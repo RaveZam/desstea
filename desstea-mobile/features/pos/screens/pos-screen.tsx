@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,13 +21,27 @@ import { ProductCard } from "../components/product-card";
 import { OrderPanel } from "../components/order-panel";
 import { OrderSummary } from "../components/order-summary";
 import { CustomizationModal } from "../components/customization-modal";
+import { SettingsScreen } from "../../settings/screens/settings-screen";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
 const DARK_TEXT = "#1C1C1E";
 const WHITE = "#FFFFFF";
+const BRAND = "#6B4F3A";
+
+const SIDEBAR_ITEMS = [
+  { key: "pos", icon: "storefront-sharp" as const, label: "POS" },
+  { key: "orders", icon: "receipt-sharp" as const, label: "Orders" },
+  { key: "reports", icon: "bar-chart-sharp" as const, label: "Reports" },
+];
+
+function generateSessionId() {
+  return "SES-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+}
 
 export default function POSScreen() {
+  const [activeSidebarItem, setActiveSidebarItem] = useState("pos");
+  const [sessionId] = useState(generateSessionId);
   const [selectedCategory, setSelectedCategory] = useState("coffee");
   const [searchQuery, setSearchQuery] = useState("");
   const [customizingProduct, setCustomizingProduct] = useState<Product | null>(null);
@@ -63,83 +78,126 @@ export default function POSScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <View style={styles.mainRow}>
-        {/* LEFT PANEL - Products */}
-        <View style={styles.leftPanel}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Image
-                source={require("../../../assets/images/logo.jpg")}
-                style={styles.logoImage}
-                resizeMode="cover"
-              />
-              <View style={styles.welcomeContainer}>
-                <Text style={styles.welcomeText}>
-                  Welcome, Micheal Aurelio Pogi
-                </Text>
-                <Text style={styles.subtitleText}>
-                  Discover whatever you need easily
-                </Text>
-              </View>
-            </View>
-            <View style={styles.searchContainer}>
-              <Ionicons
-                name="search"
-                size={16}
-                color={DARK_TEXT}
-                style={styles.searchIcon}
-              />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search product..."
-                placeholderTextColor={GRAY_TEXT}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
+        {/* SIDEBAR */}
+        <View style={styles.sidebar}>
+          <View style={styles.sidebarTop}>
+            {SIDEBAR_ITEMS.map((item) => {
+              const active = activeSidebarItem === item.key;
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  style={[styles.sidebarItem, active && styles.sidebarItemActive]}
+                  onPress={() => setActiveSidebarItem(item.key)}
+                >
+                  <Ionicons
+                    name={item.icon}
+                    size={22}
+                    color={active ? BRAND : GRAY_TEXT}
+                  />
+                  <Text style={[styles.sidebarLabel, active && styles.sidebarLabelActive]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-
-          {/* Category Tabs */}
-          <CategoryTabs
-            selectedCategory={selectedCategory}
-            onSelect={setSelectedCategory}
-          />
-
-          {/* Product Grid */}
-          <FlatList
-            data={filteredProducts}
-            renderItem={renderProductCard}
-            keyExtractor={(item) => item.id}
-            numColumns={3}
-            style={styles.productList}
-            contentContainerStyle={styles.productGrid}
-            columnWrapperStyle={styles.productRow}
-            showsVerticalScrollIndicator={false}
-          />
+          <TouchableOpacity
+            style={[styles.sidebarItem, activeSidebarItem === "settings" && styles.sidebarItemActive]}
+            onPress={() => setActiveSidebarItem("settings")}
+          >
+            <Ionicons
+              name="settings-sharp"
+              size={22}
+              color={activeSidebarItem === "settings" ? BRAND : GRAY_TEXT}
+            />
+            <Text style={[styles.sidebarLabel, activeSidebarItem === "settings" && styles.sidebarLabelActive]}>
+              Settings
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* RIGHT PANEL - Current Order */}
-        <View style={styles.rightPanel}>
-          <Text style={styles.orderTitle}>Current Order</Text>
+        {activeSidebarItem === "settings" ? (
+          <SettingsScreen sessionId={sessionId} />
+        ) : (
+          <>
+            {/* LEFT PANEL - Products */}
+            <View style={styles.leftPanel}>
+              {/* Header */}
+              <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                  <Image
+                    source={require("../../../assets/images/logo.jpg")}
+                    style={styles.logoImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.welcomeContainer}>
+                    <Text style={styles.welcomeText}>
+                      Welcome, Micheal Aurelio Pogi
+                    </Text>
+                    <Text style={styles.subtitleText}>
+                      Discover whatever you need easily
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.searchContainer}>
+                  <Ionicons
+                    name="search"
+                    size={16}
+                    color={DARK_TEXT}
+                    style={styles.searchIcon}
+                  />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search product..."
+                    placeholderTextColor={GRAY_TEXT}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </View>
+              </View>
 
-          <OrderPanel
-            orderItems={orderItems}
-            onUpdateQuantity={updateQuantity}
-          />
+              {/* Category Tabs */}
+              <CategoryTabs
+                selectedCategory={selectedCategory}
+                onSelect={setSelectedCategory}
+              />
 
+              {/* Product Grid */}
+              <FlatList
+                data={filteredProducts}
+                renderItem={renderProductCard}
+                keyExtractor={(item) => item.id}
+                numColumns={3}
+                style={styles.productList}
+                contentContainerStyle={styles.productGrid}
+                columnWrapperStyle={styles.productRow}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
 
-          <OrderSummary
-            subtotal={subtotal}
-            tax={tax}
-            total={total}
-            canPay={orderItems.length > 0}
-            onPrintTest={printTestMessage}
-            onContinueToPayment={() => {
-              commitOrder();
-              router.push("/payment");
-            }}
-          />
-        </View>
+            {/* RIGHT PANEL - Current Order */}
+            <View style={styles.rightPanel}>
+              <Text style={styles.orderTitle}>Current Order</Text>
+
+              <OrderPanel
+                orderItems={orderItems}
+                onUpdateQuantity={updateQuantity}
+              />
+
+              <OrderSummary
+                subtotal={subtotal}
+                tax={tax}
+                total={total}
+                canPay={orderItems.length > 0}
+                onPrintTest={printTestMessage}
+                onContinueToPayment={() => {
+                  commitOrder();
+                  router.push("/payment");
+                }}
+              />
+            </View>
+          </>
+        )}
       </View>
 
       <CustomizationModal
@@ -160,6 +218,37 @@ const styles = StyleSheet.create({
   mainRow: {
     flex: 1,
     flexDirection: "row",
+  },
+  sidebar: {
+    width: 72,
+    backgroundColor: WHITE,
+    borderRightWidth: 1,
+    borderRightColor: "#ECECEC",
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sidebarTop: {
+    alignItems: "center",
+    gap: 4,
+  },
+  sidebarItem: {
+    width: 56,
+    paddingVertical: 10,
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 12,
+  },
+  sidebarItemActive: {
+    backgroundColor: "#F2EBE5",
+  },
+  sidebarLabel: {
+    fontSize: 10,
+    color: GRAY_TEXT,
+    fontWeight: "500",
+  },
+  sidebarLabelActive: {
+    color: BRAND,
   },
   leftPanel: {
     flex: 1,

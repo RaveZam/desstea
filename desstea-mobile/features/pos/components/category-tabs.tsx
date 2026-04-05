@@ -45,9 +45,7 @@ export function CategoryTabs({ selectedCategory, onSelect }: Props) {
 
 const styles = StyleSheet.create({
   categoriesScroll: {
-    maxHeight: 72,
-    marginBottom: 12,
-    paddingBottom: 24,
+    maxHeight: 64,
   },
   categoriesContent: {
     gap: 10,
