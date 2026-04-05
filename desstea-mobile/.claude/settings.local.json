@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(du:*)",
+      "Bash(ls -lh ./assets/images/*)",
+      "Bash(2)",
+      "Bash(cd:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

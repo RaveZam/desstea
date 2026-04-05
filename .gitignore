@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Expo / React Native
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Android
+desstea-mobile/android/.gradle
+desstea-mobile/android/app/build/
+desstea-mobile/android/build/
+desstea-mobile/android/local.properties
+desstea-mobile/android/.idea/
+
+# iOS
+desstea-mobile/ios/Pods/
+desstea-mobile/ios/build/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Leftover old folder
+desstea/
