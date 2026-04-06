@@ -4,11 +4,11 @@
   --background: #F5F5F7;
   --foreground: #1C1C1E;
   --foreground-muted: #8E8E93;
-  --brand: #6B4F3A;
-  --accent: #E8692A;
-  --accent-light: #FFF3ED;
+  --brand: #065F46;
+  --accent: #10B981;
+  --accent-light: #ECFDF5;
   --surface: #FFFFFF;
-  --surface-active: #F2EBE5;
+  --surface-active: #D1FAE5;
   --border: #ECECEC;
 }
 
@@ -24,6 +24,7 @@
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-cormorant);
 }
 
 body {
@@ -36,3 +37,24 @@ body {
 * {
   box-sizing: border-box;
 }
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.fade-up-1 { animation-delay: 0s; }
+.fade-up-2 { animation-delay: 0.07s; }
+.fade-up-3 { animation-delay: 0.14s; }
+.fade-up-4 { animation-delay: 0.21s; }
+.fade-up-5 { animation-delay: 0.28s; }
+.fade-up-6 { animation-delay: 0.35s; }

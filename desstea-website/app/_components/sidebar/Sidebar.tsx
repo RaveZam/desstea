@@ -91,16 +91,19 @@ const generalItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-52 h-screen bg-white flex flex-col flex-shrink-0 border-r border-gray-100 overflow-hidden">
+    <aside className="w-52 h-screen flex flex-col flex-shrink-0 border-r border-[#EDE8E3] overflow-hidden" style={{ background: "#FDFAF7" }}>
       {/* Logo */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
         <img src="/logo.jpg" alt="DessTea" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-        <span className="font-bold text-gray-900 text-[15px] tracking-tight">DessTea</span>
+        <div className="flex flex-col leading-tight">
+          <span className="font-display font-semibold text-gray-900 text-base tracking-tight">DessTea</span>
+          <span className="text-xs text-[#A08C7A] font-normal">Sales Management</span>
+        </div>
       </div>
 
       {/* Nav */}
       <div className="px-3 flex-1 overflow-y-auto">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-2 mb-1.5">Menu</p>
+        <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">Menu</p>
         <nav className="space-y-0.5 mb-5">
           {navItems.map((item) => (
             <a
@@ -109,17 +112,17 @@ export default function Sidebar() {
               className={`flex items-center justify-between py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
                 item.active
                   ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
-                  : "text-gray-600 hover:bg-gray-50 border-transparent rounded-xl"
+                  : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <span className={item.active ? "text-[#6B4F3A]" : "text-gray-400"}>
+                <span className={item.active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}>
                   {item.icon}
                 </span>
                 {item.label}
               </span>
               {item.badge && (
-                <span className="bg-[#6B4F3A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                <span className="bg-[#E8692A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {item.badge}
                 </span>
               )}
@@ -127,41 +130,34 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-2 mb-1.5">General</p>
+        <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">General</p>
         <nav className="space-y-0.5">
           {generalItems.map((item) => (
             <a
               key={item.label}
               href="#"
-              className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors"
             >
-              <span className="text-gray-400">{item.icon}</span>
+              <span className="text-[#C4B4A6]">{item.icon}</span>
               {item.label}
             </a>
           ))}
         </nav>
       </div>
 
-      {/* Mobile App Promo */}
-      <div className="p-3 mt-2 flex-shrink-0">
-        <div className="bg-[#6B4F3A] rounded-2xl p-4 text-white relative overflow-hidden">
-          <div className="absolute -top-5 -right-5 w-20 h-20 bg-[#5A3F2E] rounded-full opacity-60" />
-          <div className="absolute -bottom-8 -left-4 w-24 h-24 bg-[#E8692A] rounded-full opacity-25" />
-          <div className="relative z-10">
-            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" />
-                <line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-            </div>
-            <p className="text-xs leading-snug">
-              <span className="font-bold">Download</span> our<br />Mobile App
-            </p>
-            <p className="text-[10px] text-white/50 mt-0.5">Get easy in another way</p>
-            <button className="mt-3 w-full bg-[#E8692A] hover:bg-[#52B788] text-white text-xs font-semibold py-2 rounded-xl transition-colors">
-              Download
-            </button>
+      {/* User profile footer */}
+      <div className="px-3 py-3 border-t border-[#EDE8E3]">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#F2EBE5] transition-colors cursor-pointer">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#10B981] to-[#065F46] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+            SC
           </div>
+          <div className="leading-tight min-w-0">
+            <p className="text-xs font-semibold text-gray-800 truncate">Sarah Chen</p>
+            <p className="text-[10px] text-[#A08C7A] truncate">Branch Manager</p>
+          </div>
+          <svg className="w-3 h-3 text-[#C4B4A6] ml-auto flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
       </div>
     </aside>

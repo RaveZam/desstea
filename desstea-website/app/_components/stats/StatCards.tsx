@@ -1,88 +1,128 @@
-const ArrowIcon = () => (
-  <svg
-    className="w-4 h-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2.5}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="7" y1="17" x2="17" y2="7" />
-    <polyline points="7,7 17,7 17,17" />
+const kpis = [
+  {
+    label: "Total Sales Revenue",
+    value: "₱1,245,890",
+    change: "+12.5%",
+    favorable: true,
+    dark: true,
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </svg>
+    ),
+  },
+  {
+    label: "Total Number of Orders",
+    value: "1,847",
+    change: "+8.3%",
+    favorable: true,
+    dark: false,
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <path d="M16 10a4 4 0 01-8 0" />
+      </svg>
+    ),
+  },
+  {
+    label: "Average Order Value",
+    value: "₱674.50",
+    change: "-2.1%",
+    favorable: false,
+    dark: false,
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" />
+      </svg>
+    ),
+  },
+  {
+    label: "Return / Refund Rate",
+    value: "3.2%",
+    change: "-0.5%",
+    favorable: true,
+    dark: false,
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="1 4 1 10 7 10" />
+        <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+      </svg>
+    ),
+  },
+];
+
+const UpArrow = () => (
+  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="18 15 12 9 6 15" />
   </svg>
 );
 
-const TrendIcon = ({ white }: { white?: boolean }) => (
-  <span
-    className={`flex items-center gap-1 text-[11px] font-medium ${white ? "text-white/70" : "text-[#E8692A]"}`}
-  >
-    <svg
-      className="w-3 h-3"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
-      <polyline points="17,6 23,6 23,12" />
-    </svg>
-    Increased from last month
-  </span>
+const DownArrow = () => (
+  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
 );
 
 export default function StatCards() {
   return (
-    <div className="grid grid-cols-4 gap-4">
-      {/* Total Orders — dark green */}
-      <div className="bg-[#6B4F3A] text-white rounded-2xl p-4 relative overflow-hidden">
-        <div className="absolute top-3 right-3">
-          <button className="w-6 h-6 bg-white/15 rounded-full flex items-center justify-center hover:bg-white/25 transition-colors">
-            <ArrowIcon />
-          </button>
-        </div>
-        <p className="text-xs font-medium text-white/70">Total Orders</p>
-        <p className="text-3xl font-bold mt-1.5 mb-2">124</p>
-        <TrendIcon white />
-      </div>
+    <div className="grid grid-cols-4 gap-3">
+      {kpis.map((kpi) => {
+        const isPositive = kpi.change.startsWith("+");
+        const trendColor = kpi.dark
+          ? kpi.favorable
+            ? "text-emerald-300"
+            : "text-red-300"
+          : kpi.favorable
+          ? "text-emerald-600"
+          : "text-red-500";
 
-      {/* Completed Orders */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm relative">
-        <div className="absolute top-3 right-3">
-          <button className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-500">
-            <ArrowIcon />
-          </button>
-        </div>
-        <p className="text-xs font-medium text-gray-500">Completed Orders</p>
-        <p className="text-3xl font-bold text-gray-900 mt-1.5 mb-2">98</p>
-        <TrendIcon />
-      </div>
+        return (
+          <div
+            key={kpi.label}
+            className={`rounded-2xl p-4 relative overflow-hidden ${
+              kpi.dark ? "text-white" : "bg-white shadow-sm"
+            }`}
+            style={kpi.dark ? { background: "linear-gradient(135deg, #6B4F3A 0%, #4E3628 100%)" } : {}}
+          >
+            {/* Subtle radial glow on dark card */}
+            {kpi.dark && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse at 90% 10%, rgba(232,105,42,0.35) 0%, transparent 60%)",
+                }}
+              />
+            )}
 
-      {/* Active Orders */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm relative">
-        <div className="absolute top-3 right-3">
-          <button className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-500">
-            <ArrowIcon />
-          </button>
-        </div>
-        <p className="text-xs font-medium text-gray-500">Active Orders</p>
-        <p className="text-3xl font-bold text-gray-900 mt-1.5 mb-2">18</p>
-        <TrendIcon />
-      </div>
+            <div className="relative flex items-start justify-between mb-3">
+              <p className={`text-xs font-medium leading-snug max-w-[70%] ${kpi.dark ? "text-white/65" : "text-gray-500"}`}>
+                {kpi.label}
+              </p>
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  kpi.dark ? "bg-white/15" : "bg-[#F2EBE5]"
+                }`}
+              >
+                <span className={kpi.dark ? "text-white/80" : "text-[#6B4F3A]"}>
+                  {kpi.icon}
+                </span>
+              </div>
+            </div>
 
-      {/* Pending */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm relative">
-        <div className="absolute top-3 right-3">
-          <button className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-500">
-            <ArrowIcon />
-          </button>
-        </div>
-        <p className="text-xs font-medium text-gray-500">Pending</p>
-        <p className="text-3xl font-bold text-gray-900 mt-1.5 mb-2">8</p>
-        <span className="text-[11px] font-medium text-gray-400">On Review</span>
-      </div>
+            <p className={`relative text-2xl font-semibold tracking-tight mb-2 ${kpi.dark ? "text-white" : "text-gray-900"}`}>
+              {kpi.value}
+            </p>
+
+            <span className={`relative flex items-center gap-1 text-xs font-medium ${trendColor}`}>
+              {isPositive ? <UpArrow /> : <DownArrow />}
+              {kpi.change} vs last month
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
