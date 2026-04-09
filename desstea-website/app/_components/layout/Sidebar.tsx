@@ -108,7 +108,7 @@ export default function Sidebar() {
     <aside className="w-52 h-screen flex flex-col flex-shrink-0 border-r border-[#EDE8E3] overflow-hidden" style={{ background: "#FDFAF7" }}>
       {/* Logo */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
-        <img src="/logo.jpg" alt="DessTea" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+        <img src="/logo.jpg" alt="DessTea" className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-black" />
         <div className="flex flex-col leading-tight">
           <span className="font-display font-semibold text-gray-900 text-base tracking-tight">DessTea</span>
           <span className="text-xs text-[#A08C7A] font-normal">Sales Management</span>

@@ -19,8 +19,11 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "DessTea — Dashboard",
+  title: "DessTea",
   description: "Tea shop management & analytics dashboard",
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Badge from "../../../_components/ui/Badge";
 import type { BranchStatus } from "../../../_types";
 import type { BranchWithStats } from "../data/mock-data";
@@ -12,13 +13,14 @@ const statusDot: Record<BranchStatus, string> = {
 
 interface BranchCardProps {
   branch: BranchWithStats;
-  onClick: (branch: BranchWithStats) => void;
 }
 
-export default function BranchCard({ branch, onClick }: BranchCardProps) {
+export default function BranchCard({ branch }: BranchCardProps) {
+  const router = useRouter();
+
   return (
     <div
-      onClick={() => onClick(branch)}
+      onClick={() => router.push(`/branches/${branch.id}`)}
       className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-[#EDE8E3]"
     >
       {/* Top row */}

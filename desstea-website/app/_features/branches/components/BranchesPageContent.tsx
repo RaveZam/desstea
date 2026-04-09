@@ -4,22 +4,15 @@ import { useState } from "react";
 import BranchCard from "./BranchCard";
 import BranchComparisonChart from "./BranchComparisonChart";
 import BranchFormModal from "./BranchFormModal";
-import { mockBranches, type BranchWithStats } from "../data/mock-data";
+import { mockBranches } from "../data/mock-data";
 
 type ViewMode = "grid" | "comparison";
 
 export default function BranchesPageContent() {
   const [view, setView] = useState<ViewMode>("grid");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<BranchWithStats | null>(null);
 
   function openAdd() {
-    setEditingBranch(null);
-    setModalOpen(true);
-  }
-
-  function openEdit(branch: BranchWithStats) {
-    setEditingBranch(branch);
     setModalOpen(true);
   }
 
@@ -105,7 +98,7 @@ export default function BranchesPageContent() {
           {view === "grid" ? (
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
               {mockBranches.map((branch) => (
-                <BranchCard key={branch.id} branch={branch} onClick={openEdit} />
+                <BranchCard key={branch.id} branch={branch} />
               ))}
             </div>
           ) : (
@@ -117,7 +110,7 @@ export default function BranchesPageContent() {
       <BranchFormModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        branch={editingBranch}
+        branch={null}
       />
     </>
   );
