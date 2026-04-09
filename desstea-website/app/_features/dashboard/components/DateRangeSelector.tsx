@@ -2,14 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-
-const options = [
-  { label: "Last 7 days", range: "Apr 1, 2026 - Apr 7, 2026" },
-  { label: "Last 30 days", range: "Mar 8, 2026 - Apr 7, 2026" },
-];
+import { dateRangeOptions } from "../data/mock-data";
 
 export default function DateRangeSelector() {
-  const [selected, setSelected] = useState(options[1]);
+  const [selected, setSelected] = useState(dateRangeOptions[1]);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -85,7 +81,7 @@ export default function DateRangeSelector() {
           style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999 }}
           className="w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-1"
         >
-          {options.map((opt) => (
+          {dateRangeOptions.map((opt) => (
             <button
               key={opt.label}
               onClick={() => { setSelected(opt); setOpen(false); }}

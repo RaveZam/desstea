@@ -1,20 +1,6 @@
-const products = [
-  { name: "Classic Milk Tea", revenue: 312450 },
-  { name: "Matcha Latte", revenue: 278900 },
-  { name: "Brown Sugar Boba", revenue: 241300 },
-  { name: "Taro Tea", revenue: 198750 },
-  { name: "Wintermelon Tea", revenue: 164200 },
-];
+import { topProducts, rankStyles } from "../data/mock-data";
 
-const maxRevenue = products[0].revenue;
-
-const rankStyles = [
-  { bg: "bg-[#C9A84C]/15", text: "text-[#C9A84C]" },
-  { bg: "bg-[#9EA5AD]/15", text: "text-[#9EA5AD]" },
-  { bg: "bg-[#B5754A]/15", text: "text-[#B5754A]" },
-  { bg: "bg-gray-100", text: "text-gray-400" },
-  { bg: "bg-gray-100", text: "text-gray-400" },
-];
+const maxRevenue = topProducts[0].revenue;
 
 export default function TopProductsCard() {
   return (
@@ -23,7 +9,7 @@ export default function TopProductsCard() {
       <p className="text-xs text-gray-400 mt-0.5 mb-4">Ranked by revenue in the past 30 days</p>
 
       <div className="space-y-3">
-        {products.map((product, i) => (
+        {topProducts.map((product, i) => (
           <div key={product.name} className="flex items-center gap-3">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${rankStyles[i].bg} ${rankStyles[i].text}`}>
               {i + 1}

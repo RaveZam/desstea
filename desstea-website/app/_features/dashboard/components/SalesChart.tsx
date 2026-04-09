@@ -9,16 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { day: "Mar 1", revenue: 7200 },
-  { day: "Mar 5", revenue: 8400 },
-  { day: "Mar 10", revenue: 9100 },
-  { day: "Mar 15", revenue: 7800 },
-  { day: "Mar 20", revenue: 11200 },
-  { day: "Mar 25", revenue: 10400 },
-  { day: "Mar 30", revenue: 12600 },
-];
+import { salesData } from "../data/mock-data";
 
 const formatRevenue = (value: number) => `₱${(value / 1000).toFixed(0)}K`;
 
@@ -36,7 +27,7 @@ export default function SalesChart() {
       </div>
 
       <ResponsiveContainer width="100%" height={210}>
-        <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+        <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
           <defs>
             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#6B4F3A" stopOpacity={0.2} />
@@ -57,7 +48,7 @@ export default function SalesChart() {
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: number) => [formatRevenue(value), "Revenue"]}
+            formatter={(value) => [formatRevenue(value as number), "Revenue"]}
             contentStyle={{
               borderRadius: 12,
               border: "none",

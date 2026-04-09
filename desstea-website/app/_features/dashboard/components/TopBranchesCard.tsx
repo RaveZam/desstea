@@ -1,20 +1,6 @@
-const branches = [
-  { name: "SM North EDSA", revenue: 298400 },
-  { name: "Glorietta Makati", revenue: 275600 },
-  { name: "SM Megamall", revenue: 241900 },
-  { name: "Robinsons Ermita", revenue: 198300 },
-  { name: "Ayala Cebu", revenue: 176800 },
-];
+import { topBranches, rankStyles } from "../data/mock-data";
 
-const maxRevenue = branches[0].revenue;
-
-const rankStyles = [
-  { bg: "bg-[#C9A84C]/15", text: "text-[#C9A84C]" },
-  { bg: "bg-[#9EA5AD]/15", text: "text-[#9EA5AD]" },
-  { bg: "bg-[#B5754A]/15", text: "text-[#B5754A]" },
-  { bg: "bg-gray-100", text: "text-gray-400" },
-  { bg: "bg-gray-100", text: "text-gray-400" },
-];
+const maxRevenue = topBranches[0].revenue;
 
 const LocationIcon = () => (
   <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
@@ -29,7 +15,7 @@ export default function TopBranchesCard() {
       <p className="text-xs text-gray-400 mt-0.5 mb-4">Revenue per branch in the past 30 days</p>
 
       <div className="space-y-3">
-        {branches.map((branch, i) => (
+        {topBranches.map((branch, i) => (
           <div key={branch.name} className="flex items-center gap-3">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${rankStyles[i].bg} ${rankStyles[i].text}`}>
               {i + 1}

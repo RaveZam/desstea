@@ -1,7 +1,12 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 const navItems = [
   {
     label: "Dashboard",
-    active: true,
+    href: "/",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
         <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -13,6 +18,7 @@ const navItems = [
   },
   {
     label: "Orders",
+    href: "/orders",
     badge: "8+",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -24,28 +30,29 @@ const navItems = [
     ),
   },
   {
-    label: "Schedule",
+    label: "Branches",
+    href: "/branches",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+        <circle cx="12" cy="10" r="3" />
       </svg>
     ),
   },
   {
-    label: "Analytics",
+    label: "Products",
+    href: "/products",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <path d="M16 10a4 4 0 01-8 0" />
       </svg>
     ),
   },
   {
-    label: "Team",
+    label: "Accounts",
+    href: "/accounts",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -90,6 +97,13 @@ const generalItems = [
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
+
   return (
     <aside className="w-52 h-screen flex flex-col flex-shrink-0 border-r border-[#EDE8E3] overflow-hidden" style={{ background: "#FDFAF7" }}>
       {/* Logo */}
@@ -105,29 +119,32 @@ export default function Sidebar() {
       <div className="px-3 flex-1 overflow-y-auto">
         <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">Menu</p>
         <nav className="space-y-0.5 mb-5">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className={`flex items-center justify-between py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
-                item.active
-                  ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
-                  : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span className={item.active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}>
-                  {item.icon}
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center justify-between py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
+                  active
+                    ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
+                    : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className={active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}>
+                    {item.icon}
+                  </span>
+                  {item.label}
                 </span>
-                {item.label}
-              </span>
-              {item.badge && (
-                <span className="bg-[#E8692A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                  {item.badge}
-                </span>
-              )}
-            </a>
-          ))}
+                {"badge" in item && item.badge && (
+                  <span className="bg-[#E8692A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">General</p>

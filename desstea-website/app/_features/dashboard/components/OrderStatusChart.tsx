@@ -1,14 +1,9 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
+import { orderStatusData } from "../data/mock-data";
 
-const data = [
-  { name: "Completed", value: 1284, color: "#6B4F3A" },
-  { name: "Pending", value: 389, color: "#E8692A" },
-  { name: "Cancelled", value: 174, color: "#D1CBC5" },
-];
-
-const total = data.reduce((sum, d) => sum + d.value, 0);
+const total = orderStatusData.reduce((sum, d) => sum + d.value, 0);
 
 export default function OrderStatusChart() {
   return (
@@ -20,7 +15,7 @@ export default function OrderStatusChart() {
         <ResponsiveContainer width="100%" height={190}>
           <PieChart>
             <Pie
-              data={data}
+              data={orderStatusData}
               cx="50%"
               cy="50%"
               innerRadius={58}
@@ -29,7 +24,7 @@ export default function OrderStatusChart() {
               strokeWidth={0}
               paddingAngle={2}
             >
-              {data.map((entry) => (
+              {orderStatusData.map((entry) => (
                 <Cell key={entry.name} fill={entry.color} />
               ))}
               <Label
@@ -71,7 +66,7 @@ export default function OrderStatusChart() {
       </div>
 
       <div className="space-y-1.5 mt-1">
-        {data.map((entry) => (
+        {orderStatusData.map((entry) => (
           <div key={entry.name} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
               <span

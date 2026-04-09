@@ -1,4 +1,6 @@
-const kpis = [
+import type { KpiItem } from "../data/mock-data";
+
+const kpis: KpiItem[] = [
   {
     label: "Total Sales Revenue",
     value: "₱1,245,890",
