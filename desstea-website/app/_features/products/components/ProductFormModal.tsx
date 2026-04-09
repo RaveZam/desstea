@@ -148,8 +148,8 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
           />
         </FormField>
 
-        {/* Sizes */}
-        <FormField label="Sizes & Price Adjustments">
+        {/* Sizes — only for beverages */}
+        {form.category === "Coffee" && <FormField label="Sizes & Price Adjustments">
           <div className="flex gap-3">
             {(["S", "M", "L"] as const).map((size) => {
               const sv = form.sizes.find((s) => s.size === size);
@@ -181,7 +181,7 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
               );
             })}
           </div>
-        </FormField>
+        </FormField>}
 
         {/* Add-ons */}
         <FormField label="Add-ons">
