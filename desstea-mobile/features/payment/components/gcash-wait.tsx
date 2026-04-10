@@ -11,9 +11,10 @@ type Props = {
   total: number;
   onComplete: () => void;
   onChangeMethod: () => void;
+  onPrintReceipt: () => void;
 };
 
-export function GcashWait({ total, onComplete, onChangeMethod }: Props) {
+export function GcashWait({ total, onComplete, onChangeMethod, onPrintReceipt }: Props) {
   return (
     <View style={[styles.phaseWrap, styles.phaseCentered]}>
       <View style={styles.bigIconCircle}>
@@ -39,6 +40,11 @@ export function GcashWait({ total, onComplete, onChangeMethod }: Props) {
         activeOpacity={0.85}
       >
         <Text style={styles.primaryBtnText}>Complete</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.printBtn} onPress={onPrintReceipt} activeOpacity={0.8}>
+        <Ionicons name="print-outline" size={16} color={GCASH_BLUE} />
+        <Text style={[styles.printBtnText, { color: GCASH_BLUE }]}>Print Receipt</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.changeModeBtn} onPress={onChangeMethod}>
@@ -125,5 +131,16 @@ const styles = StyleSheet.create({
   changeModeText: {
     fontSize: 13,
     color: GRAY_TEXT,
+  },
+  printBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  printBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

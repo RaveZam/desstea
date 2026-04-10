@@ -1,7 +1,45 @@
 import { Alert } from "react-native";
-import { BLEPrinter } from "react-native-thermal-receipt-printer-image-qr";
-import { CompletedOrder } from "../../reports/types";
+import { Asset } from "expo-asset";
+import {
+  BLEPrinter,
+  PrinterWidth,
+} from "react-native-thermal-receipt-printer-image-qr";
+import { OrderItem } from "../../../store";
 import { getItemPrice } from "../../pos/data/products";
+
+export type ReceiptDetails = {
+  customerName: string;
+  paymentMethod: "Cash" | "GCash";
+  items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  cashTendered?: number;
+  change?: number;
+  completedAt?: Date;
+  orderRef?: string;
+};
+
+async function getLogoBase64(): Promise<string | null> {
+  try {
+    const asset = Asset.fromModule(require("../../../assets/images/logo.jpg"));
+    await asset.downloadAsync();
+    if (!asset.localUri) return null;
+    const response = await fetch(asset.localUri);
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 function withTimeout<T>(
   promise: Promise<T>,
@@ -81,7 +119,7 @@ export function usePrinter() {
     }
   };
 
-  const printReceipt = async (order: CompletedOrder) => {
+  const printReceipt = async (order: ReceiptDetails) => {
     try {
       await BLEPrinter.init();
 
@@ -119,7 +157,22 @@ export function usePrinter() {
 
       await new Promise((r) => setTimeout(r, 300));
 
-      const d = order.completedAt;
+      // Print logo — 160px wide, centered on 58mm (~384px) paper
+      const logoBase64 = await getLogoBase64();
+      if (logoBase64) {
+        const imageWidth = 160;
+        const printerWidth = 384;
+        const paddingX = Math.floor((printerWidth - imageWidth) / 2);
+        BLEPrinter.printImageBase64(logoBase64, {
+          imageWidth,
+          imageHeight: imageWidth,
+          printerWidthType: PrinterWidth["58mm"],
+          paddingX,
+        });
+        await new Promise((r) => setTimeout(r, 400));
+      }
+
+      const d = order.completedAt ?? new Date();
       const dateStr = d.toLocaleDateString("en-PH", {
         month: "short",
         day: "numeric",
@@ -132,9 +185,9 @@ export function usePrinter() {
       });
 
       await BLEPrinter.printText("================================\n", {});
-      await BLEPrinter.printText("         DESS TEA\n", {});
-      await BLEPrinter.printText("================================\n", {});
-      await BLEPrinter.printText(`Order #: ${order.id}\n`, {});
+      if (order.orderRef) {
+        await BLEPrinter.printText(`Order #: ${order.orderRef}\n`, {});
+      }
       await BLEPrinter.printText(`Date: ${dateStr}  ${timeStr}\n`, {});
       await BLEPrinter.printText(`Customer: ${order.customerName}\n`, {});
       await BLEPrinter.printText("--------------------------------\n", {});
@@ -146,22 +199,28 @@ export function usePrinter() {
           ? `${item.product.name} (${item.customization.size})`
           : item.product.name;
         await BLEPrinter.printText(
-          `${name}\n  x${item.quantity}  ₱${price.toFixed(2)}  ₱${lineTotal.toFixed(2)}\n`,
+          `${name}\n  x${item.quantity} ${lineTotal.toFixed(2)}\n`,
           {},
         );
       }
 
       await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(`Subtotal:  ₱${order.subtotal.toFixed(2)}\n`, {});
-      await BLEPrinter.printText(`VAT (12%): ₱${order.tax.toFixed(2)}\n`, {});
-      await BLEPrinter.printText(`TOTAL:     ₱${order.total.toFixed(2)}\n`, {});
+      await BLEPrinter.printText(
+        `Subtotal:  ${order.subtotal.toFixed(2)}\n`,
+        {},
+      );
+      await BLEPrinter.printText(`VAT (12%): ${order.tax.toFixed(2)}\n`, {});
+      await BLEPrinter.printText(`TOTAL:     ${order.total.toFixed(2)}\n`, {});
       await BLEPrinter.printText("--------------------------------\n", {});
       await BLEPrinter.printText(`Payment: ${order.paymentMethod}\n`, {});
 
-      if (order.paymentMethod === "Cash" && order.cashAmount != null) {
-        await BLEPrinter.printText(`Cash:    ₱${order.cashAmount.toFixed(2)}\n`, {});
+      if (order.paymentMethod === "Cash" && order.cashTendered != null) {
         await BLEPrinter.printText(
-          `Change:  ₱${(order.change ?? 0).toFixed(2)}\n`,
+          `Cash:    ${order.cashTendered.toFixed(2)}\n`,
+          {},
+        );
+        await BLEPrinter.printText(
+          `Change:  ${(order.change ?? 0).toFixed(2)}\n`,
           {},
         );
       }
@@ -170,10 +229,7 @@ export function usePrinter() {
       await BLEPrinter.printText("      Thank you! Come again!\n", {});
       await BLEPrinter.printText("\n\n\n", {});
     } catch (err: unknown) {
-      Alert.alert(
-        "Print Error",
-        `Could not print receipt.\n\n${String(err)}`,
-      );
+      Alert.alert("Print Error", `Could not print receipt.\n\n${String(err)}`);
     }
   };
 

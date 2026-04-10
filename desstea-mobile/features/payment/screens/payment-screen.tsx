@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
 import { usePayment } from "../hooks/use-payment";
+import { usePrinter } from "../../printer/hooks/use-printer";
+import { getCustomerName } from "../../../store";
 import { OrderSummaryPanel } from "../components/order-summary-panel";
 import { PaymentMethodSelect } from "../components/payment-method-select";
 import { CashNumpad } from "../components/cash-numpad";
@@ -37,6 +39,21 @@ export default function PaymentScreen() {
     confirmCash,
     changePaymentMethod,
   } = usePayment();
+
+  const { printReceipt } = usePrinter();
+
+  const handlePrintReceipt = (paymentMethod: "Cash" | "GCash") => {
+    printReceipt({
+      customerName: getCustomerName(),
+      paymentMethod,
+      items: orderItems,
+      subtotal,
+      tax,
+      total,
+      cashTendered: paymentMethod === "Cash" ? cashAmount : undefined,
+      change: paymentMethod === "Cash" ? change : undefined,
+    });
+  };
 
   const renderPhase = () => {
     switch (phase) {
@@ -76,6 +93,7 @@ export default function PaymentScreen() {
             total={total}
             change={change}
             onComplete={handleComplete}
+            onPrintReceipt={() => handlePrintReceipt("Cash")}
           />
         );
       case "gcash-wait":
@@ -84,6 +102,7 @@ export default function PaymentScreen() {
             total={total}
             onComplete={handleComplete}
             onChangeMethod={changePaymentMethod}
+            onPrintReceipt={() => handlePrintReceipt("GCash")}
           />
         );
     }

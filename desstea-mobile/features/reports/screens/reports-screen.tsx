@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useReports } from "../hooks/use-reports";
 import { usePrinter } from "../../printer/hooks/use-printer";
+import { CompletedOrder } from "../types";
 import { DateFilterBar } from "../components/date-filter-bar";
 import { OrderHistoryList } from "../components/order-history-list";
 
@@ -24,6 +25,21 @@ export function ReportsScreen() {
   } = useReports();
 
   const { printReceipt } = usePrinter();
+
+  const handleReprint = (order: CompletedOrder) => {
+    printReceipt({
+      customerName: order.customerName,
+      paymentMethod: order.paymentMethod,
+      items: order.items,
+      subtotal: order.subtotal,
+      tax: order.tax,
+      total: order.total,
+      cashTendered: order.cashAmount,
+      change: order.change,
+      completedAt: order.completedAt,
+      orderRef: String(order.orderNumber),
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -57,7 +73,7 @@ export function ReportsScreen() {
       {/* Order History */}
       <View style={styles.listSection}>
         <Text style={styles.sectionTitle}>Order History</Text>
-        <OrderHistoryList orders={orders} onReprint={printReceipt} />
+        <OrderHistoryList orders={orders} onReprint={handleReprint} />
       </View>
     </View>
   );

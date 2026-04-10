@@ -13,9 +13,10 @@ type Props = {
   total: number;
   change: number;
   onComplete: () => void;
+  onPrintReceipt: () => void;
 };
 
-export function CashConfirmed({ cashAmount, total, change, onComplete }: Props) {
+export function CashConfirmed({ cashAmount, total, change, onComplete, onPrintReceipt }: Props) {
   return (
     <View style={[styles.phaseWrap, styles.phaseCentered]}>
       <View style={styles.bigIconCircle}>
@@ -41,6 +42,11 @@ export function CashConfirmed({ cashAmount, total, change, onComplete }: Props) 
 
       <TouchableOpacity style={styles.primaryBtn} onPress={onComplete} activeOpacity={0.85}>
         <Text style={styles.primaryBtnText}>Complete</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.printBtn} onPress={onPrintReceipt} activeOpacity={0.8}>
+        <Ionicons name="print-outline" size={16} color={ORANGE} />
+        <Text style={styles.printBtnText}>Print Receipt</Text>
       </TouchableOpacity>
     </View>
   );
@@ -122,5 +128,17 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 16,
     fontWeight: "700",
+  },
+  printBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  printBtnText: {
+    color: ORANGE,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

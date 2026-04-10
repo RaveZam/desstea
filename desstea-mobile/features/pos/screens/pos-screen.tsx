@@ -44,9 +44,18 @@ export default function POSScreen() {
   const [sessionId] = useState(generateSessionId);
   const [selectedCategory, setSelectedCategory] = useState("coffee");
   const [searchQuery, setSearchQuery] = useState("");
-  const [customizingProduct, setCustomizingProduct] = useState<Product | null>(null);
-  const { orderItems, addToOrder, updateQuantity, subtotal, tax, total, commitOrder } =
-    useOrder();
+  const [customizingProduct, setCustomizingProduct] = useState<Product | null>(
+    null,
+  );
+  const {
+    orderItems,
+    addToOrder,
+    updateQuantity,
+    subtotal,
+    tax,
+    total,
+    commitOrder,
+  } = useOrder();
   const { printTestMessage } = usePrinter();
 
   const filteredProducts = products.filter((p) => {
@@ -65,7 +74,10 @@ export default function POSScreen() {
     }
   };
 
-  const handleCustomizationConfirm = (product: Product, customization: CoffeeCustomization) => {
+  const handleCustomizationConfirm = (
+    product: Product,
+    customization: CoffeeCustomization,
+  ) => {
     addToOrder(product, customization);
     setCustomizingProduct(null);
   };
@@ -86,7 +98,10 @@ export default function POSScreen() {
               return (
                 <TouchableOpacity
                   key={item.key}
-                  style={[styles.sidebarItem, active && styles.sidebarItemActive]}
+                  style={[
+                    styles.sidebarItem,
+                    active && styles.sidebarItemActive,
+                  ]}
                   onPress={() => setActiveSidebarItem(item.key)}
                 >
                   <Ionicons
@@ -94,7 +109,12 @@ export default function POSScreen() {
                     size={22}
                     color={active ? BRAND : GRAY_TEXT}
                   />
-                  <Text style={[styles.sidebarLabel, active && styles.sidebarLabelActive]}>
+                  <Text
+                    style={[
+                      styles.sidebarLabel,
+                      active && styles.sidebarLabelActive,
+                    ]}
+                  >
                     {item.label}
                   </Text>
                 </TouchableOpacity>
@@ -102,7 +122,10 @@ export default function POSScreen() {
             })}
           </View>
           <TouchableOpacity
-            style={[styles.sidebarItem, activeSidebarItem === "settings" && styles.sidebarItemActive]}
+            style={[
+              styles.sidebarItem,
+              activeSidebarItem === "settings" && styles.sidebarItemActive,
+            ]}
             onPress={() => setActiveSidebarItem("settings")}
           >
             <Ionicons
@@ -110,7 +133,12 @@ export default function POSScreen() {
               size={22}
               color={activeSidebarItem === "settings" ? BRAND : GRAY_TEXT}
             />
-            <Text style={[styles.sidebarLabel, activeSidebarItem === "settings" && styles.sidebarLabelActive]}>
+            <Text
+              style={[
+                styles.sidebarLabel,
+                activeSidebarItem === "settings" && styles.sidebarLabelActive,
+              ]}
+            >
               Settings
             </Text>
           </TouchableOpacity>
