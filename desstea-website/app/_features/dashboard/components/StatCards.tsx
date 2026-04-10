@@ -42,15 +42,15 @@ const kpis: KpiItem[] = [
     ),
   },
   {
-    label: "Return / Refund Rate",
-    value: "3.2%",
-    change: "-0.5%",
+    label: "Avg Sale per Branch",
+    value: "₱311,472",
+    change: "+5.8%",
     favorable: true,
     dark: false,
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
   },
@@ -84,10 +84,14 @@ export default function StatCards() {
         return (
           <div
             key={kpi.label}
-            className={`rounded-2xl p-4 relative overflow-hidden ${
-              kpi.dark ? "text-white" : "bg-white shadow-sm"
+            className={`rounded-2xl p-3 relative overflow-hidden ${
+              kpi.dark ? "text-white" : "bg-white"
             }`}
-            style={kpi.dark ? { background: "linear-gradient(135deg, #6B4F3A 0%, #4E3628 100%)" } : {}}
+            style={
+              kpi.dark
+                ? { background: "linear-gradient(135deg, #6B4F3A 0%, #4E3628 100%)" }
+                : { border: "1px solid #F0E8E2", boxShadow: "0 1px 4px rgba(107,79,58,0.06)" }
+            }
           >
             {/* Subtle radial glow on dark card */}
             {kpi.dark && (
@@ -99,8 +103,8 @@ export default function StatCards() {
               />
             )}
 
-            <div className="relative flex items-start justify-between mb-3">
-              <p className={`text-xs font-medium leading-snug max-w-[70%] ${kpi.dark ? "text-white/65" : "text-gray-500"}`}>
+            <div className="relative flex items-start justify-between mb-2">
+              <p className={`text-sm font-medium leading-snug max-w-[70%] ${kpi.dark ? "text-white/65" : "text-gray-500"}`}>
                 {kpi.label}
               </p>
               <div
@@ -114,11 +118,11 @@ export default function StatCards() {
               </div>
             </div>
 
-            <p className={`relative text-2xl font-semibold tracking-tight mb-2 ${kpi.dark ? "text-white" : "text-gray-900"}`}>
+            <p className={`relative text-2xl font-semibold tracking-tight mb-1.5 ${kpi.dark ? "text-white" : "text-gray-900"}`}>
               {kpi.value}
             </p>
 
-            <span className={`relative flex items-center gap-1 text-xs font-medium ${trendColor}`}>
+            <span className={`relative flex items-center gap-1 text-sm font-medium ${trendColor}`}>
               {isPositive ? <UpArrow /> : <DownArrow />}
               {kpi.change} vs last month
             </span>

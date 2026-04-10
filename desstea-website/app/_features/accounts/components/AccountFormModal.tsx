@@ -16,13 +16,12 @@ interface AccountFormModalProps {
 const roleOptions: { value: UserRole; label: string }[] = [
   { value: "super_admin", label: "Super Admin" },
   { value: "branch_manager", label: "Branch Manager" },
-  { value: "staff", label: "Staff" },
 ];
 
 const emptyForm = {
   name: "",
   email: "",
-  role: "staff" as UserRole,
+  role: "branch_manager" as UserRole,
   assignedBranchId: "",
   status: "active" as UserStatus,
 };

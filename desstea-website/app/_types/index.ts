@@ -61,7 +61,7 @@ export interface Product {
 
 // ── User / Account ───────────────────────────────────────────
 
-export type UserRole = "super_admin" | "branch_manager" | "staff";
+export type UserRole = "super_admin" | "branch_manager";
 export type UserStatus = "active" | "inactive";
 
 export interface User {

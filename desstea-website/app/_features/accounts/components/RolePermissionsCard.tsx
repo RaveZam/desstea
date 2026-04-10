@@ -26,16 +26,6 @@ const permissions = [
       "Process order refunds",
     ],
   },
-  {
-    role: "Staff",
-    color: "bg-gray-100 text-gray-600",
-    items: [
-      "Access assigned branch only",
-      "View and process orders",
-      "Update order status",
-      "View product catalog",
-    ],
-  },
 ];
 
 export default function RolePermissionsCard() {
@@ -68,7 +58,7 @@ export default function RolePermissionsCard() {
       </button>
 
       {open && (
-        <div className="px-4 pb-4 grid grid-cols-3 gap-3 border-t border-gray-50">
+        <div className="px-4 pb-4 grid grid-cols-2 gap-3 border-t border-gray-50">
           {permissions.map((p) => (
             <div key={p.role} className="pt-3">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold mb-2 ${p.color}`}>

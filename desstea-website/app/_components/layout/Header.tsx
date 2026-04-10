@@ -3,7 +3,7 @@ export default function Header() {
     <header className="h-14 bg-white border-b border-gray-100 flex items-center px-6 gap-4 flex-shrink-0">
       {/* Greeting + date */}
       <div className="flex flex-col leading-tight">
-        <p className="text-sm font-semibold text-gray-800">Good morning, Sarah</p>
+        <p className="text-sm font-semibold text-gray-800">Good morning, Michael</p>
         <p className="text-[11px] text-gray-400">Monday, April 7, 2026</p>
       </div>
 
@@ -30,12 +30,12 @@ export default function Header() {
 
         {/* User */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#10B981] to-[#065F46] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-            SC
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+            MA
           </div>
           <div className="leading-tight hidden sm:block">
-            <p className="text-xs font-semibold text-gray-800">Sarah Chen</p>
-            <p className="text-[10px] text-gray-400">sarah@desstea.com</p>
+            <p className="text-xs font-semibold text-gray-800">Michael Aurelio</p>
+            <p className="text-[10px] text-gray-400">michael@desstea.com</p>
           </div>
         </div>
       </div>

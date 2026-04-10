@@ -6,14 +6,13 @@ import OrderFilters from "./OrderFilters";
 import OrdersTable from "./OrdersTable";
 import OrderDetailPanel from "./OrderDetailPanel";
 import { mockOrders } from "../data/mock-data";
-import type { Order, OrderStatus } from "../../../_types";
+import type { Order } from "../../../_types";
 
 const PAGE_SIZE = 10;
 
 export default function OrdersPageContent() {
   const [search, setSearch] = useState("");
   const [branch, setBranch] = useState("all");
-  const [status, setStatus] = useState<OrderStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Order | null>(null);
 
@@ -24,10 +23,9 @@ export default function OrdersPageContent() {
         o.id.toLowerCase().includes(search.toLowerCase()) ||
         o.customerName.toLowerCase().includes(search.toLowerCase());
       const matchBranch = branch === "all" || o.branchId === branch;
-      const matchStatus = status === "all" || o.status === status;
-      return matchSearch && matchBranch && matchStatus;
+      return matchSearch && matchBranch;
     });
-  }, [search, branch, status]);
+  }, [search, branch]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -66,8 +64,6 @@ export default function OrdersPageContent() {
             onSearchChange={(v) => { setSearch(v); handleFilterChange(); }}
             branch={branch}
             onBranchChange={(v) => { setBranch(v); handleFilterChange(); }}
-            status={status}
-            onStatusChange={(v) => { setStatus(v); handleFilterChange(); }}
           />
         </div>
 

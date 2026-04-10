@@ -1,32 +1,13 @@
 "use client";
 
 import { SearchInput } from "../../../_components/ui";
-import type { OrderStatus } from "../../../_types";
 import { branchOptions } from "../data/mock-data";
-
-const statusOptions: { value: OrderStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "refunded", label: "Refunded" },
-];
-
-const statusColors: Record<OrderStatus | "all", string> = {
-  all: "bg-gray-100 text-gray-600",
-  pending: "bg-orange-100 text-orange-700",
-  completed: "bg-[#F2EBE5] text-[#6B4F3A]",
-  cancelled: "bg-gray-100 text-gray-500",
-  refunded: "bg-red-100 text-red-600",
-};
 
 interface OrderFiltersProps {
   search: string;
   onSearchChange: (v: string) => void;
   branch: string;
   onBranchChange: (v: string) => void;
-  status: OrderStatus | "all";
-  onStatusChange: (v: OrderStatus | "all") => void;
 }
 
 export default function OrderFilters({
@@ -34,8 +15,6 @@ export default function OrderFilters({
   onSearchChange,
   branch,
   onBranchChange,
-  status,
-  onStatusChange,
 }: OrderFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -57,22 +36,6 @@ export default function OrderFilters({
           </option>
         ))}
       </select>
-
-      <div className="flex gap-1">
-        {statusOptions.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => onStatusChange(opt.value)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-              status === opt.value
-                ? statusColors[opt.value]
-                : "text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

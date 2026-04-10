@@ -1,31 +1,38 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
-import { orderStatusData } from "../data/mock-data";
+import { topProducts } from "../data/mock-data";
 
-const total = orderStatusData.reduce((sum, d) => sum + d.value, 0);
+const COLORS = ["#6B4F3A", "#C4895A", "#E8692A", "#A07858", "#D4C4B8"];
+
+const totalRevenue = topProducts.reduce((sum, d) => sum + d.revenue, 0);
+const maxRevenue = topProducts[0].revenue;
 
 export default function OrderStatusChart() {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
-      <h3 className="font-semibold text-gray-900">Order Status</h3>
-      <p className="text-xs text-gray-400 mt-0.5">Distribution of current orders</p>
+    <div className="bg-white rounded-2xl shadow-sm p-4 h-full flex flex-col" style={{ border: "1px solid #F5EDE7" }}>
+      {/* Header */}
+      <div className="shrink-0 mb-2">
+        <h3 className="font-semibold text-gray-900 text-base">Top Products</h3>
+        <p className="text-sm text-gray-400 mt-0.5">Revenue share · past 30 days</p>
+      </div>
 
-      <div className="flex-1 flex items-center justify-center mt-1">
-        <ResponsiveContainer width="100%" height={190}>
+      {/* Donut */}
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={orderStatusData}
+              data={topProducts}
               cx="50%"
               cy="50%"
-              innerRadius={58}
-              outerRadius={82}
-              dataKey="value"
+              innerRadius="52%"
+              outerRadius="72%"
+              dataKey="revenue"
               strokeWidth={0}
               paddingAngle={2}
             >
-              {orderStatusData.map((entry) => (
-                <Cell key={entry.name} fill={entry.color} />
+              {topProducts.map((_, index) => (
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
               <Label
                 content={({ viewBox }) => {
@@ -33,27 +40,20 @@ export default function OrderStatusChart() {
                   return (
                     <g>
                       <text
-                        x={cx}
-                        y={cy - 7}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="#1C1C1E"
-                        fontSize={20}
-                        fontWeight={600}
+                        x={cx} y={cy - 8}
+                        textAnchor="middle" dominantBaseline="central"
+                        fill="#1C1C1E" fontSize={14} fontWeight={700}
                         fontFamily="var(--font-geist-sans), system-ui"
                       >
-                        {total.toLocaleString()}
+                        ₱{(totalRevenue / 1000).toFixed(0)}K
                       </text>
                       <text
-                        x={cx}
-                        y={cy + 13}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="#9CA3AF"
-                        fontSize={11}
+                        x={cx} y={cy + 10}
+                        textAnchor="middle" dominantBaseline="central"
+                        fill="#B0A090" fontSize={10}
                         fontFamily="var(--font-geist-sans), system-ui"
                       >
-                        total orders
+                        total revenue
                       </text>
                     </g>
                   );
@@ -65,21 +65,30 @@ export default function OrderStatusChart() {
         </ResponsiveContainer>
       </div>
 
-      <div className="space-y-1.5 mt-1">
-        {orderStatusData.map((entry) => (
-          <div key={entry.name} className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-gray-500">{entry.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-800">{entry.value.toLocaleString()}</span>
-              <span className="text-gray-400 w-10 text-right">
-                {((entry.value / total) * 100).toFixed(1)}%
+      {/* Bar legend */}
+      <div className="shrink-0 space-y-2 mt-1">
+        {topProducts.map((entry, index) => (
+          <div key={entry.name}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-sm flex-shrink-0"
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                />
+                <span className="text-xs text-gray-500 truncate max-w-[110px]">{entry.name}</span>
+              </div>
+              <span className="text-xs font-semibold text-gray-700 shrink-0">
+                {((entry.revenue / totalRevenue) * 100).toFixed(0)}%
               </span>
+            </div>
+            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${(entry.revenue / maxRevenue) * 100}%`,
+                  backgroundColor: COLORS[index % COLORS.length],
+                }}
+              />
             </div>
           </div>
         ))}

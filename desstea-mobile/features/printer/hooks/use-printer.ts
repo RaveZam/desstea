@@ -22,7 +22,9 @@ export type ReceiptDetails = {
 
 async function getLogoBase64(): Promise<string | null> {
   try {
-    const asset = Asset.fromModule(require("../../../assets/images/logo.jpg"));
+    const asset = Asset.fromModule(
+      require("../../../assets/images/logo-padding.jpg"),
+    );
     await asset.downloadAsync();
     if (!asset.localUri) return null;
     const response = await fetch(asset.localUri);
@@ -157,20 +159,23 @@ export function usePrinter() {
 
       await new Promise((r) => setTimeout(r, 300));
 
-      // Print logo — 160px wide, centered on 58mm (~384px) paper
+      // Print logo — centered on 58mm paper
+      // paddingX pushes the image right; adjust if still off-center
       const logoBase64 = await getLogoBase64();
       if (logoBase64) {
-        const imageWidth = 160;
-        const printerWidth = 384;
-        const paddingX = Math.floor((printerWidth - imageWidth) / 2);
+        const imageWidth = 350;
+        const imageHeight = 180;
+
         BLEPrinter.printImageBase64(logoBase64, {
           imageWidth,
-          imageHeight: imageWidth,
+          imageHeight: imageHeight,
           printerWidthType: PrinterWidth["58mm"],
-          paddingX,
         });
         await new Promise((r) => setTimeout(r, 400));
       }
+
+      BLEPrinter.printText("Desstea Ipil Echauge Branch", {});
+      BLEPrinter.printText("Order Invoice", {});
 
       const d = order.completedAt ?? new Date();
       const dateStr = d.toLocaleDateString("en-PH", {
@@ -185,11 +190,11 @@ export function usePrinter() {
       });
 
       await BLEPrinter.printText("================================\n", {});
-      if (order.orderRef) {
-        await BLEPrinter.printText(`Order #: ${order.orderRef}\n`, {});
-      }
-      await BLEPrinter.printText(`Date: ${dateStr}  ${timeStr}\n`, {});
-      await BLEPrinter.printText(`Customer: ${order.customerName}\n`, {});
+
+      await BLEPrinter.printText(`Order #: 284731d212`, {});
+
+      await BLEPrinter.printText(`Date: ${dateStr} ${timeStr}`, {});
+      await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
       await BLEPrinter.printText("--------------------------------\n", {});
 
       for (const item of order.items) {
@@ -199,34 +204,31 @@ export function usePrinter() {
           ? `${item.product.name} (${item.customization.size})`
           : item.product.name;
         await BLEPrinter.printText(
-          `${name}\n  x${item.quantity} ${lineTotal.toFixed(2)}\n`,
+          `${name}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
           {},
         );
       }
 
       await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(
-        `Subtotal:  ${order.subtotal.toFixed(2)}\n`,
-        {},
-      );
-      await BLEPrinter.printText(`VAT (12%): ${order.tax.toFixed(2)}\n`, {});
-      await BLEPrinter.printText(`TOTAL:     ${order.total.toFixed(2)}\n`, {});
+      await BLEPrinter.printText(`Subtotal:  ${order.subtotal.toFixed(2)}`, {});
+      await BLEPrinter.printText(`VAT (12%): ${order.tax.toFixed(2)}`, {});
+      await BLEPrinter.printText(`TOTAL:     ${order.total.toFixed(2)}`, {});
       await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(`Payment: ${order.paymentMethod}\n`, {});
+      await BLEPrinter.printText(`Payment: ${order.paymentMethod}`, {});
 
       if (order.paymentMethod === "Cash" && order.cashTendered != null) {
         await BLEPrinter.printText(
-          `Cash:    ${order.cashTendered.toFixed(2)}\n`,
+          `Cash:    ${order.cashTendered.toFixed(2)}`,
           {},
         );
         await BLEPrinter.printText(
-          `Change:  ${(order.change ?? 0).toFixed(2)}\n`,
+          `Change:  ${(order.change ?? 0).toFixed(2)}`,
           {},
         );
       }
 
       await BLEPrinter.printText("================================\n", {});
-      await BLEPrinter.printText("      Thank you! Come again!\n", {});
+      await BLEPrinter.printText("      Thank you Come again!\n", {});
       await BLEPrinter.printText("\n\n\n", {});
     } catch (err: unknown) {
       Alert.alert("Print Error", `Could not print receipt.\n\n${String(err)}`);

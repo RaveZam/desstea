@@ -42,10 +42,38 @@ export const topProducts = [
 // ── Top Branches ─────────────────────────────────────────────
 
 export const topBranches = [
-  { name: "Santiago City", revenue: 198500 },
-  { name: "Cauayan City", revenue: 176300 },
-  { name: "Ipil, Echague", revenue: 164800 },
-  { name: "Cabugao, Echague", revenue: 135400 },
+  {
+    name: "Santiago City",
+    revenue: 198500,
+    orders: 412,
+    trend: +14.2,
+    topProduct: "Brown Sugar Boba",
+    status: "On Fire" as const,
+  },
+  {
+    name: "Cauayan City",
+    revenue: 176300,
+    orders: 368,
+    trend: +6.8,
+    topProduct: "Classic Milk Tea",
+    status: "Steady" as const,
+  },
+  {
+    name: "Ipil, Echague",
+    revenue: 164800,
+    orders: 298,
+    trend: -2.1,
+    topProduct: "Matcha Latte",
+    status: "Watch" as const,
+  },
+  {
+    name: "Cabugao, Echague",
+    revenue: 135400,
+    orders: 241,
+    trend: -8.4,
+    topProduct: "Taro Tea",
+    status: "Needs Boost" as const,
+  },
 ];
 
 // ── Date Range Options ───────────────────────────────────────
