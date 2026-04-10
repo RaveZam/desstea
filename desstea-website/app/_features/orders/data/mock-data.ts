@@ -5,7 +5,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0001",
     customerName: "Maria Santos",
     branchId: "br-1",
-    branchName: "SM North EDSA",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Classic Milk Tea", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
       { productName: "Brown Sugar Boba", quantity: 1, size: "M", unitPrice: 110, lineTotal: 110 },
@@ -18,7 +18,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0002",
     customerName: "Juan Dela Cruz",
     branchId: "br-2",
-    branchName: "Glorietta Makati",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Matcha Latte", quantity: 1, size: "L", unitPrice: 135, lineTotal: 135 },
     ],
@@ -30,7 +30,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0003",
     customerName: "Ana Reyes",
     branchId: "br-3",
-    branchName: "SM Megamall",
+    branchName: "Santiago City",
     items: [
       { productName: "Taro Tea", quantity: 2, size: "M", unitPrice: 100, lineTotal: 200 },
       { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
@@ -43,7 +43,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0004",
     customerName: "Carlos Mendoza",
     branchId: "br-1",
-    branchName: "SM North EDSA",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Wintermelon Tea", quantity: 3, size: "L", unitPrice: 115, lineTotal: 345 },
     ],
@@ -55,7 +55,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0005",
     customerName: "Liza Fernandez",
     branchId: "br-4",
-    branchName: "Robinsons Ermita",
+    branchName: "Cauayan City",
     items: [
       { productName: "Ube Milk Tea", quantity: 1, size: "L", unitPrice: 130, lineTotal: 130 },
       { productName: "Pandesal Combo", quantity: 1, size: "-", unitPrice: 85, lineTotal: 85 },
@@ -67,8 +67,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0006",
     customerName: "Rodel Garcia",
-    branchId: "br-5",
-    branchName: "Ayala Cebu",
+    branchId: "br-1",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Classic Milk Tea", quantity: 2, size: "S", unitPrice: 90, lineTotal: 180 },
     ],
@@ -80,7 +80,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0007",
     customerName: "Patrice Villanueva",
     branchId: "br-2",
-    branchName: "Glorietta Makati",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Matcha Latte", quantity: 1, size: "M", unitPrice: 125, lineTotal: 125 },
       { productName: "Toasted Siopao", quantity: 2, size: "-", unitPrice: 65, lineTotal: 130 },
@@ -92,8 +92,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0008",
     customerName: "Benedict Cruz",
-    branchId: "br-6",
-    branchName: "SM Seaside Cebu",
+    branchId: "br-2",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Brown Sugar Boba", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
     ],
@@ -104,8 +104,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0009",
     customerName: "Sophia Tan",
-    branchId: "br-7",
-    branchName: "Eastwood Libis",
+    branchId: "br-4",
+    branchName: "Cauayan City",
     items: [
       { productName: "Taro Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
       { productName: "Wintermelon Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
@@ -117,8 +117,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0010",
     customerName: "Michael Ong",
-    branchId: "br-8",
-    branchName: "Festival Mall Alabang",
+    branchId: "br-4",
+    branchName: "Cauayan City",
     items: [
       { productName: "Ube Milk Tea", quantity: 2, size: "M", unitPrice: 120, lineTotal: 240 },
       { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
@@ -131,7 +131,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0011",
     customerName: "Camille Bautista",
     branchId: "br-3",
-    branchName: "SM Megamall",
+    branchName: "Santiago City",
     items: [
       { productName: "Classic Milk Tea", quantity: 1, size: "L", unitPrice: 120, lineTotal: 120 },
     ],
@@ -143,7 +143,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0012",
     customerName: "Jerome Pascual",
     branchId: "br-1",
-    branchName: "SM North EDSA",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Matcha Latte", quantity: 2, size: "L", unitPrice: 135, lineTotal: 270 },
       { productName: "Ensaymada Combo", quantity: 1, size: "-", unitPrice: 95, lineTotal: 95 },
@@ -156,7 +156,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0013",
     customerName: "Kristine Manalo",
     branchId: "br-4",
-    branchName: "Robinsons Ermita",
+    branchName: "Cauayan City",
     items: [
       { productName: "Brown Sugar Boba", quantity: 3, size: "M", unitPrice: 110, lineTotal: 330 },
     ],
@@ -167,8 +167,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0014",
     customerName: "Andrei Lim",
-    branchId: "br-5",
-    branchName: "Ayala Cebu",
+    branchId: "br-1",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Taro Tea", quantity: 1, size: "S", unitPrice: 90, lineTotal: 90 },
       { productName: "Classic Milk Tea", quantity: 1, size: "S", unitPrice: 90, lineTotal: 90 },
@@ -181,7 +181,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0015",
     customerName: "Danna Espiritu",
     branchId: "br-2",
-    branchName: "Glorietta Makati",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Wintermelon Tea", quantity: 2, size: "L", unitPrice: 115, lineTotal: 230 },
       { productName: "Toasted Siopao", quantity: 1, size: "-", unitPrice: 65, lineTotal: 65 },
@@ -193,8 +193,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0016",
     customerName: "Paolo Aquino",
-    branchId: "br-6",
-    branchName: "SM Seaside Cebu",
+    branchId: "br-2",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Matcha Latte", quantity: 1, size: "M", unitPrice: 125, lineTotal: 125 },
     ],
@@ -205,8 +205,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0017",
     customerName: "Vanessa Torres",
-    branchId: "br-7",
-    branchName: "Eastwood Libis",
+    branchId: "br-3",
+    branchName: "Santiago City",
     items: [
       { productName: "Ube Milk Tea", quantity: 2, size: "L", unitPrice: 130, lineTotal: 260 },
       { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
@@ -218,8 +218,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0018",
     customerName: "Felix Ramos",
-    branchId: "br-8",
-    branchName: "Festival Mall Alabang",
+    branchId: "br-4",
+    branchName: "Cauayan City",
     items: [
       { productName: "Classic Milk Tea", quantity: 1, size: "M", unitPrice: 105, lineTotal: 105 },
     ],
@@ -231,7 +231,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0019",
     customerName: "Rina Castillo",
     branchId: "br-3",
-    branchName: "SM Megamall",
+    branchName: "Santiago City",
     items: [
       { productName: "Brown Sugar Boba", quantity: 1, size: "L", unitPrice: 120, lineTotal: 120 },
       { productName: "Pandesal Combo", quantity: 2, size: "-", unitPrice: 85, lineTotal: 170 },
@@ -244,7 +244,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0020",
     customerName: "Nathan Rivera",
     branchId: "br-1",
-    branchName: "SM North EDSA",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Taro Tea", quantity: 2, size: "L", unitPrice: 115, lineTotal: 230 },
     ],
@@ -256,7 +256,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0021",
     customerName: "Margaux dela Rosa",
     branchId: "br-2",
-    branchName: "Glorietta Makati",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Matcha Latte", quantity: 3, size: "M", unitPrice: 125, lineTotal: 375 },
     ],
@@ -268,7 +268,7 @@ export const mockOrders: Order[] = [
     id: "ORD-2026-0022",
     customerName: "Gino Salazar",
     branchId: "br-4",
-    branchName: "Robinsons Ermita",
+    branchName: "Cauayan City",
     items: [
       { productName: "Wintermelon Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
       { productName: "Ensaymada Combo", quantity: 1, size: "-", unitPrice: 95, lineTotal: 95 },
@@ -280,8 +280,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0023",
     customerName: "Tricia Reyes",
-    branchId: "br-5",
-    branchName: "Ayala Cebu",
+    branchId: "br-1",
+    branchName: "Ipil, Echague",
     items: [
       { productName: "Classic Milk Tea", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
       { productName: "Ube Milk Tea", quantity: 1, size: "M", unitPrice: 120, lineTotal: 120 },
@@ -293,8 +293,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0024",
     customerName: "Elmo Buenaventura",
-    branchId: "br-6",
-    branchName: "SM Seaside Cebu",
+    branchId: "br-2",
+    branchName: "Cabugao, Echague",
     items: [
       { productName: "Taro Tea", quantity: 1, size: "M", unitPrice: 100, lineTotal: 100 },
     ],
@@ -305,8 +305,8 @@ export const mockOrders: Order[] = [
   {
     id: "ORD-2026-0025",
     customerName: "Aiza Guinto",
-    branchId: "br-7",
-    branchName: "Eastwood Libis",
+    branchId: "br-3",
+    branchName: "Santiago City",
     items: [
       { productName: "Brown Sugar Boba", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
       { productName: "Toasted Siopao", quantity: 2, size: "-", unitPrice: 65, lineTotal: 130 },
@@ -319,12 +319,8 @@ export const mockOrders: Order[] = [
 
 export const branchOptions = [
   { value: "all", label: "All Branches" },
-  { value: "br-1", label: "SM North EDSA" },
-  { value: "br-2", label: "Glorietta Makati" },
-  { value: "br-3", label: "SM Megamall" },
-  { value: "br-4", label: "Robinsons Ermita" },
-  { value: "br-5", label: "Ayala Cebu" },
-  { value: "br-6", label: "SM Seaside Cebu" },
-  { value: "br-7", label: "Eastwood Libis" },
-  { value: "br-8", label: "Festival Mall Alabang" },
+  { value: "br-1", label: "Ipil, Echague" },
+  { value: "br-2", label: "Cabugao, Echague" },
+  { value: "br-3", label: "Santiago City" },
+  { value: "br-4", label: "Cauayan City" },
 ];

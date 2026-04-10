@@ -64,9 +64,10 @@ const navItems = [
   },
 ];
 
-const generalItems = [
+const generalItems: { label: string; href?: string; icon: React.ReactNode }[] = [
   {
     label: "Settings",
+    href: "/settings",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
@@ -76,6 +77,7 @@ const generalItems = [
   },
   {
     label: "Help",
+    href: "/help",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -149,16 +151,35 @@ export default function Sidebar() {
 
         <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">General</p>
         <nav className="space-y-0.5">
-          {generalItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors"
-            >
-              <span className="text-[#C4B4A6]">{item.icon}</span>
-              {item.label}
-            </a>
-          ))}
+          {generalItems.map((item) => {
+            if (item.href) {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`flex items-center gap-2.5 py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
+                    active
+                      ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
+                      : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
+                  }`}
+                >
+                  <span className={active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            }
+            return (
+              <a
+                key={item.label}
+                href="#"
+                className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors"
+              >
+                <span className="text-[#C4B4A6]">{item.icon}</span>
+                {item.label}
+              </a>
+            );
+          })}
         </nav>
       </div>
 

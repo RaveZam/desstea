@@ -20,13 +20,6 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       onClick={() => onClick(product)}
       className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-[#EDE8E3]"
     >
-      {/* Image placeholder */}
-      <div className="w-full h-28 bg-gradient-to-br from-[#F2EBE5] to-[#E8D5C8] rounded-xl mb-3 flex items-center justify-center">
-        <span className="text-3xl">
-          {product.category === "Coffee" ? "🧋" : product.category === "Foods" ? "🥐" : "🎁"}
-        </span>
-      </div>
-
       {/* Name + category */}
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <h3 className="font-semibold text-gray-900 text-sm leading-tight">{product.name}</h3>

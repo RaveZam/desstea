@@ -42,11 +42,10 @@ export const topProducts = [
 // ── Top Branches ─────────────────────────────────────────────
 
 export const topBranches = [
-  { name: "SM North EDSA", revenue: 298400 },
-  { name: "Glorietta Makati", revenue: 275600 },
-  { name: "SM Megamall", revenue: 241900 },
-  { name: "Robinsons Ermita", revenue: 198300 },
-  { name: "Ayala Cebu", revenue: 176800 },
+  { name: "Santiago City", revenue: 198500 },
+  { name: "Cauayan City", revenue: 176300 },
+  { name: "Ipil, Echague", revenue: 164800 },
+  { name: "Cabugao, Echague", revenue: 135400 },
 ];
 
 // ── Date Range Options ───────────────────────────────────────

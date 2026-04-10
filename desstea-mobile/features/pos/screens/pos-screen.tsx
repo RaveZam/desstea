@@ -22,6 +22,7 @@ import { OrderPanel } from "../components/order-panel";
 import { OrderSummary } from "../components/order-summary";
 import { CustomizationModal } from "../components/customization-modal";
 import { SettingsScreen } from "../../settings/screens/settings-screen";
+import { ReportsScreen } from "../../reports/screens/reports-screen";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -32,7 +33,6 @@ const BRAND = "#6B4F3A";
 const SIDEBAR_ITEMS = [
   { key: "pos", icon: "storefront-sharp" as const, label: "POS" },
   { key: "orders", icon: "receipt-sharp" as const, label: "Orders" },
-  { key: "reports", icon: "bar-chart-sharp" as const, label: "Reports" },
 ];
 
 function generateSessionId() {
@@ -118,6 +118,8 @@ export default function POSScreen() {
 
         {activeSidebarItem === "settings" ? (
           <SettingsScreen sessionId={sessionId} />
+        ) : activeSidebarItem === "orders" ? (
+          <ReportsScreen />
         ) : (
           <>
             {/* LEFT PANEL - Products */}

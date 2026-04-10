@@ -18,7 +18,7 @@ export const mockProducts: Product[] = [
       { name: "Cheese Foam", price: 30 },
       { name: "Pudding", price: 20 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-5", "br-6", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-3", "br-4"],
   },
   {
     id: "prod-2",
@@ -35,7 +35,7 @@ export const mockProducts: Product[] = [
       { name: "Oat Milk Upgrade", price: 20 },
       { name: "Matcha Shot", price: 25 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-5", "br-7"],
+    availability: ["br-1", "br-2", "br-3"],
   },
   {
     id: "prod-3",
@@ -52,7 +52,7 @@ export const mockProducts: Product[] = [
       { name: "Extra Pearls", price: 15 },
       { name: "Cheese Foam", price: 30 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-5", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-3", "br-4"],
   },
   {
     id: "prod-4",
@@ -69,7 +69,7 @@ export const mockProducts: Product[] = [
       { name: "Pudding", price: 20 },
       { name: "Grass Jelly", price: 15 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-5", "br-6", "br-7"],
+    availability: ["br-1", "br-2", "br-3", "br-4"],
   },
   {
     id: "prod-5",
@@ -86,7 +86,7 @@ export const mockProducts: Product[] = [
       { name: "Lychee Jelly", price: 15 },
       { name: "Grass Jelly", price: 15 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-4"],
   },
   {
     id: "prod-6",
@@ -103,7 +103,7 @@ export const mockProducts: Product[] = [
       { name: "Extra Pearls", price: 15 },
       { name: "Cheese Foam", price: 30 },
     ],
-    availability: ["br-1", "br-3", "br-5", "br-7", "br-8"],
+    availability: ["br-1", "br-3", "br-4"],
   },
   // ── Foods ────────────────────────────────────────────────
   {
@@ -116,7 +116,7 @@ export const mockProducts: Product[] = [
     addOns: [
       { name: "Extra Sauce", price: 10 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-7"],
+    availability: ["br-1", "br-2", "br-3"],
   },
   {
     id: "prod-8",
@@ -129,7 +129,7 @@ export const mockProducts: Product[] = [
       { name: "Butter", price: 10 },
       { name: "Ube Jam", price: 15 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-5", "br-6", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-3", "br-4"],
   },
   {
     id: "prod-9",
@@ -139,7 +139,7 @@ export const mockProducts: Product[] = [
     category: "Foods",
     sizes: [],
     addOns: [],
-    availability: ["br-1", "br-2", "br-3", "br-5"],
+    availability: ["br-1", "br-2"],
   },
   {
     id: "prod-10",
@@ -151,7 +151,7 @@ export const mockProducts: Product[] = [
     addOns: [
       { name: "Extra Dip", price: 10 },
     ],
-    availability: ["br-1", "br-2", "br-4", "br-5", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-4"],
   },
   // ── Combos ───────────────────────────────────────────────
   {
@@ -164,7 +164,7 @@ export const mockProducts: Product[] = [
     addOns: [
       { name: "Upgrade to L", price: 15 },
     ],
-    availability: ["br-1", "br-2", "br-3", "br-4", "br-5", "br-6", "br-7", "br-8"],
+    availability: ["br-1", "br-2", "br-3", "br-4"],
   },
   {
     id: "prod-12",
@@ -174,7 +174,7 @@ export const mockProducts: Product[] = [
     category: "Combos",
     sizes: [],
     addOns: [],
-    availability: ["br-1", "br-2", "br-3", "br-5"],
+    availability: ["br-1", "br-2"],
   },
   {
     id: "prod-13",
@@ -186,17 +186,13 @@ export const mockProducts: Product[] = [
     addOns: [
       { name: "Extra Cheese Sticks", price: 55 },
     ],
-    availability: ["br-1", "br-2", "br-4", "br-5", "br-7"],
+    availability: ["br-1", "br-2", "br-4"],
   },
 ];
 
 export const allBranchOptions = [
-  { id: "br-1", name: "SM North EDSA" },
-  { id: "br-2", name: "Glorietta Makati" },
-  { id: "br-3", name: "SM Megamall" },
-  { id: "br-4", name: "Robinsons Ermita" },
-  { id: "br-5", name: "Ayala Cebu" },
-  { id: "br-6", name: "SM Seaside Cebu" },
-  { id: "br-7", name: "Eastwood Libis" },
-  { id: "br-8", name: "Festival Mall Alabang" },
+  { id: "br-1", name: "Ipil, Echague" },
+  { id: "br-2", name: "Cabugao, Echague" },
+  { id: "br-3", name: "Santiago City" },
+  { id: "br-4", name: "Cauayan City" },
 ];

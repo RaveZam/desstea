@@ -57,7 +57,15 @@ export function usePayment() {
   };
 
   const handleComplete = () => {
-    completeOrder();
+    const paymentMethod = phase === "cash-confirmed" ? "Cash" : "GCash";
+    completeOrder({
+      paymentMethod,
+      subtotal,
+      tax,
+      total,
+      cashAmount: phase === "cash-confirmed" ? cashAmount : undefined,
+      change: phase === "cash-confirmed" ? change : undefined,
+    });
     router.back();
   };
 
