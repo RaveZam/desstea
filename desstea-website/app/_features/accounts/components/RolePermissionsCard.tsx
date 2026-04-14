@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const permissions = [
   {
-    role: "Super Admin",
+    role: "Admin Account",
     color: "bg-purple-100 text-purple-700",
     items: [
       "Access all branches and data",
@@ -16,14 +16,13 @@ const permissions = [
     ],
   },
   {
-    role: "Branch Manager",
+    role: "Branch Account",
     color: "bg-blue-100 text-blue-700",
     items: [
-      "Access assigned branch only",
-      "View branch orders and stats",
-      "Manage branch staff accounts",
-      "Update product availability",
-      "Process order refunds",
+      "Access POS system for assigned branch",
+      "Process sales on the POS",
+      "Log branch sales",
+      "Generate tickets on the branch side",
     ],
   },
 ];

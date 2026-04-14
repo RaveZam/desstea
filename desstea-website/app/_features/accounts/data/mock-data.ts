@@ -73,8 +73,8 @@ export const mockUsers: User[] = [
 
 export const roleOptions: { value: UserRole | "all"; label: string }[] = [
   { value: "all", label: "All Roles" },
-  { value: "super_admin", label: "Super Admin" },
-  { value: "branch_manager", label: "Branch Manager" },
+  { value: "super_admin", label: "Admin Account" },
+  { value: "branch_manager", label: "Branch Account" },
 ];
 
 export const branchOptions = [

@@ -1,31 +1,38 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { SearchInput } from "../../../_components/ui";
 import AccountsTable from "./AccountsTable";
 import AccountFormModal from "./AccountFormModal";
+import DeleteAccountModal from "./DeleteAccountModal";
 import RolePermissionsCard from "./RolePermissionsCard";
-import { mockUsers, roleOptions } from "../data/mock-data";
+import { roleOptions } from "../data/mock-data";
 import type { User, UserRole, UserStatus } from "../../../_types";
 
-export default function AccountsPageContent() {
+interface AccountsPageContentProps {
+  initialUsers: User[];
+}
+
+export default function AccountsPageContent({
+  initialUsers,
+}: AccountsPageContentProps) {
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<UserRole | "all">("all");
   const [status, setStatus] = useState<UserStatus | "all">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
-  const filtered = useMemo(() => {
-    return mockUsers.filter((u) => {
-      const matchSearch =
-        !search ||
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase());
-      const matchRole = role === "all" || u.role === role;
-      const matchStatus = status === "all" || u.status === status;
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [search, role, status]);
+  const filtered = initialUsers.filter((u) => {
+    const matchSearch =
+      !search ||
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = role === "all" || u.role === role;
+    const matchStatus = status === "all" || u.status === status;
+    return matchSearch && matchRole && matchStatus;
+  });
 
   function openAdd() {
     setEditingUser(null);
@@ -37,7 +44,12 @@ export default function AccountsPageContent() {
     setModalOpen(true);
   }
 
-  const activeCount = mockUsers.filter((u) => u.status === "active").length;
+  function openDelete(user: User) {
+    setDeletingUser(user);
+    setDeleteModalOpen(true);
+  }
+
+  const activeCount = initialUsers.filter((u) => u.status === "active").length;
 
   return (
     <>
@@ -53,12 +65,22 @@ export default function AccountsPageContent() {
             </p>
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-gray-400">{activeCount} active users</span>
+            <span className="text-xs text-gray-400">
+              {activeCount} active users
+            </span>
             <button
               onClick={openAdd}
               className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -87,7 +109,9 @@ export default function AccountsPageContent() {
             className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] text-gray-700"
           >
             {roleOptions.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
             ))}
           </select>
 
@@ -101,8 +125,8 @@ export default function AccountsPageContent() {
                     ? s === "active"
                       ? "bg-emerald-100 text-emerald-700"
                       : s === "inactive"
-                      ? "bg-gray-100 text-gray-500"
-                      : "bg-[#F2EBE5] text-[#6B4F3A]"
+                        ? "bg-gray-100 text-gray-500"
+                        : "bg-[#F2EBE5] text-[#6B4F3A]"
                     : "text-gray-500 hover:bg-gray-100"
                 }`}
               >
@@ -118,7 +142,11 @@ export default function AccountsPageContent() {
 
         {/* Table */}
         <div className="fade-up fade-up-4">
-          <AccountsTable users={filtered} onRowClick={openEdit} />
+          <AccountsTable
+            users={filtered}
+            onRowClick={openEdit}
+            onDelete={openDelete}
+          />
         </div>
       </div>
 
@@ -126,6 +154,12 @@ export default function AccountsPageContent() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         user={editingUser}
+      />
+
+      <DeleteAccountModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        user={deletingUser}
       />
     </>
   );

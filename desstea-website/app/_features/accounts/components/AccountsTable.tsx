@@ -14,8 +14,8 @@ function formatLastLogin(iso: string) {
 }
 
 const roleLabel: Record<UserRole, string> = {
-  super_admin: "Super Admin",
-  branch_manager: "Branch Manager",
+  super_admin: "Admin Account",
+  branch_manager: "Branch Account",
 };
 
 const avatarGradient: Record<string, string> = {
@@ -39,9 +39,10 @@ const avatarGradient: Record<string, string> = {
 interface AccountsTableProps {
   users: User[];
   onRowClick: (user: User) => void;
+  onDelete: (user: User) => void;
 }
 
-export default function AccountsTable({ users, onRowClick }: AccountsTableProps) {
+export default function AccountsTable({ users, onRowClick, onDelete }: AccountsTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <table className="w-full text-sm">
@@ -53,6 +54,7 @@ export default function AccountsTable({ users, onRowClick }: AccountsTableProps)
             <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Branch</th>
             <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Login</th>
+            <th className="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
@@ -96,6 +98,20 @@ export default function AccountsTable({ users, onRowClick }: AccountsTableProps)
               </td>
               <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                 {formatLastLogin(user.lastLogin)}
+              </td>
+              <td className="px-4 py-3 text-right">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(user); }}
+                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Delete account"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                  </svg>
+                </button>
               </td>
             </tr>
           ))}
