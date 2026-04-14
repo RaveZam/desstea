@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logout } from "@/app/login/actions";
 
 const navItems = [
   {
@@ -98,7 +99,13 @@ const generalItems: { label: string; href?: string; icon: React.ReactNode }[] = 
   },
 ];
 
-export default function Sidebar() {
+type Props = {
+  email: string;
+  displayName: string;
+  initials: string;
+};
+
+export default function Sidebar({ email, displayName, initials }: Props) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -170,14 +177,15 @@ export default function Sidebar() {
               );
             }
             return (
-              <a
-                key={item.label}
-                href="#"
-                className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors"
-              >
-                <span className="text-[#C4B4A6]">{item.icon}</span>
-                {item.label}
-              </a>
+              <form key={item.label} action={logout}>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors w-full text-left"
+                >
+                  <span className="text-[#C4B4A6]">{item.icon}</span>
+                  {item.label}
+                </button>
+              </form>
             );
           })}
         </nav>
@@ -187,11 +195,11 @@ export default function Sidebar() {
       <div className="px-3 py-3 border-t border-[#EDE8E3]">
         <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#F2EBE5] transition-colors cursor-pointer">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-            MA
+            {initials}
           </div>
           <div className="leading-tight min-w-0">
-            <p className="text-xs font-semibold text-gray-800 truncate">Michael Aurelio</p>
-            <p className="text-[10px] text-[#A08C7A] truncate">Branch Manager</p>
+            <p className="text-xs font-semibold text-gray-800 truncate">{displayName}</p>
+            <p className="text-[10px] text-[#A08C7A] truncate">{email}</p>
           </div>
           <svg className="w-3 h-3 text-[#C4B4A6] ml-auto flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />

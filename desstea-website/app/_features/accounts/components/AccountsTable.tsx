@@ -16,7 +16,6 @@ function formatLastLogin(iso: string) {
 const roleLabel: Record<UserRole, string> = {
   super_admin: "Super Admin",
   branch_manager: "Branch Manager",
-  staff: "Staff",
 };
 
 const avatarGradient: Record<string, string> = {
