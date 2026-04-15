@@ -6,9 +6,10 @@ export interface Branch {
   id: string;
   name: string;
   address: string;
-  contact: string;
-  operatingHours: string;
-  status: BranchStatus;
+  assigned_account_id: string | null;
+  assigned_account_name: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Order ────────────────────────────────────────────────────
@@ -70,7 +71,6 @@ export interface User {
   email: string;
   role: UserRole;
   assignedBranchId: string | null;
-  assignedBranchName: string | null;
   status: UserStatus;
   lastLogin: string;
   avatarInitials: string;

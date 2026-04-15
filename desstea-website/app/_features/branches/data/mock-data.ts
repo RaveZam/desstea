@@ -2,11 +2,18 @@ import type { Branch, BranchStatus } from "../../../_types";
 import { mockOrders } from "../../orders/data/mock-data";
 
 export interface BranchWithStats extends Branch {
+  // Display-only fields (not in DB schema)
+  contact: string;
+  operatingHours: string;
+  status: BranchStatus;
+  // Stats
   dailyRevenue: number;
   ordersToday: number;
   topProduct: string;
   staffCount: number;
 }
+
+const MOCK_TIMESTAMPS = { assigned_account_id: null, assigned_account_name: null, created_at: "", updated_at: "" };
 
 export const mockBranches: BranchWithStats[] = [
   {
@@ -20,6 +27,7 @@ export const mockBranches: BranchWithStats[] = [
     ordersToday: 62,
     topProduct: "Classic Milk Tea",
     staffCount: 5,
+    ...MOCK_TIMESTAMPS,
   },
   {
     id: "br-2",
@@ -32,6 +40,7 @@ export const mockBranches: BranchWithStats[] = [
     ordersToday: 49,
     topProduct: "Brown Sugar Boba",
     staffCount: 4,
+    ...MOCK_TIMESTAMPS,
   },
   {
     id: "br-3",
@@ -44,6 +53,7 @@ export const mockBranches: BranchWithStats[] = [
     ordersToday: 74,
     topProduct: "Matcha Latte",
     staffCount: 6,
+    ...MOCK_TIMESTAMPS,
   },
   {
     id: "br-4",
@@ -56,6 +66,7 @@ export const mockBranches: BranchWithStats[] = [
     ordersToday: 65,
     topProduct: "Taro Tea",
     staffCount: 5,
+    ...MOCK_TIMESTAMPS,
   },
 ];
 

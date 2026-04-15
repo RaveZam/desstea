@@ -1,4 +1,5 @@
 import type { BranchWithStats } from "../data/mock-data";
+import type { Branch } from "../../../_types";
 
 const UpArrow = () => (
   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -7,18 +8,26 @@ const UpArrow = () => (
 );
 
 interface BranchStatCardsProps {
-  branch: BranchWithStats;
+  branch: Branch | BranchWithStats;
+}
+
+function getStats(branch: Branch | BranchWithStats) {
+  const b = branch as BranchWithStats;
+  return {
+    dailyRevenue: b.dailyRevenue ?? 0,
+    ordersToday: b.ordersToday ?? 0,
+    staffCount: b.staffCount ?? 0,
+  };
 }
 
 export default function BranchStatCards({ branch }: BranchStatCardsProps) {
-  const avgOrderValue = branch.ordersToday > 0
-    ? Math.round(branch.dailyRevenue / branch.ordersToday)
-    : 0;
+  const { dailyRevenue, ordersToday, staffCount } = getStats(branch);
+  const avgOrderValue = ordersToday > 0 ? Math.round(dailyRevenue / ordersToday) : 0;
 
   const cards = [
     {
       label: "Today's Revenue",
-      value: branch.dailyRevenue > 0 ? `₱${branch.dailyRevenue.toLocaleString()}` : "—",
+      value: dailyRevenue > 0 ? `₱${dailyRevenue.toLocaleString()}` : "—",
       change: "+8.2%",
       favorable: true,
       dark: true,
@@ -31,7 +40,7 @@ export default function BranchStatCards({ branch }: BranchStatCardsProps) {
     },
     {
       label: "Orders Today",
-      value: branch.ordersToday > 0 ? branch.ordersToday.toString() : "—",
+      value: ordersToday > 0 ? ordersToday.toString() : "—",
       change: "+5.1%",
       favorable: true,
       dark: false,
@@ -58,7 +67,7 @@ export default function BranchStatCards({ branch }: BranchStatCardsProps) {
     },
     {
       label: "Staff On Duty",
-      value: branch.staffCount > 0 ? branch.staffCount.toString() : "—",
+      value: staffCount > 0 ? staffCount.toString() : "—",
       change: "+0",
       favorable: true,
       dark: false,

@@ -13,7 +13,6 @@ export async function createAccount(data: {
   password: string;
   role: "super_admin" | "branch_manager";
   assignedBranchId?: string;
-  assignedBranchName?: string;
 }) {
   const error = await createAccountInSupabase(data);
   if (error) return { error };
@@ -28,7 +27,6 @@ export async function updateAccount(
     email: string;
     role: "super_admin" | "branch_manager";
     assignedBranchId?: string;
-    assignedBranchName?: string;
   }
 ) {
   const error = await updateAccountInSupabase(userId, data);

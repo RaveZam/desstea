@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "../../../_components/ui/Modal";
 import FormField from "../../../_components/ui/FormField";
-import type { User, UserRole, UserStatus } from "../../../_types";
-import { branchOptions } from "../data/mock-data";
+import type { Branch, User, UserRole, UserStatus } from "../../../_types";
 import { createAccount, updateAccount } from "../actions";
 
 interface AccountFormModalProps {
   open: boolean;
   onClose: () => void;
   user: User | null;
+  branches: Branch[];
 }
 
 const roleOptions: { value: UserRole; label: string }[] = [
@@ -33,6 +33,7 @@ export default function AccountFormModal({
   open,
   onClose,
   user,
+  branches,
 }: AccountFormModalProps) {
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
@@ -72,14 +73,12 @@ export default function AccountFormModal({
     setLoading(true);
     setError(null);
 
-    const branch = branchOptions.find((b) => b.value === form.assignedBranchId);
     const result = await createAccount({
       name: form.name,
       email: form.email,
       password: form.password,
       role: form.role,
       assignedBranchId: form.assignedBranchId || undefined,
-      assignedBranchName: branch?.label || undefined,
     });
 
     setLoading(false);
@@ -99,13 +98,11 @@ export default function AccountFormModal({
     setLoading(true);
     setError(null);
 
-    const branch = branchOptions.find((b) => b.value === form.assignedBranchId);
     const result = await updateAccount(user!.id, {
       name: form.name,
       email: form.email,
       role: form.role,
       assignedBranchId: form.assignedBranchId || undefined,
-      assignedBranchName: branch?.label || undefined,
     });
 
     setLoading(false);
@@ -216,9 +213,10 @@ export default function AccountFormModal({
               disabled={isSuperAdmin}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {branchOptions.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
+              <option value="">No Branch (All)</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
                 </option>
               ))}
             </select>

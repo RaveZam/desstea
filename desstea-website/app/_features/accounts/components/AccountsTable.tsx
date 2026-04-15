@@ -1,7 +1,7 @@
 "use client";
 
 import Badge from "../../../_components/ui/Badge";
-import type { User, UserRole } from "../../../_types";
+import type { Branch, User, UserRole } from "../../../_types";
 
 function formatLastLogin(iso: string) {
   return new Date(iso).toLocaleString("en-PH", {
@@ -38,11 +38,12 @@ const avatarGradient: Record<string, string> = {
 
 interface AccountsTableProps {
   users: User[];
+  branches: Branch[];
   onRowClick: (user: User) => void;
   onDelete: (user: User) => void;
 }
 
-export default function AccountsTable({ users, onRowClick, onDelete }: AccountsTableProps) {
+export default function AccountsTable({ users, branches, onRowClick, onDelete }: AccountsTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <table className="w-full text-sm">
@@ -88,7 +89,9 @@ export default function AccountsTable({ users, onRowClick, onDelete }: AccountsT
                 </Badge>
               </td>
               <td className="px-4 py-3 text-xs text-gray-500">
-                {user.assignedBranchName ?? <span className="text-gray-300">—</span>}
+                {user.assignedBranchId
+                  ? (branches.find((b) => b.id === user.assignedBranchId)?.name ?? <span className="text-gray-300">—</span>)
+                  : <span className="text-gray-300">—</span>}
               </td>
               <td className="px-4 py-3 text-center">
                 <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${user.status === "active" ? "text-emerald-600" : "text-gray-400"}`}>

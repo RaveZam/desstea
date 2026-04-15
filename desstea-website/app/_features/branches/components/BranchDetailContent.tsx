@@ -10,30 +10,26 @@ import BranchOrderStatusChart from "./BranchOrderStatusChart";
 import BranchTopProducts from "./BranchTopProducts";
 import BranchRecentOrders from "./BranchRecentOrders";
 import BranchFormModal from "./BranchFormModal";
+import type { Branch } from "../../../_types";
 
 interface BranchDetailContentProps {
-  branchId: string;
+  branch: Branch;
 }
 
-export default function BranchDetailContent({ branchId }: BranchDetailContentProps) {
+export default function BranchDetailContent({ branch }: BranchDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const branch = getBranchById(branchId);
 
-  if (!branch) {
-    return (
-      <div className="px-5 py-4">
-        <div className="bg-white rounded-2xl shadow-sm p-10 text-center">
-          <p className="text-gray-400 text-sm mb-4">Branch not found.</p>
-          <Link
-            href="/branches"
-            className="text-[#E8692A] text-sm font-semibold hover:underline"
-          >
-            ← Back to Branches
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Use mock stats if available for this branch ID, otherwise show zeros
+  const mockStats = getBranchById(branch.id) ?? {
+    ...branch,
+    contact: "—",
+    operatingHours: "—",
+    status: "active" as const,
+    dailyRevenue: 0,
+    ordersToday: 0,
+    topProduct: "—",
+    staffCount: 0,
+  };
 
   return (
     <>
@@ -45,26 +41,26 @@ export default function BranchDetailContent({ branchId }: BranchDetailContentPro
 
         {/* KPI Cards */}
         <div className="fade-up fade-up-2">
-          <BranchStatCards branch={branch} />
+          <BranchStatCards branch={mockStats} />
         </div>
 
         {/* Charts row */}
         <div className="grid grid-cols-3 gap-3 fade-up fade-up-3 items-stretch">
           <div className="col-span-2 flex flex-col">
-            <BranchSalesChart branchId={branchId} />
+            <BranchSalesChart branchId={branch.id} />
           </div>
           <div className="flex flex-col">
-            <BranchOrderStatusChart branchId={branchId} />
+            <BranchOrderStatusChart branchId={branch.id} />
           </div>
         </div>
 
         {/* Bottom row */}
         <div className="grid grid-cols-3 gap-3 fade-up fade-up-4">
           <div>
-            <BranchTopProducts branchId={branchId} />
+            <BranchTopProducts branchId={branch.id} />
           </div>
           <div className="col-span-2">
-            <BranchRecentOrders branchId={branchId} />
+            <BranchRecentOrders branchId={branch.id} />
           </div>
         </div>
       </div>

@@ -1,24 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import BranchCard from "./BranchCard";
 import BranchComparisonChart from "./BranchComparisonChart";
 import BranchFormModal from "./BranchFormModal";
-import { mockBranches } from "../data/mock-data";
+import { deleteBranch } from "../actions";
+import type { Branch } from "../../../_types";
 
 type ViewMode = "grid" | "comparison";
 
-export default function BranchesPageContent() {
+interface BranchesPageContentProps {
+  initialBranches: Branch[];
+}
+
+export default function BranchesPageContent({ initialBranches }: BranchesPageContentProps) {
+  const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function openAdd() {
+    setEditingBranch(null);
     setModalOpen(true);
   }
 
-  const active = mockBranches.filter((b) => b.status === "active").length;
-  const maintenance = mockBranches.filter((b) => b.status === "maintenance").length;
-  const inactive = mockBranches.filter((b) => b.status === "inactive").length;
+  function openEdit(branch: Branch) {
+    setEditingBranch(branch);
+    setModalOpen(true);
+  }
+
+  async function handleDelete(branch: Branch) {
+    if (!confirm(`Delete branch "${branch.name}"? This cannot be undone.`)) return;
+    startTransition(async () => {
+      const result = await deleteBranch(branch.id);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
 
   return (
     <>
@@ -76,31 +99,32 @@ export default function BranchesPageContent() {
           </div>
         </div>
 
-        {/* Summary chips */}
+        {/* Count chip */}
         <div className="flex gap-2 fade-up fade-up-2">
-          <span className="bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-            {active} Active
+          <span className="bg-[#F2EBE5] text-[#6B4F3A] text-xs font-semibold px-3 py-1 rounded-full">
+            {initialBranches.length} {initialBranches.length === 1 ? "Branch" : "Branches"}
           </span>
-          {maintenance > 0 && (
-            <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
-              {maintenance} Maintenance
-            </span>
-          )}
-          {inactive > 0 && (
-            <span className="bg-gray-100 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full">
-              {inactive} Inactive
-            </span>
-          )}
         </div>
 
         {/* Content */}
         <div className="fade-up fade-up-3">
           {view === "grid" ? (
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-              {mockBranches.map((branch) => (
-                <BranchCard key={branch.id} branch={branch} />
-              ))}
-            </div>
+            initialBranches.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-10 text-center">
+                <p className="text-gray-400 text-sm">No branches yet. Add one to get started.</p>
+              </div>
+            ) : (
+              <div className={`grid grid-cols-2 xl:grid-cols-3 gap-3 ${isPending ? "opacity-60 pointer-events-none" : ""}`}>
+                {initialBranches.map((branch) => (
+                  <BranchCard
+                    key={branch.id}
+                    branch={branch}
+                    onEdit={() => openEdit(branch)}
+                    onDelete={() => handleDelete(branch)}
+                  />
+                ))}
+              </div>
+            )
           ) : (
             <BranchComparisonChart />
           )}
@@ -110,7 +134,7 @@ export default function BranchesPageContent() {
       <BranchFormModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        branch={null}
+        branch={editingBranch}
       />
     </>
   );

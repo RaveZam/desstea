@@ -22,8 +22,6 @@ export async function listAccounts(): Promise<User[]> {
       email: u.email ?? "",
       role: (u.app_metadata?.role as User["role"]) ?? "branch_manager",
       assignedBranchId: u.app_metadata?.branch_id ?? null,
-      assignedBranchName:
-        u.app_metadata?.branch_name ?? u.app_metadata?.Assigned_Branch ?? null,
       status: u.banned_until ? "inactive" : "active",
       lastLogin: u.last_sign_in_at ?? u.created_at ?? new Date().toISOString(),
       avatarInitials: initials,
@@ -37,7 +35,6 @@ export async function createAccountInSupabase(data: {
   password: string;
   role: "super_admin" | "branch_manager";
   assignedBranchId?: string;
-  assignedBranchName?: string;
 }) {
   const supabase = createAdminClient();
 
@@ -49,7 +46,6 @@ export async function createAccountInSupabase(data: {
     app_metadata: {
       role: data.role,
       branch_id: data.assignedBranchId || null,
-      branch_name: data.assignedBranchName || null,
     },
   });
 
@@ -63,7 +59,6 @@ export async function updateAccountInSupabase(
     email: string;
     role: "super_admin" | "branch_manager";
     assignedBranchId?: string;
-    assignedBranchName?: string;
   },
 ) {
   const supabase = createAdminClient();
@@ -74,7 +69,6 @@ export async function updateAccountInSupabase(
     app_metadata: {
       role: data.role,
       branch_id: data.assignedBranchId || null,
-      branch_name: data.assignedBranchName || null,
     },
   });
 

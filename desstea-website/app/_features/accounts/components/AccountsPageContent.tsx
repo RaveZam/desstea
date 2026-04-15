@@ -7,14 +7,16 @@ import AccountFormModal from "./AccountFormModal";
 import DeleteAccountModal from "./DeleteAccountModal";
 import RolePermissionsCard from "./RolePermissionsCard";
 import { roleOptions } from "../data/mock-data";
-import type { User, UserRole, UserStatus } from "../../../_types";
+import type { Branch, User, UserRole, UserStatus } from "../../../_types";
 
 interface AccountsPageContentProps {
   initialUsers: User[];
+  initialBranches: Branch[];
 }
 
 export default function AccountsPageContent({
   initialUsers,
+  initialBranches,
 }: AccountsPageContentProps) {
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<UserRole | "all">("all");
@@ -144,6 +146,7 @@ export default function AccountsPageContent({
         <div className="fade-up fade-up-4">
           <AccountsTable
             users={filtered}
+            branches={initialBranches}
             onRowClick={openEdit}
             onDelete={openDelete}
           />
@@ -154,6 +157,7 @@ export default function AccountsPageContent({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         user={editingUser}
+        branches={initialBranches}
       />
 
       <DeleteAccountModal
