@@ -20,8 +20,8 @@ export async function listAccounts(): Promise<User[]> {
       id: u.id,
       name: fullName,
       email: u.email ?? "",
-      role: (u.app_metadata?.role as User["role"]) ?? "branch_manager",
-      assignedBranchId: u.app_metadata?.branch_id ?? null,
+      role: (meta.role as User["role"]) ?? "branch_manager",
+      assignedBranchId: meta.branch_id ?? null,
       status: u.banned_until ? "inactive" : "active",
       lastLogin: u.last_sign_in_at ?? u.created_at ?? new Date().toISOString(),
       avatarInitials: initials,
@@ -42,8 +42,8 @@ export async function createAccountInSupabase(data: {
     email: data.email,
     password: data.password,
     email_confirm: true,
-    user_metadata: { full_name: data.name },
-    app_metadata: {
+    user_metadata: {
+      full_name: data.name,
       role: data.role,
       branch_id: data.assignedBranchId || null,
     },
@@ -65,8 +65,8 @@ export async function updateAccountInSupabase(
 
   const { error } = await supabase.auth.admin.updateUserById(userId, {
     email: data.email,
-    user_metadata: { full_name: data.name },
-    app_metadata: {
+    user_metadata: {
+      full_name: data.name,
       role: data.role,
       branch_id: data.assignedBranchId || null,
     },

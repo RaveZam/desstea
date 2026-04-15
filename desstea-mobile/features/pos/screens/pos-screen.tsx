@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import { products, Product, CoffeeCustomization } from "../data/products";
 import { useOrder } from "../hooks/use-order";
 import { usePrinter } from "../../printer/hooks/use-printer";
+import { useAuth } from "../../auth/hooks/use-auth";
 import { CategoryTabs } from "../components/category-tabs";
 import { ProductCard } from "../components/product-card";
 import { OrderPanel } from "../components/order-panel";
@@ -40,6 +41,7 @@ function generateSessionId() {
 }
 
 export default function POSScreen() {
+  const { user } = useAuth();
   const [activeSidebarItem, setActiveSidebarItem] = useState("pos");
   const [sessionId] = useState(generateSessionId);
   const [selectedCategory, setSelectedCategory] = useState("coffee");
@@ -145,7 +147,7 @@ export default function POSScreen() {
         </View>
 
         {activeSidebarItem === "settings" ? (
-          <SettingsScreen sessionId={sessionId} />
+          <SettingsScreen sessionId={sessionId} user={user} />
         ) : activeSidebarItem === "orders" ? (
           <ReportsScreen />
         ) : (
@@ -162,7 +164,7 @@ export default function POSScreen() {
                   />
                   <View style={styles.welcomeContainer}>
                     <Text style={styles.welcomeText}>
-                      Welcome, Micheal Aurelio Pogi
+                      Welcome, {user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
                     </Text>
                     <Text style={styles.subtitleText}>
                       Discover whatever you need easily

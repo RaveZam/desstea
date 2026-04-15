@@ -1,6 +1,8 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -10,6 +12,7 @@ const BRAND = "#6B4F3A";
 
 interface SettingsScreenProps {
   sessionId: string;
+  user: User | null;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -41,7 +44,42 @@ function Section({
   );
 }
 
-export function SettingsScreen({ sessionId }: SettingsScreenProps) {
+function formatRole(role: string | undefined): string {
+  if (!role) return "—";
+  return role
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+  }
+
+  const meta = user?.user_metadata ?? {};
+  const fullName: string = meta.full_name ?? user?.email?.split("@")[0] ?? "—";
+  const email: string = user?.email ?? "—";
+  const role: string = formatRole(meta.role);
+  const branchId: string | undefined = meta.branch_id;
+
+  const [branchName, setBranchName] = useState<string>("—");
+
+  useEffect(() => {
+    if (!branchId) {
+      setBranchName("—");
+      return;
+    }
+    supabase
+      .from("branches")
+      .select("branch_name")
+      .eq("branch_id", branchId)
+      .single()
+      .then(({ data }) => {
+        setBranchName(data?.branch_name ?? branchId);
+      });
+  }, [branchId]);
+
   return (
     <ScrollView
       style={styles.container}
@@ -51,11 +89,13 @@ export function SettingsScreen({ sessionId }: SettingsScreenProps) {
       <Text style={styles.pageTitle}>Settings</Text>
 
       <Section icon="person-sharp" title="Account">
-        <InfoRow label="Name" value="Micheal Aurelio Pogi" />
+        <InfoRow label="Name" value={fullName} />
         <View style={styles.divider} />
-        <InfoRow label="Role" value="Cashier" />
+        <InfoRow label="Email" value={email} />
         <View style={styles.divider} />
-        <InfoRow label="Branch" value="Main Branch" />
+        <InfoRow label="Role" value={role} />
+        <View style={styles.divider} />
+        <InfoRow label="Branch" value={branchName} />
       </Section>
 
       <Section icon="key-sharp" title="Session">
@@ -65,6 +105,11 @@ export function SettingsScreen({ sessionId }: SettingsScreenProps) {
       <Section icon="print-sharp" title="Printer">
         <InfoRow label="Bluetooth Printer" value="Not connected" />
       </Section>
+
+      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+        <Ionicons name="log-out-outline" size={18} color="#C0392B" />
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -130,5 +175,22 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#F0F0F0",
+  },
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: WHITE,
+    borderRadius: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#F5C6C2",
+    marginTop: 4,
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#C0392B",
   },
 });
