@@ -1,19 +1,25 @@
 "use client";
 
 import Badge from "../../../_components/ui/Badge";
-import type { Product, ProductCategory } from "../../../_types";
+import type { Product } from "../../../_types";
+import type { AddonGroupRow } from "../services/productsService";
 
 interface ProductCardProps {
   product: Product;
   onClick: (product: Product) => void;
+  addonGroupTemplates: AddonGroupRow[];
 }
 
-export default function ProductCard({ product, onClick }: ProductCardProps) {
-  const minPrice = product.basePrice;
+export default function ProductCard({ product, onClick, addonGroupTemplates }: ProductCardProps) {
+  const addonGroup = addonGroupTemplates.find((g) => g.id === product.addon_group_id);
+  const minPrice =
+    product.has_sizes && product.sizes.length > 0
+      ? Math.min(...product.sizes.map((s) => s.size_price))
+      : product.base_price;
   const maxPrice =
-    product.sizes.length > 0
-      ? product.basePrice + Math.max(...product.sizes.map((s) => s.priceAdjustment))
-      : product.basePrice;
+    product.has_sizes && product.sizes.length > 0
+      ? Math.max(...product.sizes.map((s) => s.size_price))
+      : product.base_price;
 
   return (
     <div
@@ -23,8 +29,8 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       {/* Name + category */}
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <h3 className="font-semibold text-gray-900 text-sm leading-tight">{product.name}</h3>
-        <Badge variant={product.category as ProductCategory} className="flex-shrink-0">
-          {product.category}
+        <Badge variant="default" className="flex-shrink-0">
+          {product.category_name}
         </Badge>
       </div>
 
@@ -40,17 +46,28 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           </p>
         </div>
         <span className="text-[11px] text-gray-400">
-          {product.availability.length} branch{product.availability.length !== 1 ? "es" : ""}
+          {product.available_branch_ids.length} branch{product.available_branch_ids.length !== 1 ? "es" : ""}
         </span>
       </div>
 
       {/* Size chips */}
-      {product.sizes.length > 0 && (
-        <div className="flex gap-1 mt-2">
-          {product.sizes.map((sv) => (
-            <span key={sv.size} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-              {sv.size}
-              {sv.priceAdjustment > 0 && ` +₱${sv.priceAdjustment}`}
+      {product.has_sizes && product.sizes.length > 0 && (
+        <div className="flex gap-1 mt-2 flex-wrap">
+          {product.sizes.map((sv, i) => (
+            <span key={sv.id ?? i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+              {sv.label} ₱{sv.size_price}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Addon options */}
+      {addonGroup && addonGroup.options.length > 0 && (
+        <div className="flex gap-1 mt-2 flex-wrap">
+          {addonGroup.options.map((o) => (
+            <span key={o.id} className="inline-flex items-center gap-1 text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+              {o.name}
+              {o.price_modifier > 0 && <span className="text-[#E8692A]">+₱{o.price_modifier}</span>}
             </span>
           ))}
         </div>

@@ -37,27 +37,63 @@ export interface Order {
 
 // ── Product ──────────────────────────────────────────────────
 
-export interface SizeVariant {
-  size: "S" | "M" | "L";
-  priceAdjustment: number;
-}
-
-export interface AddOn {
+export interface Category {
+  id: string;
   name: string;
-  price: number;
+  description: string | null;
+  created_at: string;
 }
 
-export type ProductCategory = "Coffee" | "Foods" | "Combos";
+export interface ProductSize {
+  id?: string;
+  label: string;
+  size_price: number;
+  sort_order: number;
+}
+
+export interface AddonOption {
+  id?: string;
+  name: string;
+  price_modifier: number;
+  is_available: boolean;
+  sort_order: number;
+}
+
+export interface AddonGroup {
+  id?: string;
+  name: string;
+  category_id?: string | null;
+  options: AddonOption[];
+}
 
 export interface Product {
   id: string;
   name: string;
+  description: string | null;
+  base_price: number;
+  category_id: string;
+  category_name: string;
+  has_sizes: boolean;
+  is_available: boolean;
+  is_branch_exclusive: boolean;
+  sizes: ProductSize[];
+  addon_group_id: string | null;
+  addon_group_name: string | null;
+  available_branch_ids: string[];
+  created_at: string;
+}
+
+export interface ProductFormData {
+  name: string;
   description: string;
-  basePrice: number;
-  category: ProductCategory;
-  sizes: SizeVariant[];
-  addOns: AddOn[];
-  availability: string[]; // branch IDs where available
+  base_price: number;
+  category_id: string;
+  has_sizes: boolean;
+  is_available: boolean;
+  is_branch_exclusive: boolean;
+  sizes: Omit<ProductSize, "id">[];
+  addon_group_id: string | null;
+  available_branch_ids: string[];
 }
 
 // ── User / Account ───────────────────────────────────────────

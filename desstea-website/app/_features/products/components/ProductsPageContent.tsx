@@ -4,31 +4,38 @@ import { useState, useMemo } from "react";
 import { SearchInput, Tabs } from "../../../_components/ui";
 import ProductCard from "./ProductCard";
 import ProductFormModal from "./ProductFormModal";
-import { mockProducts } from "../data/mock-data";
-import type { Product, ProductCategory } from "../../../_types";
+import CategoryFormModal from "./CategoryFormModal";
+import AddonGroupFormModal from "./AddonGroupFormModal";
+import type { Product, Category, Branch } from "../../../_types";
+import type { AddonGroupRow } from "../services/productsService";
 
-type CategoryFilter = "All" | ProductCategory;
+interface Props {
+  initialProducts: Product[];
+  initialCategories: Category[];
+  initialBranches: Branch[];
+  initialAddonGroupTemplates: AddonGroupRow[];
+}
 
-const categoryTabs = [
-  { label: "All", value: "All" },
-  { label: "Coffee", value: "Coffee" },
-  { label: "Foods", value: "Foods" },
-  { label: "Combos", value: "Combos" },
-];
-
-export default function ProductsPageContent() {
+export default function ProductsPageContent({ initialProducts, initialCategories, initialBranches, initialAddonGroupTemplates }: Props) {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<CategoryFilter>("All");
+  const [selectedTab, setSelectedTab] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [addonGroupModalOpen, setAddonGroupModalOpen] = useState(false);
+
+  const categoryTabs = useMemo(() => [
+    { label: "All", value: "all" },
+    ...initialCategories.map((c) => ({ label: c.name, value: c.id })),
+  ], [initialCategories]);
 
   const filtered = useMemo(() => {
-    return mockProducts.filter((p) => {
+    return initialProducts.filter((p) => {
       const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
-      const matchCat = category === "All" || p.category === category;
+      const matchCat = selectedTab === "all" || p.category_id === selectedTab;
       return matchSearch && matchCat;
     });
-  }, [search, category]);
+  }, [search, selectedTab, initialProducts]);
 
   function openAdd() {
     setEditingProduct(null);
@@ -53,24 +60,38 @@ export default function ProductsPageContent() {
               Manage your menu catalog across all branches.
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm mt-1"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Product
-          </button>
+          <div className="flex items-center gap-2 mt-1">
+            <button
+              onClick={() => setCategoryModalOpen(true)}
+              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Manage Categories
+            </button>
+            <button
+              onClick={() => setAddonGroupModalOpen(true)}
+              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Manage Addon Groups
+            </button>
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Product
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
         <div className="flex items-center justify-between gap-4 fade-up fade-up-2">
           <Tabs
             tabs={categoryTabs}
-            active={category}
-            onChange={(v) => setCategory(v as CategoryFilter)}
+            active={selectedTab}
+            onChange={(v) => setSelectedTab(v)}
           />
           <SearchInput
             value={search}
@@ -91,7 +112,7 @@ export default function ProductsPageContent() {
             <p className="col-span-full text-center text-gray-400 py-10">No products found.</p>
           )}
           {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} onClick={openEdit} />
+            <ProductCard key={product.id} product={product} onClick={openEdit} addonGroupTemplates={initialAddonGroupTemplates} />
           ))}
         </div>
       </div>
@@ -100,6 +121,22 @@ export default function ProductsPageContent() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         product={editingProduct}
+        categories={initialCategories}
+        branches={initialBranches}
+        addonGroupTemplates={initialAddonGroupTemplates}
+      />
+
+      <CategoryFormModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        categories={initialCategories}
+      />
+
+      <AddonGroupFormModal
+        open={addonGroupModalOpen}
+        onClose={() => setAddonGroupModalOpen(false)}
+        categories={initialCategories}
+        addonGroups={initialAddonGroupTemplates}
       />
     </>
   );

@@ -37,11 +37,11 @@ export async function listBranches(): Promise<Branch[]> {
     console.log("[listBranches] auth users fetched:", usersData?.users?.length ?? 0);
   }
 
-  // Key is app_metadata.branch_id (the branch's own ID), not the user's UUID
+  // Key is raw_user_meta_data.branch_id (the branch's own ID), not the user's UUID
   const nameByBranchId: Record<string, string> = {};
   for (const u of usersData?.users ?? []) {
-    const branchId = u.app_metadata?.branch_id as string | undefined;
-    console.log(`[listBranches] user="${resolveDisplayName(u)}" app_metadata.branch_id=${branchId ?? "null"}`);
+    const branchId = u.user_metadata?.branch_id as string | undefined;
+    console.log(`[listBranches] user="${resolveDisplayName(u)}" user_metadata.branch_id=${branchId ?? "null"}`);
     if (branchId) nameByBranchId[branchId] = resolveDisplayName(u);
   }
 
@@ -65,7 +65,7 @@ export async function getBranchByIdFromDB(id: string): Promise<Branch | null> {
 
   console.log(`[getBranchByIdFromDB] looking up branch id=${id}`);
 
-  // Find the user whose app_metadata.branch_id matches this branch's ID
+  // Find the user whose raw_user_meta_data.branch_id matches this branch's ID
   const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   if (usersError) {
     console.error(`[getBranchByIdFromDB] failed to fetch auth users:`, usersError.message);
@@ -73,8 +73,8 @@ export async function getBranchByIdFromDB(id: string): Promise<Branch | null> {
 
   let resolvedName: string | null = null;
   for (const u of usersData?.users ?? []) {
-    const branchId = u.app_metadata?.branch_id as string | undefined;
-    console.log(`[getBranchByIdFromDB] user="${resolveDisplayName(u)}" app_metadata.branch_id=${branchId ?? "null"}`);
+    const branchId = u.user_metadata?.branch_id as string | undefined;
+    console.log(`[getBranchByIdFromDB] user="${resolveDisplayName(u)}" user_metadata.branch_id=${branchId ?? "null"}`);
     if (branchId === id) {
       resolvedName = resolveDisplayName(u);
       console.log(`[getBranchByIdFromDB] matched user="${resolvedName}" for branch ${id}`);
@@ -83,7 +83,7 @@ export async function getBranchByIdFromDB(id: string): Promise<Branch | null> {
   }
 
   if (!resolvedName) {
-    console.warn(`[getBranchByIdFromDB] no user found with app_metadata.branch_id=${id}`);
+    console.warn(`[getBranchByIdFromDB] no user found with user_metadata.branch_id=${id}`);
   }
 
   return { ...mapRow(data, {}), assigned_account_name: resolvedName };
