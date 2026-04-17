@@ -30,9 +30,14 @@ export type LocalAddonOption = {
   sort_order: number;
 };
 
+export type AddonWithQty = {
+  option: LocalAddonOption;
+  qty: number;
+};
+
 export type ProductCustomization = {
   size: LocalSize | null;
-  addonOptions: LocalAddonOption[];
+  addonOptions: AddonWithQty[];
 };
 
 export type OrderItem = {
@@ -44,7 +49,7 @@ export type OrderItem = {
 export function getItemPrice(item: OrderItem): number {
   const base = item.customization?.size?.size_price ?? item.product.base_price;
   const addons = (item.customization?.addonOptions ?? []).reduce(
-    (sum, ao) => sum + ao.price_modifier,
+    (sum, aq) => sum + aq.option.price_modifier * aq.qty,
     0
   );
   return base + addons;
@@ -54,7 +59,8 @@ export function getItemKey(item: OrderItem): string {
   if (!item.customization) return item.product.id;
   const sizeKey = item.customization.size?.id ?? "no-size";
   const addonKey = item.customization.addonOptions
-    .map((a) => a.id)
+    .filter((aq) => aq.qty > 0)
+    .map((aq) => `${aq.option.id}x${aq.qty}`)
     .sort()
     .join(",");
   return `${item.product.id}__${sizeKey}__${addonKey}`;

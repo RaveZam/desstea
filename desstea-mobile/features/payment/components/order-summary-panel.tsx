@@ -2,14 +2,13 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { OrderItem, getItemKey, getItemPrice } from "../../pos/data/products";
+import { OrderItem, getItemKey, getItemPrice } from "../../pos/types";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -40,19 +39,25 @@ export function OrderSummaryPanel({ orderItems, subtotal, tax, total }: Props) {
           const price = getItemPrice(item);
           return (
             <View key={key} style={styles.summaryItem}>
-              <Image
-                source={item.product.image}
-                style={styles.itemImage}
-                resizeMode="cover"
-              />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName} numberOfLines={1}>
                   {item.product.name}
                 </Text>
                 {item.customization && (
-                  <Text style={styles.customizationLabel}>
-                    {item.customization.size} | {item.customization.sugarLevel}% Sugar
-                  </Text>
+                  <>
+                    {item.customization.size && (
+                      <Text style={styles.customizationLabel}>
+                        {item.customization.size.label}
+                      </Text>
+                    )}
+                    {item.customization.addonOptions.length > 0 && (
+                      <Text style={styles.customizationLabel}>
+                        +{item.customization.addonOptions
+                          .map((aq) => aq.qty > 1 ? `${aq.option.name} ×${aq.qty}` : aq.option.name)
+                          .join(", ")}
+                      </Text>
+                    )}
+                  </>
                 )}
                 <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
               </View>
@@ -121,11 +126,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
-  },
-  itemImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
   },
   itemInfo: {
     flex: 1,

@@ -12,27 +12,37 @@ import {
   LocalProduct,
   LocalSize,
   LocalAddonOption,
+  AddonWithQty,
   ProductCustomization,
 } from "../types";
 
 const ORANGE = "#E8692A";
-const ORANGE_LIGHT = "#FFF3ED";
 const DARK_TEXT = "#1C1C1E";
 const GRAY_TEXT = "#8E8E93";
+const GRAY_BG = "#F5F5F7";
 const WHITE = "#FFFFFF";
+const ORANGE_LIGHT = "#FFF3ED";
 
 type Props = {
   visible: boolean;
   product: LocalProduct | null;
-  onConfirm: (product: LocalProduct, customization: ProductCustomization) => void;
+  onConfirm: (
+    product: LocalProduct,
+    customization: ProductCustomization,
+  ) => void;
   onCancel: () => void;
 };
 
-export function CustomizationModal({ visible, product, onConfirm, onCancel }: Props) {
+export function CustomizationModal({
+  visible,
+  product,
+  onConfirm,
+  onCancel,
+}: Props) {
   const [sizes, setSizes] = useState<LocalSize[]>([]);
   const [addonOptions, setAddonOptions] = useState<LocalAddonOption[]>([]);
   const [selectedSize, setSelectedSize] = useState<LocalSize | null>(null);
-  const [selectedAddons, setSelectedAddons] = useState<LocalAddonOption[]>([]);
+  const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!product) return;
@@ -43,7 +53,7 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
          FROM product_sizes
          WHERE product_id = ?
          ORDER BY sort_order`,
-        [product.id]
+        [product.id],
       );
       setSizes(s);
       setSelectedSize(s[0] ?? null);
@@ -58,37 +68,38 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
          FROM addon_options
          WHERE addon_group_id = ? AND is_available = 1
          ORDER BY sort_order`,
-        [product.addon_group_id]
+        [product.addon_group_id],
       );
       setAddonOptions(ao);
     } else {
       setAddonOptions([]);
     }
 
-    setSelectedAddons([]);
+    setAddonQtys({});
   }, [product?.id]);
 
   if (!product) return null;
 
-  const basePrice = selectedSize?.size_price ?? product.base_price;
-  const addonsTotal = selectedAddons.reduce((sum, ao) => sum + ao.price_modifier, 0);
-  const totalPrice = basePrice + addonsTotal;
-
-  const toggleAddon = (option: LocalAddonOption) => {
-    setSelectedAddons((prev) =>
-      prev.find((a) => a.id === option.id)
-        ? prev.filter((a) => a.id !== option.id)
-        : [...prev, option]
-    );
+  const setAddonQty = (id: string, qty: number) => {
+    setAddonQtys((prev) => ({ ...prev, [id]: Math.max(0, qty) }));
   };
 
+  const basePrice = selectedSize?.size_price ?? product.base_price;
+  const addonsTotal = addonOptions.reduce((sum, ao) => {
+    return sum + ao.price_modifier * (addonQtys[ao.id] ?? 0);
+  }, 0);
+  const totalPrice = basePrice + addonsTotal;
+
   const handleConfirm = () => {
-    onConfirm(product, { size: selectedSize, addonOptions: selectedAddons });
-    setSelectedAddons([]);
+    const activeAddons: AddonWithQty[] = addonOptions
+      .filter((ao) => (addonQtys[ao.id] ?? 0) > 0)
+      .map((ao) => ({ option: ao, qty: addonQtys[ao.id] }));
+    onConfirm(product, { size: selectedSize, addonOptions: activeAddons });
+    setAddonQtys({});
   };
 
   const handleCancel = () => {
-    setSelectedAddons([]);
+    setAddonQtys({});
     onCancel();
   };
 
@@ -98,7 +109,9 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
         <View style={styles.card}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.title}>{product.name}</Text>
-            <Text style={styles.basePrice}>Base ₱{product.base_price.toFixed(2)}</Text>
+            <Text style={styles.basePrice}>
+              Base ₱{product.base_price.toFixed(2)}
+            </Text>
 
             {sizes.length > 0 && (
               <>
@@ -107,13 +120,26 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
                   {sizes.map((s) => (
                     <TouchableOpacity
                       key={s.id}
-                      style={[styles.pill, selectedSize?.id === s.id && styles.pillActive]}
+                      style={[
+                        styles.pill,
+                        selectedSize?.id === s.id && styles.pillActive,
+                      ]}
                       onPress={() => setSelectedSize(s)}
                     >
-                      <Text style={[styles.pillText, selectedSize?.id === s.id && styles.pillTextActive]}>
+                      <Text
+                        style={[
+                          styles.pillText,
+                          selectedSize?.id === s.id && styles.pillTextActive,
+                        ]}
+                      >
                         {s.label}
                       </Text>
-                      <Text style={[styles.pillSub, selectedSize?.id === s.id && styles.pillSubActive]}>
+                      <Text
+                        style={[
+                          styles.pillSub,
+                          selectedSize?.id === s.id && styles.pillSubActive,
+                        ]}
+                      >
                         ₱{s.size_price.toFixed(2)}
                       </Text>
                     </TouchableOpacity>
@@ -125,24 +151,52 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
             {addonOptions.length > 0 && (
               <>
                 <Text style={styles.sectionLabel}>Add-ons</Text>
-                <View style={styles.pillRow}>
+                <View style={styles.addonPillRow}>
                   {addonOptions.map((ao) => {
-                    const selected = !!selectedAddons.find((a) => a.id === ao.id);
+                    const qty = addonQtys[ao.id] ?? 0;
+                    const active = qty > 0;
                     return (
-                      <TouchableOpacity
-                        key={ao.id}
-                        style={[styles.pill, selected && styles.pillActive]}
-                        onPress={() => toggleAddon(ao)}
-                      >
-                        <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                          {ao.name}
-                        </Text>
-                        {ao.price_modifier > 0 && (
-                          <Text style={[styles.pillSub, selected && styles.pillSubActive]}>
-                            +₱{ao.price_modifier.toFixed(2)}
+                      <View key={ao.id} style={styles.addonPillWrapper}>
+                        <TouchableOpacity
+                          style={[
+                            styles.addonPill,
+                            active && styles.addonPillActive,
+                          ]}
+                          onPress={() => setAddonQty(ao.id, qty + 1)}
+                          activeOpacity={0.75}
+                        >
+                          <Text
+                            style={[
+                              styles.addonPillName,
+                              active && styles.addonPillNameActive,
+                            ]}
+                          >
+                            {ao.name}
                           </Text>
+                          {ao.price_modifier > 0 && (
+                            <Text
+                              style={[
+                                styles.addonPillPrice,
+                                active && styles.addonPillPriceActive,
+                              ]}
+                            >
+                              +₱{ao.price_modifier.toFixed(2)}
+                            </Text>
+                          )}
+                          {active && (
+                            <Text style={styles.addonPillQty}>×{qty}</Text>
+                          )}
+                        </TouchableOpacity>
+                        {active && (
+                          <TouchableOpacity
+                            style={styles.addonMinusBadge}
+                            onPress={() => setAddonQty(ao.id, qty - 1)}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text style={styles.addonMinusText}>−</Text>
+                          </TouchableOpacity>
                         )}
-                      </TouchableOpacity>
+                      </View>
                     );
                   })}
                 </View>
@@ -210,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#F5F5F7",
+    backgroundColor: GRAY_BG,
     alignItems: "center",
     minWidth: 52,
   },
@@ -232,6 +286,70 @@ const styles = StyleSheet.create({
   },
   pillSubActive: {
     color: ORANGE_LIGHT,
+  },
+  addonPillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 20,
+    paddingTop: 8,
+    paddingLeft: 6,
+  },
+  addonPillWrapper: {
+    position: "relative",
+  },
+  addonPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 22,
+    backgroundColor: GRAY_BG,
+  },
+  addonPillActive: {
+    backgroundColor: ORANGE,
+  },
+  addonPillName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: DARK_TEXT,
+  },
+  addonPillNameActive: {
+    color: WHITE,
+  },
+  addonPillPrice: {
+    fontSize: 11,
+    color: GRAY_TEXT,
+  },
+  addonPillPriceActive: {
+    color: "rgba(255,255,255,0.7)",
+  },
+  addonPillQty: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: WHITE,
+    marginLeft: 2,
+  },
+  addonMinusBadge: {
+    position: "absolute",
+    top: -10,
+    left: -6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: DARK_TEXT,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  addonMinusText: {
+    color: WHITE,
+    fontSize: 16,
+    fontWeight: "700",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    textAlign: "center",
   },
   adjustedPrice: {
     fontSize: 28,

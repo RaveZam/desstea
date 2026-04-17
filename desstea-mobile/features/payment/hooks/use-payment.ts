@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { getOrder, completeOrder, setCustomerName } from "../../../store";
-import { getItemPrice } from "../../pos/data/products";
+import { getItemPrice } from "../../pos/types";
 
 export type Phase = "name-input" | "select" | "cash-numpad" | "cash-confirmed" | "gcash-wait";
 

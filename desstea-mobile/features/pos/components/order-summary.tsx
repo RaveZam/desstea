@@ -11,7 +11,6 @@ type Props = {
   tax: number;
   total: number;
   canPay: boolean;
-  onPrintTest: () => void;
   onContinueToPayment: () => void;
 };
 
@@ -20,7 +19,6 @@ export function OrderSummary({
   tax,
   total,
   canPay,
-  onPrintTest,
   onContinueToPayment,
 }: Props) {
   return (
@@ -38,13 +36,6 @@ export function OrderSummary({
         <Text style={styles.totalLabel}>Total</Text>
         <Text style={styles.totalValue}>₱{total.toFixed(2)}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.printBtn}
-        activeOpacity={0.8}
-        onPress={onPrintTest}
-      >
-        <Text style={styles.printBtnText}>🖨️ Print Hello World</Text>
-      </TouchableOpacity>
       <TouchableOpacity
         style={[styles.paymentBtn, !canPay && styles.paymentBtnDisabled]}
         activeOpacity={0.8}
@@ -108,16 +99,5 @@ const styles = StyleSheet.create({
   },
   paymentBtnDisabled: {
     backgroundColor: "#D6D6D6",
-  },
-  printBtn: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  printBtnText: {
-    color: WHITE,
-    fontSize: 15,
-    fontWeight: "600",
   },
 });

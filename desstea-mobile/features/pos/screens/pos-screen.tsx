@@ -18,7 +18,6 @@ import { LocalProduct, ProductCustomization } from "../types";
 import { useCatalog } from "../hooks/use-catalog";
 import { useOrder } from "../hooks/use-order";
 import { useIsSyncing } from "@/lib/sync-context";
-import { usePrinter } from "../../printer/hooks/use-printer";
 import { useAuth } from "../../auth/hooks/use-auth";
 import { useBranchName } from "../../auth/hooks/use-branch-name";
 import { CategoryTabs } from "../components/category-tabs";
@@ -64,7 +63,6 @@ export default function POSScreen() {
     total,
     commitOrder,
   } = useOrder();
-  const { printTestMessage } = usePrinter();
 
   // Default to first category once loaded
   const activeCategory = selectedCategory ?? categories[0]?.id ?? null;
@@ -245,7 +243,6 @@ export default function POSScreen() {
                 tax={tax}
                 total={total}
                 canPay={orderItems.length > 0}
-                onPrintTest={printTestMessage}
                 onContinueToPayment={() => {
                   commitOrder();
                   router.push("/payment");

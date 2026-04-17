@@ -40,7 +40,9 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
                   )}
                   {item.customization.addonOptions.length > 0 && (
                     <Text style={styles.customizationLabel}>
-                      +{item.customization.addonOptions.map((a) => a.name).join(", ")}
+                      +{item.customization.addonOptions
+                        .map((aq) => aq.qty > 1 ? `${aq.option.name} ×${aq.qty}` : aq.option.name)
+                        .join(", ")}
                     </Text>
                   )}
                 </>

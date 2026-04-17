@@ -1,5 +1,5 @@
 // In-memory store to pass order data between POS screen and payment screen
-import { OrderItem } from "./features/pos/data/products";
+import { OrderItem } from "./features/pos/types";
 import { CompletedOrder } from "./features/reports/types";
 
 export type { OrderItem };
