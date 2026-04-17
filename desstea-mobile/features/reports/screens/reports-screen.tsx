@@ -1,8 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useReports } from "../hooks/use-reports";
-import { usePrinter } from "../../printer/hooks/use-printer";
-import { CompletedOrder } from "../types";
 import { DateFilterBar } from "../components/date-filter-bar";
 import { OrderHistoryList } from "../components/order-history-list";
 
@@ -19,27 +17,11 @@ export function ReportsScreen() {
     goToPreviousDay,
     goToNextDay,
     orders,
+    loading,
     totalRevenue,
     orderCount,
     averageOrderValue,
   } = useReports();
-
-  const { printReceipt } = usePrinter();
-
-  const handleReprint = (order: CompletedOrder) => {
-    printReceipt({
-      customerName: order.customerName,
-      paymentMethod: order.paymentMethod,
-      items: order.items,
-      subtotal: order.subtotal,
-      tax: order.tax,
-      total: order.total,
-      cashTendered: order.cashAmount,
-      change: order.change,
-      completedAt: order.completedAt,
-      orderRef: String(order.orderNumber),
-    });
-  };
 
   return (
     <View style={styles.container}>
@@ -73,7 +55,13 @@ export function ReportsScreen() {
       {/* Order History */}
       <View style={styles.listSection}>
         <Text style={styles.sectionTitle}>Order History</Text>
-        <OrderHistoryList orders={orders} onReprint={handleReprint} />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={BRAND} />
+          </View>
+        ) : (
+          <OrderHistoryList orders={orders} />
+        )}
       </View>
     </View>
   );
@@ -133,5 +121,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: DARK_TEXT,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

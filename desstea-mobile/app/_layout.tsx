@@ -17,6 +17,7 @@ import { initDatabase } from "@/lib/database";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { syncCatalog } from "@/lib/sync";
 import { SyncProvider, useBumpSync, useSetSyncing } from "@/lib/sync-context";
+import { useOutboxSync } from "@/features/outbox/hooks/use-outbox-sync";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +31,7 @@ function AuthGate() {
   const router = useRouter();
   const bumpSync = useBumpSync();
   const setSyncing = useSetSyncing();
+  useOutboxSync();
 
   useEffect(() => {
     if (isLoading) return;

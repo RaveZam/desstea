@@ -11,8 +11,6 @@ export type ReceiptDetails = {
   customerName: string;
   paymentMethod: "Cash" | "GCash";
   items: OrderItem[];
-  subtotal: number;
-  tax: number;
   total: number;
   cashTendered?: number;
   change?: number;
@@ -210,8 +208,6 @@ export function usePrinter() {
       }
 
       await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(`Subtotal:  ${order.subtotal.toFixed(2)}`, {});
-      await BLEPrinter.printText(`VAT (12%): ${order.tax.toFixed(2)}`, {});
       await BLEPrinter.printText(`TOTAL:     ${order.total.toFixed(2)}`, {});
       await BLEPrinter.printText("--------------------------------\n", {});
       await BLEPrinter.printText(`Payment: ${order.paymentMethod}`, {});

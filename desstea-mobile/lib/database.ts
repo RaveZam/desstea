@@ -60,5 +60,50 @@ export async function initDatabase() {
       key   TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id              TEXT PRIMARY KEY,
+      branch_id       TEXT NOT NULL,
+      customer_name   TEXT,
+      total           REAL NOT NULL,
+      payment_method  TEXT NOT NULL,
+      ordered_at      TEXT NOT NULL,
+      created_at      TEXT NOT NULL,
+      cash_tendered   REAL,
+      cash_change     REAL
+    );
+
+    CREATE TABLE IF NOT EXISTS order_items (
+      id                     TEXT PRIMARY KEY,
+      order_id               TEXT NOT NULL REFERENCES orders(id),
+      product_id             TEXT,
+      product_size_id        TEXT,
+      product_name_snapshot  TEXT NOT NULL,
+      size_label_snapshot    TEXT,
+      quantity               INTEGER NOT NULL CHECK(quantity > 0),
+      unit_price_snapshot    REAL NOT NULL,
+      created_at             TEXT NOT NULL,
+      total_price            REAL NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS order_item_addons (
+      id                      TEXT PRIMARY KEY,
+      order_item_id           TEXT NOT NULL REFERENCES order_items(id),
+      addon_option_id         TEXT,
+      addon_name_snapshot     TEXT NOT NULL,
+      price_modifier_snapshot REAL NOT NULL DEFAULT 0.00,
+      quantity                INTEGER NOT NULL CHECK(quantity > 0),
+      created_at              TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS outbox (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      table_name TEXT NOT NULL,
+      record_id  TEXT NOT NULL,
+      payload    TEXT NOT NULL,
+      priority   INTEGER NOT NULL DEFAULT 0,
+      status     TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL
+    );
   `);
 }

@@ -21,8 +21,8 @@ export function useOrder() {
     }, []),
   );
 
-  const addToOrder = (product: LocalProduct, customization?: ProductCustomization) => {
-    const newItem: OrderItem = { product, quantity: 1, customization };
+  const addToOrder = (product: LocalProduct, customization?: ProductCustomization, categoryLabel?: string) => {
+    const newItem: OrderItem = { product, quantity: 1, customization, categoryLabel };
     const key = getItemKey(newItem);
     setOrderItems((prev) => {
       const existing = prev.find((item) => getItemKey(item) === key);
@@ -49,12 +49,10 @@ export function useOrder() {
     );
   };
 
-  const subtotal = orderItems.reduce(
+  const total = orderItems.reduce(
     (sum, item) => sum + getItemPrice(item) * item.quantity,
     0,
   );
-  const tax = subtotal * 0.12;
-  const total = subtotal + tax;
 
   const commitOrder = () => {
     setOrder(orderItems);
@@ -64,8 +62,6 @@ export function useOrder() {
     orderItems,
     addToOrder,
     updateQuantity,
-    subtotal,
-    tax,
     total,
     commitOrder,
   };

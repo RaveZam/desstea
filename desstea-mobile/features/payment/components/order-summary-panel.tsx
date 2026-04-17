@@ -18,12 +18,10 @@ const ORANGE = "#E8692A";
 
 type Props = {
   orderItems: OrderItem[];
-  subtotal: number;
-  tax: number;
   total: number;
 };
 
-export function OrderSummaryPanel({ orderItems, subtotal, tax, total }: Props) {
+export function OrderSummaryPanel({ orderItems, total }: Props) {
   return (
     <View style={styles.leftPanel}>
       <View style={styles.leftHeader}>
@@ -71,14 +69,6 @@ export function OrderSummaryPanel({ orderItems, subtotal, tax, total }: Props) {
 
       <View style={styles.summaryFooter}>
         <View style={styles.footerDivider} />
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal</Text>
-          <Text style={styles.summaryValue}>₱{subtotal.toFixed(2)}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>VAT (12%)</Text>
-          <Text style={styles.summaryValue}>₱{tax.toFixed(2)}</Text>
-        </View>
         <View style={styles.grandTotalRow}>
           <Text style={styles.grandTotalLabel}>Total</Text>
           <Text style={styles.grandTotalValue}>₱{total.toFixed(2)}</Text>

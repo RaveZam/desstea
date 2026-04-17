@@ -3,18 +3,20 @@ import { router } from "expo-router";
 import { getOrder, completeOrder, setCustomerName } from "../../../store";
 import { getItemPrice } from "../../pos/types";
 
+import { saveOrderLocally } from "../../outbox/services/save-order";
+import { processOutbox } from "../../outbox/services/outbox-sync";
+import { supabase } from "@/lib/supabase";
+
 export type Phase = "name-input" | "select" | "cash-numpad" | "cash-confirmed" | "gcash-wait";
 
 const NUMPAD_KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "⌫"];
 
 export function usePayment() {
   const orderItems = getOrder();
-  const subtotal = orderItems.reduce(
+  const total = orderItems.reduce(
     (sum, item) => sum + getItemPrice(item) * item.quantity,
     0,
   );
-  const tax = subtotal * 0.12;
-  const total = subtotal + tax;
 
   const [phase, setPhase] = useState<Phase>("name-input");
   const [cashInput, setCashInput] = useState("");
@@ -56,16 +58,29 @@ export function usePayment() {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const paymentMethod = phase === "cash-confirmed" ? "Cash" : "GCash";
-    completeOrder({
+    const isCash = phase === "cash-confirmed";
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const branchId =
+      sessionData?.session?.user?.user_metadata?.branch_id ?? "";
+
+    await saveOrderLocally({
+      orderItems,
+      customerName,
       paymentMethod,
-      subtotal,
-      tax,
       total,
-      cashAmount: phase === "cash-confirmed" ? cashAmount : undefined,
-      change: phase === "cash-confirmed" ? change : undefined,
+      cashTendered: isCash ? cashAmount : undefined,
+      branchId,
     });
+
+    completeOrder();
+
+    processOutbox().catch((err) =>
+      console.error("[outbox] post-payment sync failed", err)
+    );
+
     router.back();
   };
 
@@ -81,8 +96,6 @@ export function usePayment() {
 
   return {
     orderItems,
-    subtotal,
-    tax,
     total,
     phase,
     cashInput,

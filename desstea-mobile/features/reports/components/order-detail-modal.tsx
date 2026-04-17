@@ -4,13 +4,12 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CompletedOrder } from "../types";
-import { getItemPrice } from "../../pos/data/products";
 
 const BRAND = "#6B4F3A";
 const BRAND_LIGHT = "#F2EBE5";
@@ -18,10 +17,12 @@ const DARK = "#1C1C1E";
 const MID = "#48484A";
 const GRAY = "#8E8E93";
 const SOFT = "#F5F5F7";
-const WHITE = "#FFFFFF";
 const GCASH_COLOR = "#0070E0";
 const CASH_COLOR = "#2D7D46";
 const DIVIDER = "#EFEFEF";
+const SYNCED_COLOR = "#2D7D46";
+const PENDING_COLOR = "#D4700A";
+const WHITE = "#FFFFFF";
 
 function formatDateTime(date: Date) {
   const datePart = date.toLocaleDateString("en-PH", {
@@ -43,21 +44,17 @@ type Props = {
   order: CompletedOrder | null;
   visible: boolean;
   onClose: () => void;
-  onReprint: (order: CompletedOrder) => void;
 };
 
-export function OrderDetailModal({
-  order,
-  visible,
-  onClose,
-  onReprint,
-}: Props) {
+export function OrderDetailModal({ order, visible, onClose }: Props) {
   if (!order) return null;
 
   const { datePart, timePart } = formatDateTime(order.completedAt);
   const isGcash = order.paymentMethod === "GCash";
   const paymentColor = isGcash ? GCASH_COLOR : CASH_COLOR;
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
+  const isSynced = order.syncStatus === "synced";
+  const syncColor = isSynced ? SYNCED_COLOR : PENDING_COLOR;
 
   return (
     <Modal
@@ -77,7 +74,7 @@ export function OrderDetailModal({
             <View style={styles.headerLeft}>
               <View style={styles.orderBadge}>
                 <Text style={styles.orderBadgeText}>
-                  #{String(order.orderNumber).padStart(3, "0")}
+                  #{order.id.slice(0, 6).toUpperCase()}
                 </Text>
               </View>
               <View style={styles.headerMeta}>
@@ -88,9 +85,29 @@ export function OrderDetailModal({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Ionicons name="close" size={18} color={MID} />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              {/* Sync status badge */}
+              <View
+                style={[
+                  styles.syncBadge,
+                  { backgroundColor: syncColor + "18" },
+                ]}
+              >
+                <Ionicons
+                  name={
+                    isSynced ? "cloud-done-outline" : "cloud-upload-outline"
+                  }
+                  size={12}
+                  color={syncColor}
+                />
+                <Text style={[styles.syncBadgeText, { color: syncColor }]}>
+                  {isSynced ? "Synced" : "Pending"}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                <Ionicons name="close" size={18} color={MID} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* ── DATE ROW ── */}
@@ -110,56 +127,42 @@ export function OrderDetailModal({
             <Pressable>
               <Text style={styles.sectionLabel}>ORDER ITEMS</Text>
 
-              {order.items.map((item, idx) => {
-                const unitPrice = getItemPrice(item);
-                const lineTotal = unitPrice * item.quantity;
-                const hasCustom = !!item.customization;
-                return (
-                  <View
-                    key={`${item.product.id}-${idx}`}
-                    style={styles.itemRow}
-                  >
-                    <View style={styles.itemQtyBubble}>
-                      <Text style={styles.itemQtyText}>{item.quantity}</Text>
-                    </View>
-                    <Text>Test</Text>
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemName}>{item.product.name}</Text>
-                      {hasCustom && (
-                        <Text style={styles.itemCustom}>
-                          {item.customization!.size} ·{" "}
-                          {item.customization!.sugarLevel}% sugar
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.itemPriceCol}>
-                      <Text style={styles.itemLineTotal}>
-                        ₱{lineTotal.toFixed(2)}
-                      </Text>
-                      {item.quantity > 1 && (
-                        <Text style={styles.itemUnitPrice}>
-                          ₱{unitPrice.toFixed(2)} ea.
-                        </Text>
-                      )}
-                    </View>
+              {order.items.map((item) => (
+                <View key={item.id} style={styles.itemRow}>
+                  <View style={styles.itemQtyBubble}>
+                    <Text style={styles.itemQtyText}>{item.quantity}</Text>
                   </View>
-                );
-              })}
+                  <View style={styles.itemDetails}>
+                    <Text style={styles.itemName}>
+                      {item.product_name_snapshot}
+                    </Text>
+                    {item.size_label_snapshot && (
+                      <Text style={styles.itemCustom}>
+                        {item.size_label_snapshot}
+                      </Text>
+                    )}
+                    {item.addons.map((a) => (
+                      <Text key={a.id} style={styles.itemCustom}>
+                        + {a.addon_name_snapshot}
+                        {a.quantity > 1 ? ` ×${a.quantity}` : ""}
+                      </Text>
+                    ))}
+                  </View>
+                  <View style={styles.itemPriceCol}>
+                    <Text style={styles.itemLineTotal}>
+                      ₱{item.total_price.toFixed(2)}
+                    </Text>
+                    {item.quantity > 1 && (
+                      <Text style={styles.itemUnitPrice}>
+                        ₱{item.unit_price_snapshot.toFixed(2)} ea.
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
 
               {/* ── TOTALS ── */}
-
               <View style={styles.totalsCard}>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Subtotal</Text>
-                  <Text style={styles.totalValue}>
-                    ₱{order.subtotal.toFixed(2)}
-                  </Text>
-                </View>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>VAT (12%)</Text>
-                  <Text style={styles.totalValue}>₱{order.tax.toFixed(2)}</Text>
-                </View>
-                <View style={styles.totalDivider} />
                 <View style={styles.totalRow}>
                   <Text style={styles.grandTotalLabel}>Total</Text>
                   <Text style={styles.grandTotalValue}>
@@ -169,7 +172,6 @@ export function OrderDetailModal({
               </View>
 
               {/* ── PAYMENT ── */}
-
               <Text style={[styles.sectionLabel, { marginTop: 20 }]}>
                 PAYMENT
               </Text>
@@ -195,44 +197,33 @@ export function OrderDetailModal({
                   <Text style={styles.paymentStatus}>Paid</Text>
                 </View>
 
-                {order.paymentMethod === "Cash" && order.cashAmount != null && (
-                  <>
-                    <View style={styles.paymentDetailRow}>
-                      <Text style={styles.paymentDetailLabel}>
-                        Cash Tendered
-                      </Text>
-                      <Text style={styles.paymentDetailValue}>
-                        ₱{order.cashAmount.toFixed(2)}
-                      </Text>
-                    </View>
-                    <View style={styles.paymentDetailRow}>
-                      <Text style={styles.paymentDetailLabel}>Change</Text>
-                      <Text
-                        style={[styles.paymentDetailValue, styles.changeValue]}
-                      >
-                        ₱{(order.change ?? 0).toFixed(2)}
-                      </Text>
-                    </View>
-                  </>
-                )}
+                {order.paymentMethod === "Cash" &&
+                  order.cashTendered != null && (
+                    <>
+                      <View style={styles.paymentDetailRow}>
+                        <Text style={styles.paymentDetailLabel}>
+                          Cash Tendered
+                        </Text>
+                        <Text style={styles.paymentDetailValue}>
+                          ₱{order.cashTendered.toFixed(2)}
+                        </Text>
+                      </View>
+                      <View style={styles.paymentDetailRow}>
+                        <Text style={styles.paymentDetailLabel}>Change</Text>
+                        <Text
+                          style={[
+                            styles.paymentDetailValue,
+                            styles.changeValue,
+                          ]}
+                        >
+                          ₱{(order.cashChange ?? 0).toFixed(2)}
+                        </Text>
+                      </View>
+                    </>
+                  )}
               </View>
             </Pressable>
           </ScrollView>
-
-          {/* ── REPRINT BUTTON ── */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.reprintBtn}
-              onPress={() => {
-                onReprint(order);
-                onClose();
-              }}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="print-outline" size={18} color={WHITE} />
-              <Text style={styles.reprintText}>Reprint Receipt</Text>
-            </TouchableOpacity>
-          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -281,6 +272,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   orderBadge: {
     width: 52,
@@ -291,13 +288,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   orderBadgeText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "800",
     color: BRAND,
     letterSpacing: 0.5,
   },
   headerMeta: {
     gap: 3,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 18,
@@ -308,6 +306,18 @@ const styles = StyleSheet.create({
   headerSub: {
     fontSize: 13,
     color: GRAY,
+  },
+  syncBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  syncBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   closeBtn: {
     width: 32,
@@ -476,25 +486,5 @@ const styles = StyleSheet.create({
   },
   changeValue: {
     color: CASH_COLOR,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: DIVIDER,
-  },
-  reprintBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: BRAND,
-    borderRadius: 14,
-    paddingVertical: 15,
-  },
-  reprintText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: WHITE,
   },
 });

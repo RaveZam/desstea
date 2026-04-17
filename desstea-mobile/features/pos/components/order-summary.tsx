@@ -7,31 +7,15 @@ const DARK_TEXT = "#1C1C1E";
 const WHITE = "#FFFFFF";
 
 type Props = {
-  subtotal: number;
-  tax: number;
   total: number;
   canPay: boolean;
   onContinueToPayment: () => void;
 };
 
-export function OrderSummary({
-  subtotal,
-  tax,
-  total,
-  canPay,
-  onContinueToPayment,
-}: Props) {
+export function OrderSummary({ total, canPay, onContinueToPayment }: Props) {
   return (
     <View style={styles.orderSummary}>
       <View style={styles.summaryDivider} />
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Subtotal</Text>
-        <Text style={styles.summaryValue}>₱{subtotal.toFixed(2)}</Text>
-      </View>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>VAT (12%)</Text>
-        <Text style={styles.summaryValue}>₱{tax.toFixed(2)}</Text>
-      </View>
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Total</Text>
         <Text style={styles.totalValue}>₱{total.toFixed(2)}</Text>

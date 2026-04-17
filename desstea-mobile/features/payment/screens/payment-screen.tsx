@@ -19,8 +19,6 @@ const WHITE = "#FFFFFF";
 export default function PaymentScreen() {
   const {
     orderItems,
-    subtotal,
-    tax,
     total,
     phase,
     cashInput,
@@ -47,8 +45,6 @@ export default function PaymentScreen() {
       customerName: getCustomerName(),
       paymentMethod,
       items: orderItems,
-      subtotal,
-      tax,
       total,
       cashTendered: paymentMethod === "Cash" ? cashAmount : undefined,
       change: paymentMethod === "Cash" ? change : undefined,
@@ -114,8 +110,6 @@ export default function PaymentScreen() {
       <View style={styles.mainRow}>
         <OrderSummaryPanel
           orderItems={orderItems}
-          subtotal={subtotal}
-          tax={tax}
           total={total}
         />
         <View style={styles.rightPanel}>{renderPhase()}</View>

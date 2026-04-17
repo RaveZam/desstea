@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CompletedOrder } from "../types";
-import { getItemPrice } from "../../pos/data/products";
 import { OrderDetailModal } from "./order-detail-modal";
 
 const BRAND = "#6B4F3A";
@@ -17,13 +16,13 @@ const DARK = "#1C1C1E";
 const MID = "#48484A";
 const GRAY = "#8E8E93";
 const WHITE = "#FFFFFF";
-const DIVIDER = "#EFEFEF";
 const GCASH_COLOR = "#0070E0";
 const CASH_COLOR = "#2D7D46";
+const SYNCED_COLOR = "#2D7D46";
+const PENDING_COLOR = "#D4700A";
 
 type Props = {
   orders: CompletedOrder[];
-  onReprint: (order: CompletedOrder) => void;
 };
 
 function formatTime(date: Date): string {
@@ -36,13 +35,39 @@ function formatTime(date: Date): string {
 
 function buildItemSummary(order: CompletedOrder): string {
   const names = order.items.map((i) => {
-    const base = i.product.name;
+    const base = i.product_name_snapshot;
     const qty = i.quantity > 1 ? ` ×${i.quantity}` : "";
-    const size = i.customization ? ` (${i.customization.size[0]})` : "";
+    const size = i.size_label_snapshot ? ` (${i.size_label_snapshot[0]})` : "";
     return `${base}${size}${qty}`;
   });
   if (names.length <= 2) return names.join(", ");
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
+}
+
+function SyncBadge({ status }: { status: "synced" | "pending" }) {
+  const isSynced = status === "synced";
+  return (
+    <View
+      style={[
+        styles.syncBadge,
+        { backgroundColor: isSynced ? SYNCED_COLOR + "18" : PENDING_COLOR + "18" },
+      ]}
+    >
+      <Ionicons
+        name={isSynced ? "cloud-done-outline" : "cloud-upload-outline"}
+        size={11}
+        color={isSynced ? SYNCED_COLOR : PENDING_COLOR}
+      />
+      <Text
+        style={[
+          styles.syncBadgeText,
+          { color: isSynced ? SYNCED_COLOR : PENDING_COLOR },
+        ]}
+      >
+        {isSynced ? "Synced" : "Pending"}
+      </Text>
+    </View>
+  );
 }
 
 function OrderRow({
@@ -71,7 +96,7 @@ function OrderRow({
         <View style={styles.topRow}>
           <View style={styles.orderNumBadge}>
             <Text style={styles.orderNumText}>
-              #{String(order.orderNumber).padStart(3, "0")}
+              #{order.id.slice(0, 6).toUpperCase()}
             </Text>
           </View>
 
@@ -90,6 +115,9 @@ function OrderRow({
           </Text>
 
           <View style={styles.metaRight}>
+            {/* Sync badge */}
+            <SyncBadge status={order.syncStatus} />
+
             {/* Payment chip */}
             <View style={[styles.payChip, { backgroundColor: paymentColor + "18" }]}>
               <Ionicons
@@ -119,7 +147,7 @@ function OrderRow({
   );
 }
 
-export function OrderHistoryList({ orders, onReprint }: Props) {
+export function OrderHistoryList({ orders }: Props) {
   const [selectedOrder, setSelectedOrder] = useState<CompletedOrder | null>(null);
 
   if (orders.length === 0) {
@@ -156,7 +184,6 @@ export function OrderHistoryList({ orders, onReprint }: Props) {
         order={selectedOrder}
         visible={selectedOrder !== null}
         onClose={() => setSelectedOrder(null)}
-        onReprint={onReprint}
       />
     </>
   );
@@ -238,6 +265,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     flexShrink: 0,
+  },
+  syncBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  syncBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
   },
   payChip: {
     flexDirection: "row",

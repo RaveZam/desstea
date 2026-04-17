@@ -58,8 +58,6 @@ export default function POSScreen() {
     orderItems,
     addToOrder,
     updateQuantity,
-    subtotal,
-    tax,
     total,
     commitOrder,
   } = useOrder();
@@ -75,11 +73,16 @@ export default function POSScreen() {
     return matchesCategory && matchesSearch;
   });
 
+  const getCategoryLabel = (product: LocalProduct) => {
+    const cat = categories.find((c) => c.id === product.category_id);
+    return cat ? cat.name[0].toUpperCase() : undefined;
+  };
+
   const handleProductPress = (product: LocalProduct) => {
     if (product.has_sizes || product.addon_group_id) {
       setCustomizingProduct(product);
     } else {
-      addToOrder(product);
+      addToOrder(product, undefined, getCategoryLabel(product));
     }
   };
 
@@ -87,7 +90,7 @@ export default function POSScreen() {
     product: LocalProduct,
     customization: ProductCustomization,
   ) => {
-    addToOrder(product, customization);
+    addToOrder(product, customization, getCategoryLabel(product));
     setCustomizingProduct(null);
   };
 
@@ -239,8 +242,6 @@ export default function POSScreen() {
               />
 
               <OrderSummary
-                subtotal={subtotal}
-                tax={tax}
                 total={total}
                 canPay={orderItems.length > 0}
                 onContinueToPayment={() => {

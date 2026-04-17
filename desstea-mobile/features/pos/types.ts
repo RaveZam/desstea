@@ -44,6 +44,7 @@ export type OrderItem = {
   product: LocalProduct;
   quantity: number;
   customization?: ProductCustomization;
+  categoryLabel?: string;
 };
 
 export function getItemPrice(item: OrderItem): number {
