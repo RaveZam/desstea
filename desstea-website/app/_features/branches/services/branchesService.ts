@@ -110,7 +110,6 @@ export async function updateBranchInSupabase(
     .update({
       branch_name: data.name,
       branch_address: data.address,
-      updated_at: new Date().toISOString(),
     })
     .eq("branch_id", id);
   return error ? error.message : null;

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { useBranchName } from "@/features/auth/hooks/use-branch-name";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -61,24 +62,7 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
   const fullName: string = meta.full_name ?? user?.email?.split("@")[0] ?? "—";
   const email: string = user?.email ?? "—";
   const role: string = formatRole(meta.role);
-  const branchId: string | undefined = meta.branch_id;
-
-  const [branchName, setBranchName] = useState<string>("—");
-
-  useEffect(() => {
-    if (!branchId) {
-      setBranchName("—");
-      return;
-    }
-    supabase
-      .from("branches")
-      .select("branch_name")
-      .eq("branch_id", branchId)
-      .single()
-      .then(({ data }) => {
-        setBranchName(data?.branch_name ?? branchId);
-      });
-  }, [branchId]);
+  const { branchName, branchId } = useBranchName();
 
   return (
     <ScrollView
@@ -95,7 +79,9 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
         <View style={styles.divider} />
         <InfoRow label="Role" value={role} />
         <View style={styles.divider} />
-        <InfoRow label="Branch" value={branchName} />
+        <InfoRow label="Branch ID" value={branchId} />
+        <View style={styles.divider} />
+        <InfoRow label="Branch Name" value={branchName} />
       </Section>
 
       <Section icon="key-sharp" title="Session">

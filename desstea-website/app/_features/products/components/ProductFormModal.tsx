@@ -26,7 +26,6 @@ function emptyForm(categories: Category[]): ProductFormData {
     category_id: categories[0]?.id ?? "",
     has_sizes: false,
     is_available: true,
-    is_branch_exclusive: false,
     sizes: [],
     addon_group_id: null,
     available_branch_ids: [],
@@ -52,7 +51,6 @@ export default function ProductFormModal({ open, onClose, product, categories, b
           category_id: product.category_id,
           has_sizes: product.has_sizes,
           is_available: product.is_available,
-          is_branch_exclusive: product.is_branch_exclusive,
           sizes: product.sizes.map((s) => ({ label: s.label, size_price: s.size_price, sort_order: s.sort_order })),
           addon_group_id: product.addon_group_id,
           available_branch_ids: product.available_branch_ids,
@@ -190,11 +188,6 @@ export default function ProductFormModal({ open, onClose, product, categories, b
             checked={form.is_available}
             onChange={(v) => setForm((f) => ({ ...f, is_available: v }))}
             label="Available"
-          />
-          <Toggle
-            checked={form.is_branch_exclusive}
-            onChange={(v) => setForm((f) => ({ ...f, is_branch_exclusive: v }))}
-            label="Branch Exclusive"
           />
         </div>
 

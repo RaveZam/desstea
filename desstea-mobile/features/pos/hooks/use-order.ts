@@ -2,12 +2,12 @@ import { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { setOrder, getShouldReset, clearResetFlag } from "../../../store";
 import {
-  Product,
+  LocalProduct,
+  ProductCustomization,
   OrderItem,
-  CoffeeCustomization,
   getItemKey,
   getItemPrice,
-} from "../data/products";
+} from "../types";
 
 export function useOrder() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -21,7 +21,7 @@ export function useOrder() {
     }, []),
   );
 
-  const addToOrder = (product: Product, customization?: CoffeeCustomization) => {
+  const addToOrder = (product: LocalProduct, customization?: ProductCustomization) => {
     const newItem: OrderItem = { product, quantity: 1, customization };
     const key = getItemKey(newItem);
     setOrderItems((prev) => {

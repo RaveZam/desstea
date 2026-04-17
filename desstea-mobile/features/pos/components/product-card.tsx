@@ -1,6 +1,6 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { Product } from "../data/products";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { LocalProduct } from "../types";
 
 const ORANGE = "#E8692A";
 const DARK_TEXT = "#1C1C1E";
@@ -8,32 +8,30 @@ const GRAY_TEXT = "#8E8E93";
 const WHITE = "#FFFFFF";
 
 type Props = {
-  product: Product;
-  onPress: (product: Product) => void;
+  product: LocalProduct;
+  size: number;
+  onPress: (product: LocalProduct) => void;
 };
 
-export function ProductCard({ product, onPress }: Props) {
+export function ProductCard({ product, size, onPress }: Props) {
   return (
     <TouchableOpacity
-      style={styles.productCard}
+      style={[styles.productCard, { width: size, height: size }]}
       onPress={() => onPress(product)}
       activeOpacity={0.7}
     >
-      <Image
-        source={product.image}
-        style={styles.productImage}
-        resizeMode="cover"
-      />
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>
           {product.name}
         </Text>
-        <Text style={styles.productDesc} numberOfLines={2}>
-          {product.description}
-        </Text>
+        {product.description ? (
+          <Text style={styles.productDesc} numberOfLines={2}>
+            {product.description}
+          </Text>
+        ) : null}
         <View style={styles.productPriceRow}>
           <Text style={styles.priceCurrency}>₱</Text>
-          <Text style={styles.productPrice}>{product.price.toFixed(2)}</Text>
+          <Text style={styles.productPrice}>{product.base_price.toFixed(2)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -42,34 +40,36 @@ export function ProductCard({ product, onPress }: Props) {
 
 const styles = StyleSheet.create({
   productCard: {
-    flex: 1,
     backgroundColor: WHITE,
     borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#C4501E",
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
-  },
-  productImage: {
-    width: "100%",
-    height: 120,
+    justifyContent: "center",
+    alignItems: "center",
   },
   productInfo: {
-    padding: 12,
+    padding: 16,
     gap: 4,
+    alignItems: "center",
   },
   productName: {
     fontSize: 14,
     fontWeight: "700",
     color: DARK_TEXT,
     lineHeight: 18,
+    textAlign: "center",
   },
   productDesc: {
     fontSize: 11,
     color: GRAY_TEXT,
     lineHeight: 15,
+    textAlign: "center",
   },
   productPriceRow: {
     flexDirection: "row",

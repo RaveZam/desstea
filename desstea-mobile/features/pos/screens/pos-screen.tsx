@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,16 +7,20 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
-import { products, Product, CoffeeCustomization } from "../data/products";
+import { LocalProduct, ProductCustomization } from "../types";
+import { useCatalog } from "../hooks/use-catalog";
 import { useOrder } from "../hooks/use-order";
+import { useIsSyncing } from "@/lib/sync-context";
 import { usePrinter } from "../../printer/hooks/use-printer";
 import { useAuth } from "../../auth/hooks/use-auth";
+import { useBranchName } from "../../auth/hooks/use-branch-name";
 import { CategoryTabs } from "../components/category-tabs";
 import { ProductCard } from "../components/product-card";
 import { OrderPanel } from "../components/order-panel";
@@ -42,13 +46,15 @@ function generateSessionId() {
 
 export default function POSScreen() {
   const { user } = useAuth();
+  const { branchName } = useBranchName();
+  const { categories, products } = useCatalog();
+  const isSyncing = useIsSyncing();
+  const [cardSize, setCardSize] = useState(130);
   const [activeSidebarItem, setActiveSidebarItem] = useState("pos");
   const [sessionId] = useState(generateSessionId);
-  const [selectedCategory, setSelectedCategory] = useState("coffee");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [customizingProduct, setCustomizingProduct] = useState<Product | null>(
-    null,
-  );
+  const [customizingProduct, setCustomizingProduct] = useState<LocalProduct | null>(null);
   const {
     orderItems,
     addToOrder,
@@ -60,16 +66,19 @@ export default function POSScreen() {
   } = useOrder();
   const { printTestMessage } = usePrinter();
 
+  // Default to first category once loaded
+  const activeCategory = selectedCategory ?? categories[0]?.id ?? null;
+
   const filteredProducts = products.filter((p) => {
-    const matchesCategory = p.categoryId === selectedCategory;
+    const matchesCategory = p.category_id === activeCategory;
     const matchesSearch =
       searchQuery === "" ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const handleProductPress = (product: Product) => {
-    if (product.categoryId === "coffee") {
+  const handleProductPress = (product: LocalProduct) => {
+    if (product.has_sizes || product.addon_group_id) {
       setCustomizingProduct(product);
     } else {
       addToOrder(product);
@@ -77,15 +86,24 @@ export default function POSScreen() {
   };
 
   const handleCustomizationConfirm = (
-    product: Product,
-    customization: CoffeeCustomization,
+    product: LocalProduct,
+    customization: ProductCustomization,
   ) => {
     addToOrder(product, customization);
     setCustomizingProduct(null);
   };
 
-  const renderProductCard = ({ item }: { item: Product }) => (
-    <ProductCard product={item} onPress={handleProductPress} />
+  const NUM_COLUMNS = 4;
+  const CARD_GAP = 10;
+
+  const onLeftPanelLayout = useCallback((e: any) => {
+    const panelWidth = e.nativeEvent.layout.width;
+    const size = Math.floor((panelWidth - CARD_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS * 0.75);
+    setCardSize(size);
+  }, []);
+
+  const renderProductCard = ({ item }: { item: LocalProduct }) => (
+    <ProductCard product={item} size={cardSize} onPress={handleProductPress} />
   );
 
   return (
@@ -153,7 +171,7 @@ export default function POSScreen() {
         ) : (
           <>
             {/* LEFT PANEL - Products */}
-            <View style={styles.leftPanel}>
+            <View style={styles.leftPanel} onLayout={onLeftPanelLayout}>
               {/* Header */}
               <View style={styles.header}>
                 <View style={styles.headerLeft}>
@@ -166,9 +184,7 @@ export default function POSScreen() {
                     <Text style={styles.welcomeText}>
                       Welcome, {user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
                     </Text>
-                    <Text style={styles.subtitleText}>
-                      Discover whatever you need easily
-                    </Text>
+                    <Text style={styles.subtitleText}>{branchName}</Text>
                   </View>
                 </View>
                 <View style={styles.searchContainer}>
@@ -190,21 +206,29 @@ export default function POSScreen() {
 
               {/* Category Tabs */}
               <CategoryTabs
-                selectedCategory={selectedCategory}
+                categories={categories}
+                selectedCategory={activeCategory ?? ""}
                 onSelect={setSelectedCategory}
               />
 
               {/* Product Grid */}
-              <FlatList
-                data={filteredProducts}
-                renderItem={renderProductCard}
-                keyExtractor={(item) => item.id}
-                numColumns={3}
-                style={styles.productList}
-                contentContainerStyle={styles.productGrid}
-                columnWrapperStyle={styles.productRow}
-                showsVerticalScrollIndicator={false}
-              />
+              {isSyncing ? (
+                <View style={styles.syncingContainer}>
+                  <ActivityIndicator size="large" color={BRAND} />
+                  <Text style={styles.syncingText}>Syncing catalog…</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={filteredProducts}
+                  renderItem={renderProductCard}
+                  keyExtractor={(item) => item.id}
+                  numColumns={4}
+                  style={styles.productList}
+                  contentContainerStyle={styles.productGrid}
+                  columnWrapperStyle={styles.productRow}
+                  showsVerticalScrollIndicator={false}
+                />
+              )}
             </View>
 
             {/* RIGHT PANEL - Current Order */}
@@ -338,6 +362,17 @@ const styles = StyleSheet.create({
     color: DARK_TEXT,
     padding: 0,
   },
+  syncingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  syncingText: {
+    fontSize: 14,
+    color: GRAY_TEXT,
+    fontWeight: "500",
+  },
   productList: {
     flex: 1,
   },
@@ -345,8 +380,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   productRow: {
-    gap: 14,
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 10,
   },
   rightPanel: {
     width: 300,

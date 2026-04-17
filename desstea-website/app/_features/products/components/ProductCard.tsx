@@ -21,17 +21,29 @@ export default function ProductCard({ product, onClick, addonGroupTemplates }: P
       ? Math.max(...product.sizes.map((s) => s.size_price))
       : product.base_price;
 
+  const isUnavailable = !product.is_available;
+
   return (
     <div
       onClick={() => onClick(product)}
-      className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-[#EDE8E3]"
+      className={[
+        "bg-white rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-transparent",
+        isUnavailable
+          ? "opacity-40 grayscale hover:opacity-50 hover:shadow-sm"
+          : "hover:shadow-md hover:border-[#EDE8E3]",
+      ].join(" ")}
     >
       {/* Name + category */}
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <h3 className="font-semibold text-gray-900 text-sm leading-tight">{product.name}</h3>
-        <Badge variant="default" className="flex-shrink-0">
-          {product.category_name}
-        </Badge>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {isUnavailable && (
+            <span className="text-[10px] font-medium bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full border border-gray-200">
+              Unavailable
+            </span>
+          )}
+          <Badge variant="default">{product.category_name}</Badge>
+        </div>
       </div>
 
       {/* Description */}

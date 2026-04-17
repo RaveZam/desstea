@@ -1,17 +1,18 @@
 import React from "react";
 import { Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
-import { categories } from "../data/categories";
+import { LocalCategory } from "../types";
 
 const ORANGE = "#E8692A";
 const DARK_TEXT = "#1C1C1E";
 const WHITE = "#FFFFFF";
 
 type Props = {
+  categories: LocalCategory[];
   selectedCategory: string;
   onSelect: (categoryId: string) => void;
 };
 
-export function CategoryTabs({ selectedCategory, onSelect }: Props) {
+export function CategoryTabs({ categories, selectedCategory, onSelect }: Props) {
   return (
     <ScrollView
       horizontal
@@ -28,14 +29,13 @@ export function CategoryTabs({ selectedCategory, onSelect }: Props) {
           ]}
           onPress={() => onSelect(cat.id)}
         >
-          <Text style={styles.categoryIcon}>{cat.icon}</Text>
           <Text
             style={[
               styles.categoryLabel,
               selectedCategory === cat.id && styles.categoryLabelActive,
             ]}
           >
-            {cat.label}
+            {cat.name}
           </Text>
         </TouchableOpacity>
       ))}
@@ -68,9 +68,6 @@ const styles = StyleSheet.create({
   },
   categoryTabActive: {
     backgroundColor: ORANGE,
-  },
-  categoryIcon: {
-    fontSize: 16,
   },
   categoryLabel: {
     fontSize: 14,

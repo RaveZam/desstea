@@ -1,18 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
 } from "react-native";
+import { db } from "@/lib/database";
 import {
-  Product,
-  CoffeeSize,
-  SugarLevel,
-  CoffeeCustomization,
-  SIZE_PRICE_ADJUSTMENT,
-} from "../data/products";
+  LocalProduct,
+  LocalSize,
+  LocalAddonOption,
+  ProductCustomization,
+} from "../types";
 
 const ORANGE = "#E8692A";
 const ORANGE_LIGHT = "#FFF3ED";
@@ -20,33 +21,74 @@ const DARK_TEXT = "#1C1C1E";
 const GRAY_TEXT = "#8E8E93";
 const WHITE = "#FFFFFF";
 
-const SIZES: CoffeeSize[] = ["Small", "Medium", "Large"];
-const SUGAR_LEVELS: SugarLevel[] = [0, 25, 50, 75, 100];
-
 type Props = {
   visible: boolean;
-  product: Product | null;
-  onConfirm: (product: Product, customization: CoffeeCustomization) => void;
+  product: LocalProduct | null;
+  onConfirm: (product: LocalProduct, customization: ProductCustomization) => void;
   onCancel: () => void;
 };
 
 export function CustomizationModal({ visible, product, onConfirm, onCancel }: Props) {
-  const [size, setSize] = useState<CoffeeSize>("Medium");
-  const [sugarLevel, setSugarLevel] = useState<SugarLevel>(50);
+  const [sizes, setSizes] = useState<LocalSize[]>([]);
+  const [addonOptions, setAddonOptions] = useState<LocalAddonOption[]>([]);
+  const [selectedSize, setSelectedSize] = useState<LocalSize | null>(null);
+  const [selectedAddons, setSelectedAddons] = useState<LocalAddonOption[]>([]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    if (product.has_sizes) {
+      const s = db.getAllSync<LocalSize>(
+        `SELECT id, label, size_price, sort_order
+         FROM product_sizes
+         WHERE product_id = ?
+         ORDER BY sort_order`,
+        [product.id]
+      );
+      setSizes(s);
+      setSelectedSize(s[0] ?? null);
+    } else {
+      setSizes([]);
+      setSelectedSize(null);
+    }
+
+    if (product.addon_group_id) {
+      const ao = db.getAllSync<LocalAddonOption>(
+        `SELECT id, addon_group_id, name, price_modifier, is_available, sort_order
+         FROM addon_options
+         WHERE addon_group_id = ? AND is_available = 1
+         ORDER BY sort_order`,
+        [product.addon_group_id]
+      );
+      setAddonOptions(ao);
+    } else {
+      setAddonOptions([]);
+    }
+
+    setSelectedAddons([]);
+  }, [product?.id]);
 
   if (!product) return null;
 
-  const adjustedPrice = product.price + SIZE_PRICE_ADJUSTMENT[size];
+  const basePrice = selectedSize?.size_price ?? product.base_price;
+  const addonsTotal = selectedAddons.reduce((sum, ao) => sum + ao.price_modifier, 0);
+  const totalPrice = basePrice + addonsTotal;
+
+  const toggleAddon = (option: LocalAddonOption) => {
+    setSelectedAddons((prev) =>
+      prev.find((a) => a.id === option.id)
+        ? prev.filter((a) => a.id !== option.id)
+        : [...prev, option]
+    );
+  };
 
   const handleConfirm = () => {
-    onConfirm(product, { size, sugarLevel });
-    setSize("Medium");
-    setSugarLevel(50);
+    onConfirm(product, { size: selectedSize, addonOptions: selectedAddons });
+    setSelectedAddons([]);
   };
 
   const handleCancel = () => {
-    setSize("Medium");
-    setSugarLevel(50);
+    setSelectedAddons([]);
     onCancel();
   };
 
@@ -54,52 +96,68 @@ export function CustomizationModal({ visible, product, onConfirm, onCancel }: Pr
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.title}>{product.name}</Text>
-          <Text style={styles.basePrice}>Base ₱{product.price}</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={styles.title}>{product.name}</Text>
+            <Text style={styles.basePrice}>Base ₱{product.base_price.toFixed(2)}</Text>
 
-          <Text style={styles.sectionLabel}>Size</Text>
-          <View style={styles.pillRow}>
-            {SIZES.map((s) => (
-              <TouchableOpacity
-                key={s}
-                style={[styles.pill, size === s && styles.pillActive]}
-                onPress={() => setSize(s)}
-              >
-                <Text style={[styles.pillText, size === s && styles.pillTextActive]}>
-                  {s === "Small" ? "S" : s === "Medium" ? "M" : "L"}
-                </Text>
-                {SIZE_PRICE_ADJUSTMENT[s] > 0 && (
-                  <Text style={[styles.pillSub, size === s && styles.pillSubActive]}>
-                    +₱{SIZE_PRICE_ADJUSTMENT[s]}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+            {sizes.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>Size</Text>
+                <View style={styles.pillRow}>
+                  {sizes.map((s) => (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[styles.pill, selectedSize?.id === s.id && styles.pillActive]}
+                      onPress={() => setSelectedSize(s)}
+                    >
+                      <Text style={[styles.pillText, selectedSize?.id === s.id && styles.pillTextActive]}>
+                        {s.label}
+                      </Text>
+                      <Text style={[styles.pillSub, selectedSize?.id === s.id && styles.pillSubActive]}>
+                        ₱{s.size_price.toFixed(2)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
-          <Text style={styles.sectionLabel}>Sugar Level</Text>
-          <View style={styles.pillRow}>
-            {SUGAR_LEVELS.map((level) => (
-              <TouchableOpacity
-                key={level}
-                style={[styles.pill, sugarLevel === level && styles.pillActive]}
-                onPress={() => setSugarLevel(level)}
-              >
-                <Text style={[styles.pillText, sugarLevel === level && styles.pillTextActive]}>
-                  {level}%
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            {addonOptions.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>Add-ons</Text>
+                <View style={styles.pillRow}>
+                  {addonOptions.map((ao) => {
+                    const selected = !!selectedAddons.find((a) => a.id === ao.id);
+                    return (
+                      <TouchableOpacity
+                        key={ao.id}
+                        style={[styles.pill, selected && styles.pillActive]}
+                        onPress={() => toggleAddon(ao)}
+                      >
+                        <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                          {ao.name}
+                        </Text>
+                        {ao.price_modifier > 0 && (
+                          <Text style={[styles.pillSub, selected && styles.pillSubActive]}>
+                            +₱{ao.price_modifier.toFixed(2)}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
-          <Text style={styles.adjustedPrice}>₱{adjustedPrice.toFixed(2)}</Text>
+            <Text style={styles.adjustedPrice}>₱{totalPrice.toFixed(2)}</Text>
 
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-            <Text style={styles.confirmBtnText}>Add to Order</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
+              <Text style={styles.confirmBtnText}>Add to Order</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -118,7 +176,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     width: 320,
-    alignItems: "center",
+    maxHeight: "80%",
   },
   title: {
     fontSize: 20,
@@ -131,6 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: GRAY_TEXT,
     marginBottom: 20,
+    textAlign: "center",
   },
   sectionLabel: {
     fontSize: 13,
@@ -180,6 +239,7 @@ const styles = StyleSheet.create({
     color: DARK_TEXT,
     marginBottom: 20,
     letterSpacing: -0.5,
+    textAlign: "center",
   },
   confirmBtn: {
     backgroundColor: ORANGE,

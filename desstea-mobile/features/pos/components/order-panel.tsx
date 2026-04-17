@@ -2,12 +2,11 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { OrderItem, getItemKey, getItemPrice } from "../data/products";
+import { OrderItem, getItemKey, getItemPrice } from "../types";
 
 const ORANGE = "#E8692A";
 const ORANGE_LIGHT = "#FFF3ED";
@@ -28,19 +27,23 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
         const price = getItemPrice(item);
         return (
           <View key={key} style={styles.orderItem}>
-            <Image
-              source={item.product.image}
-              style={styles.orderItemImage}
-              resizeMode="cover"
-            />
             <View style={styles.orderItemInfo}>
               <Text style={styles.orderItemName} numberOfLines={2}>
                 {item.product.name}
               </Text>
               {item.customization && (
-                <Text style={styles.customizationLabel}>
-                  {item.customization.size} | {item.customization.sugarLevel}% Sugar
-                </Text>
+                <>
+                  {item.customization.size && (
+                    <Text style={styles.customizationLabel}>
+                      {item.customization.size.label}
+                    </Text>
+                  )}
+                  {item.customization.addonOptions.length > 0 && (
+                    <Text style={styles.customizationLabel}>
+                      +{item.customization.addonOptions.map((a) => a.name).join(", ")}
+                    </Text>
+                  )}
+                </>
               )}
               <Text style={styles.orderItemPrice}>
                 ₱{(price * item.quantity).toFixed(2)}
@@ -77,11 +80,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 14,
     gap: 10,
-  },
-  orderItemImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
   },
   orderItemInfo: {
     flex: 1,

@@ -75,7 +75,6 @@ export interface Product {
   category_name: string;
   has_sizes: boolean;
   is_available: boolean;
-  is_branch_exclusive: boolean;
   sizes: ProductSize[];
   addon_group_id: string | null;
   addon_group_name: string | null;
@@ -90,7 +89,6 @@ export interface ProductFormData {
   category_id: string;
   has_sizes: boolean;
   is_available: boolean;
-  is_branch_exclusive: boolean;
   sizes: Omit<ProductSize, "id">[];
   addon_group_id: string | null;
   available_branch_ids: string[];

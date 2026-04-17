@@ -6,6 +6,7 @@ export async function listCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("*")
+    .is("deleted_at", null)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as Category[];
@@ -22,6 +23,7 @@ export async function listProducts(): Promise<Product[]> {
       addon_groups ( id, name ),
       branch_product_availability ( branch_id, is_available )
     `)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
@@ -51,7 +53,6 @@ export async function listProducts(): Promise<Product[]> {
       category_name: cat?.name ?? "",
       has_sizes: row.has_sizes as boolean,
       is_available: row.is_available as boolean,
-      is_branch_exclusive: row.is_branch_exclusive as boolean,
       sizes,
       addon_group_id: addonGroup?.id ?? null,
       addon_group_name: addonGroup?.name ?? null,
@@ -76,7 +77,6 @@ export async function createProductInSupabase(
       category_id: data.category_id,
       has_sizes: data.has_sizes,
       is_available: data.is_available,
-      is_branch_exclusive: data.is_branch_exclusive,
       addon_group_id: data.addon_group_id || null,
     })
     .select("id")
@@ -121,7 +121,6 @@ export async function updateProductInSupabase(
       category_id: data.category_id,
       has_sizes: data.has_sizes,
       is_available: data.is_available,
-      is_branch_exclusive: data.is_branch_exclusive,
       addon_group_id: data.addon_group_id || null,
     })
     .eq("id", id);
@@ -152,7 +151,10 @@ export async function updateProductInSupabase(
 
 export async function deleteProductInSupabase(id: string): Promise<string | null> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase
+    .from("products")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
   return error ? error.message : null;
 }
 
@@ -182,7 +184,10 @@ export async function updateCategoryInSupabase(
 
 export async function deleteCategoryInSupabase(id: string): Promise<string | null> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from("categories").delete().eq("id", id);
+  const { error } = await supabase
+    .from("categories")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
   return error ? error.message : null;
 }
 
