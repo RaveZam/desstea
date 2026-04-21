@@ -9,6 +9,7 @@ export interface BranchWithStats extends Branch {
   // Stats
   dailyRevenue: number;
   ordersToday: number;
+  itemsSold: number;
   topProduct: string;
   staffCount: number;
 }
@@ -25,6 +26,7 @@ export const mockBranches: BranchWithStats[] = [
     status: "active" as BranchStatus,
     dailyRevenue: 18500,
     ordersToday: 62,
+    itemsSold: 89,
     topProduct: "Classic Milk Tea",
     staffCount: 5,
     ...MOCK_TIMESTAMPS,
@@ -38,6 +40,7 @@ export const mockBranches: BranchWithStats[] = [
     status: "active" as BranchStatus,
     dailyRevenue: 15200,
     ordersToday: 49,
+    itemsSold: 71,
     topProduct: "Brown Sugar Boba",
     staffCount: 4,
     ...MOCK_TIMESTAMPS,
@@ -51,6 +54,7 @@ export const mockBranches: BranchWithStats[] = [
     status: "active" as BranchStatus,
     dailyRevenue: 22300,
     ordersToday: 74,
+    itemsSold: 108,
     topProduct: "Matcha Latte",
     staffCount: 6,
     ...MOCK_TIMESTAMPS,
@@ -64,6 +68,7 @@ export const mockBranches: BranchWithStats[] = [
     status: "active" as BranchStatus,
     dailyRevenue: 19800,
     ordersToday: 65,
+    itemsSold: 94,
     topProduct: "Taro Tea",
     staffCount: 5,
     ...MOCK_TIMESTAMPS,

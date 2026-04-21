@@ -58,8 +58,8 @@ export default function BranchRecentOrders({ branchId }: BranchRecentOrdersProps
                 ₱{order.total.toLocaleString()}
               </td>
               <td className="px-4 py-3 text-center">
-                <Badge variant={order.status as OrderStatus}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                <Badge variant={(order.status ?? "default") as OrderStatus}>
+                  {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : "—"}
                 </Badge>
               </td>
               <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">

@@ -6,6 +6,8 @@ import type { Branch, BranchStatus } from "../../../_types";
 
 interface BranchCardProps {
   branch: Branch;
+  orderCount: number;
+  totalRevenue: number;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -16,14 +18,10 @@ const statusDot: Record<BranchStatus, string> = {
   maintenance: "bg-amber-500",
 };
 
-export default function BranchCard({ branch, onEdit, onDelete }: BranchCardProps) {
+export default function BranchCard({ branch, orderCount, totalRevenue, onEdit, onDelete }: BranchCardProps) {
   const router = useRouter();
 
-  // Temporary fixed placeholders until real analytics are wired up
   const status: BranchStatus = "active";
-  const dailyRevenue = 18500;
-  const ordersToday = 62;
-  const topProduct = "Classic Milk Tea";
 
   return (
     <div
@@ -74,13 +72,13 @@ export default function BranchCard({ branch, onEdit, onDelete }: BranchCardProps
         <div className="bg-[#FDFAF7] rounded-xl p-2.5">
           <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Daily Revenue</p>
           <p className="text-base font-bold text-[#6B4F3A] mt-0.5">
-            {dailyRevenue > 0 ? `₱${dailyRevenue.toLocaleString()}` : "—"}
+            {totalRevenue > 0 ? `₱${totalRevenue.toLocaleString()}` : "—"}
           </p>
         </div>
         <div className="bg-[#FDFAF7] rounded-xl p-2.5">
           <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Orders Today</p>
           <p className="text-base font-bold text-gray-800 mt-0.5">
-            {ordersToday > 0 ? ordersToday : "—"}
+            {orderCount > 0 ? orderCount : "—"}
           </p>
         </div>
       </div>
@@ -90,7 +88,7 @@ export default function BranchCard({ branch, onEdit, onDelete }: BranchCardProps
         <span className="truncate max-w-[140px]" title={branch.assigned_account_name ?? undefined}>
           {branch.assigned_account_name ?? "Unassigned"}
         </span>
-        <span className="font-medium text-[#6B4F3A] truncate max-w-[120px]">↑ {topProduct}</span>
+        <span className="font-medium text-[#6B4F3A] truncate max-w-[120px]">Today</span>
       </div>
     </div>
   );

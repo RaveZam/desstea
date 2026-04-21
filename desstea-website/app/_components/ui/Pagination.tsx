@@ -4,10 +4,26 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
+function getPageWindow(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: (number | "...")[] = [1];
+
+  const rangeStart = Math.max(2, current - 2);
+  const rangeEnd = Math.min(total - 1, current + 2);
+
+  if (rangeStart > 2) pages.push("...");
+  for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
+  if (rangeEnd < total - 1) pages.push("...");
+
+  pages.push(total);
+  return pages;
+}
+
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const window = getPageWindow(currentPage, totalPages);
 
   return (
     <div className="flex items-center gap-1">
@@ -21,19 +37,25 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         </svg>
       </button>
 
-      {pages.map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`w-7 h-7 flex items-center justify-center rounded-lg text-sm transition-colors ${
-            page === currentPage
-              ? "bg-[#6B4F3A] text-white font-semibold"
-              : "text-gray-500 hover:bg-gray-100"
-          }`}
-        >
-          {page}
-        </button>
-      ))}
+      {window.map((item, idx) =>
+        item === "..." ? (
+          <span key={`ellipsis-${idx}`} className="w-7 h-7 flex items-center justify-center text-gray-400 text-sm select-none">
+            …
+          </span>
+        ) : (
+          <button
+            key={item}
+            onClick={() => onPageChange(item)}
+            className={`w-7 h-7 flex items-center justify-center rounded-lg text-sm transition-colors ${
+              item === currentPage
+                ? "bg-[#6B4F3A] text-white font-semibold"
+                : "text-gray-500 hover:bg-gray-100"
+            }`}
+          >
+            {item}
+          </button>
+        )
+      )}
 
       <button
         onClick={() => onPageChange(currentPage + 1)}

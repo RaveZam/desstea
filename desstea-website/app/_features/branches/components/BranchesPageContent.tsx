@@ -7,14 +7,16 @@ import BranchComparisonChart from "./BranchComparisonChart";
 import BranchFormModal from "./BranchFormModal";
 import { deleteBranch } from "../actions";
 import type { Branch } from "../../../_types";
+import type { BranchDailySummary } from "../services/branchesService";
 
 type ViewMode = "grid" | "comparison";
 
 interface BranchesPageContentProps {
   initialBranches: Branch[];
+  summary: Record<string, BranchDailySummary>;
 }
 
-export default function BranchesPageContent({ initialBranches }: BranchesPageContentProps) {
+export default function BranchesPageContent({ initialBranches, summary }: BranchesPageContentProps) {
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [modalOpen, setModalOpen] = useState(false);
@@ -119,6 +121,8 @@ export default function BranchesPageContent({ initialBranches }: BranchesPageCon
                   <BranchCard
                     key={branch.id}
                     branch={branch}
+                    orderCount={summary[branch.id]?.order_count ?? 0}
+                    totalRevenue={summary[branch.id]?.total_revenue ?? 0}
                     onEdit={() => openEdit(branch)}
                     onDelete={() => handleDelete(branch)}
                   />

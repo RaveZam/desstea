@@ -16,12 +16,12 @@ function getStats(branch: Branch | BranchWithStats) {
   return {
     dailyRevenue: b.dailyRevenue ?? 0,
     ordersToday: b.ordersToday ?? 0,
-    staffCount: b.staffCount ?? 0,
+    itemsSold: b.itemsSold ?? 0,
   };
 }
 
 export default function BranchStatCards({ branch }: BranchStatCardsProps) {
-  const { dailyRevenue, ordersToday, staffCount } = getStats(branch);
+  const { dailyRevenue, ordersToday, itemsSold } = getStats(branch);
   const avgOrderValue = ordersToday > 0 ? Math.round(dailyRevenue / ordersToday) : 0;
 
   const cards = [
@@ -66,17 +66,16 @@ export default function BranchStatCards({ branch }: BranchStatCardsProps) {
       ),
     },
     {
-      label: "Staff On Duty",
-      value: staffCount > 0 ? staffCount.toString() : "—",
-      change: "+0",
+      label: "Items Sold",
+      value: itemsSold > 0 ? itemsSold.toString() : "—",
+      change: "+12.3%",
       favorable: true,
       dark: false,
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87" />
-          <path d="M16 3.13a4 4 0 010 7.75" />
+          <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 7h13" />
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="19" cy="21" r="1" />
         </svg>
       ),
     },

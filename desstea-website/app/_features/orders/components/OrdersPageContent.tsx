@@ -5,19 +5,34 @@ import { Pagination } from "../../../_components/ui";
 import OrderFilters from "./OrderFilters";
 import OrdersTable from "./OrdersTable";
 import OrderDetailPanel from "./OrderDetailPanel";
-import { mockOrders } from "../data/mock-data";
-import type { Order } from "../../../_types";
+import type { Branch, Order } from "../../../_types";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 
-export default function OrdersPageContent() {
+interface OrdersPageContentProps {
+  initialOrders: Order[];
+  initialBranches: Branch[];
+}
+
+export default function OrdersPageContent({
+  initialOrders,
+  initialBranches,
+}: OrdersPageContentProps) {
   const [search, setSearch] = useState("");
   const [branch, setBranch] = useState("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Order | null>(null);
 
+  const branchOptions = useMemo(
+    () => [
+      { value: "all", label: "All Branches" },
+      ...initialBranches.map((b) => ({ value: b.id, label: b.name })),
+    ],
+    [initialBranches],
+  );
+
   const filtered = useMemo(() => {
-    return mockOrders.filter((o) => {
+    return initialOrders.filter((o) => {
       const matchSearch =
         !search ||
         o.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -25,7 +40,7 @@ export default function OrdersPageContent() {
       const matchBranch = branch === "all" || o.branchId === branch;
       return matchSearch && matchBranch;
     });
-  }, [search, branch]);
+  }, [search, branch, initialOrders]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -38,10 +53,10 @@ export default function OrdersPageContent() {
   return (
     <>
       <div
-        className={`px-5 py-4 space-y-4 transition-all duration-300 ${selected ? "mr-[400px]" : ""}`}
+        className={`h-full flex flex-col transition-all duration-300 ${selected ? "mr-[400px]" : ""}`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between fade-up fade-up-1">
+        <div className="px-5 pt-4 pb-3 flex items-start justify-between fade-up fade-up-1 shrink-0">
           <div>
             <h1 className="font-display text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
               Orders
@@ -58,17 +73,24 @@ export default function OrdersPageContent() {
         </div>
 
         {/* Filters */}
-        <div className="fade-up fade-up-2">
+        <div className="px-5 pb-3 fade-up fade-up-2 shrink-0">
           <OrderFilters
             search={search}
-            onSearchChange={(v) => { setSearch(v); handleFilterChange(); }}
+            onSearchChange={(v) => {
+              setSearch(v);
+              handleFilterChange();
+            }}
             branch={branch}
-            onBranchChange={(v) => { setBranch(v); handleFilterChange(); }}
+            onBranchChange={(v) => {
+              setBranch(v);
+              handleFilterChange();
+            }}
+            branchOptions={branchOptions}
           />
         </div>
 
-        {/* Table */}
-        <div className="fade-up fade-up-3">
+        {/* Table — scrollable */}
+        <div className="flex-1 px-5 fade-up fade-up-3">
           <OrdersTable
             orders={paginated}
             selectedId={selected?.id ?? null}
@@ -77,7 +99,7 @@ export default function OrdersPageContent() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between fade-up fade-up-4">
+        <div className="px-5 py-3 mb-4 flex items-center justify-between fade-up fade-up-4 shrink-0 border-t border-gray-100 bg-[#F4F6F8]">
           <p className="text-xs text-gray-400">
             Showing {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–
             {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
@@ -93,7 +115,7 @@ export default function OrdersPageContent() {
       {/* Slide-over detail panel */}
       <OrderDetailPanel order={selected} onClose={() => setSelected(null)} />
 
-      {/* Overlay for closing panel on mobile */}
+      {/* Overlay for closing panel */}
       {selected && (
         <div
           className="fixed inset-0 z-30 bg-transparent"

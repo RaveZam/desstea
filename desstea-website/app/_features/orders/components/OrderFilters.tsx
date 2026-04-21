@@ -1,13 +1,18 @@
 "use client";
 
 import { SearchInput } from "../../../_components/ui";
-import { branchOptions } from "../data/mock-data";
+
+interface BranchOption {
+  value: string;
+  label: string;
+}
 
 interface OrderFiltersProps {
   search: string;
   onSearchChange: (v: string) => void;
   branch: string;
   onBranchChange: (v: string) => void;
+  branchOptions: BranchOption[];
 }
 
 export default function OrderFilters({
@@ -15,6 +20,7 @@ export default function OrderFilters({
   onSearchChange,
   branch,
   onBranchChange,
+  branchOptions,
 }: OrderFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">

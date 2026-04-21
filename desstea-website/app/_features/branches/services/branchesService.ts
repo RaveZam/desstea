@@ -115,6 +115,28 @@ export async function updateBranchInSupabase(
   return error ? error.message : null;
 }
 
+export type BranchDailySummary = {
+  order_count: number;
+  total_revenue: number;
+};
+
+export async function getTodayOrdersSummary(): Promise<Record<string, BranchDailySummary>> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc("get_today_orders_summary");
+  if (error) {
+    console.error("[getTodayOrdersSummary] error:", error.message);
+    return {};
+  }
+  const map: Record<string, BranchDailySummary> = {};
+  for (const row of data ?? []) {
+    map[row.branch_id] = {
+      order_count: Number(row.order_count),
+      total_revenue: Number(row.total_revenue),
+    };
+  }
+  return map;
+}
+
 export async function deleteBranchInSupabase(id: string): Promise<string | null> {
   const supabase = createAdminClient();
   const { error } = await supabase

@@ -16,7 +16,9 @@ interface BranchDetailContentProps {
   branch: Branch;
 }
 
-export default function BranchDetailContent({ branch }: BranchDetailContentProps) {
+export default function BranchDetailContent({
+  branch,
+}: BranchDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
 
   // Use mock stats if available for this branch ID, otherwise show zeros
@@ -36,7 +38,10 @@ export default function BranchDetailContent({ branch }: BranchDetailContentProps
       <div className="px-5 py-4 space-y-3">
         {/* Header */}
         <div className="fade-up fade-up-1">
-          <BranchDetailHeader branch={branch} onEdit={() => setEditOpen(true)} />
+          <BranchDetailHeader
+            branch={branch}
+            onEdit={() => setEditOpen(true)}
+          />
         </div>
 
         {/* KPI Cards */}

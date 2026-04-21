@@ -16,12 +16,19 @@ export interface Branch {
 
 export type OrderStatus = "pending" | "completed" | "cancelled" | "refunded";
 
+export interface OrderAddon {
+  addonName: string;
+  priceModifier: number;
+  quantity: number;
+}
+
 export interface OrderLineItem {
   productName: string;
   quantity: number;
   size: string;
   unitPrice: number;
   lineTotal: number;
+  addons?: OrderAddon[];
 }
 
 export interface Order {
@@ -31,7 +38,9 @@ export interface Order {
   branchName: string;
   items: OrderLineItem[];
   total: number;
-  status: OrderStatus;
+  status?: OrderStatus;
+  paymentMethod?: string;
+  cashTendered?: number;
   createdAt: string;
 }
 
