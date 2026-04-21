@@ -1,7 +1,7 @@
 "use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Label, Tooltip } from "recharts";
-import type { TopProduct } from "../services/dashboardService";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import type { TopCategory } from "../services/dashboardService";
 
 const COLORS = ["#6B4F3A", "#C4895A", "#E8692A", "#A07858", "#D4C4B8"];
 
@@ -10,7 +10,7 @@ const CustomTooltip = ({
   payload,
 }: {
   active?: boolean;
-  payload?: { name: string; value: number; payload: TopProduct }[];
+  payload?: { name: string; value: number; payload: TopCategory }[];
 }) => {
   if (!active || !payload?.length) return null;
   const entry = payload[0];
@@ -40,19 +40,14 @@ const CustomTooltip = ({
   );
 };
 
-type Props = { topProducts: TopProduct[] };
+type Props = { topCategories: TopCategory[] };
 
-export default function OrderStatusChart({ topProducts }: Props) {
-  const totalRevenue = topProducts.reduce(
+export default function OrderStatusChart({ topCategories }: Props) {
+  const totalRevenue = topCategories.reduce(
     (sum, d) => sum + Number(d.revenue),
     0,
   );
-  const maxRevenue = topProducts[0]?.revenue ?? 1;
-
-  const formattedTotal =
-    totalRevenue >= 1_000_000
-      ? `₱${(totalRevenue / 1_000_000).toFixed(1)}M`
-      : `₱${(totalRevenue / 1_000).toFixed(0)}K`;
+  const maxRevenue = topCategories[0]?.revenue ?? 1;
 
   return (
     <div
@@ -60,7 +55,7 @@ export default function OrderStatusChart({ topProducts }: Props) {
       style={{ border: "1px solid #F5EDE7" }}
     >
       <div className="shrink-0 mb-2">
-        <h3 className="font-semibold text-gray-900 text-base">Top Products</h3>
+        <h3 className="font-semibold text-gray-900 text-base">Top Categories</h3>
         <p className="text-sm text-gray-400 mt-0.5">
           Revenue share · selected period
         </p>
@@ -71,7 +66,7 @@ export default function OrderStatusChart({ topProducts }: Props) {
           <PieChart>
             <Tooltip content={<CustomTooltip />} />
             <Pie
-              data={topProducts}
+              data={topCategories}
               cx="50%"
               cy="50%"
               innerRadius="52%"
@@ -81,7 +76,7 @@ export default function OrderStatusChart({ topProducts }: Props) {
               paddingAngle={2}
               activeOuterRadiusOffset={6}
             >
-              {topProducts.map((_, index) => (
+              {topCategories.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -90,7 +85,7 @@ export default function OrderStatusChart({ topProducts }: Props) {
       </div>
 
       <div className="shrink-0 space-y-2 mt-1">
-        {topProducts.map((entry, index) => (
+        {topCategories.map((entry, index) => (
           <div key={entry.name}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1.5">

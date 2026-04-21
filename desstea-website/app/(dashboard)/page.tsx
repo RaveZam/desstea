@@ -82,7 +82,7 @@ export default async function DashboardPage({
           salesByDay={data.salesByDay}
           rangeLabel={RANGE_LABELS[range]}
         />
-        <OrderStatusChart topProducts={data.topProducts} />
+        <OrderStatusChart topCategories={data.topCategories} />
       </div>
 
       {/* Row 3: Branch overview + Top products list */}

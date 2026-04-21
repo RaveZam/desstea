@@ -15,6 +15,7 @@ export type DashboardKpis = {
 
 export type SalesDay = { day: string; revenue: number };
 export type TopProduct = { name: string; revenue: number };
+export type TopCategory = { name: string; revenue: number };
 export type BranchOverview = {
   branch_name: string;
   revenue: number;
@@ -27,6 +28,7 @@ export type DashboardData = {
   kpis: DashboardKpis;
   salesByDay: SalesDay[];
   topProducts: TopProduct[];
+  topCategories: TopCategory[];
   branchOverview: BranchOverview[];
 };
 
@@ -62,16 +64,18 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   const startIso = start.toISOString();
   const endIso = end.toISOString();
 
-  const [kpisRes, salesRes, productsRes, branchRes] = await Promise.all([
+  const [kpisRes, salesRes, productsRes, categoriesRes, branchRes] = await Promise.all([
     supabase.rpc("get_dashboard_kpis", { start_date: startIso, end_date: endIso }),
     supabase.rpc("get_sales_by_day", { start_date: startIso, end_date: endIso }),
     supabase.rpc("get_top_products", { start_date: startIso, end_date: endIso, lim: 5 }),
+    supabase.rpc("get_top_categories", { start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_branch_overview", { start_date: startIso, end_date: endIso }),
   ]);
 
   if (kpisRes.error) throw new Error(kpisRes.error.message);
   if (salesRes.error) throw new Error(salesRes.error.message);
   if (productsRes.error) throw new Error(productsRes.error.message);
+  if (categoriesRes.error) throw new Error(categoriesRes.error.message);
   if (branchRes.error) throw new Error(branchRes.error.message);
 
   return {
@@ -81,6 +85,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
     },
     salesByDay: (salesRes.data as SalesDay[]) ?? [],
     topProducts: (productsRes.data as TopProduct[]) ?? [],
+    topCategories: (categoriesRes.data as TopCategory[]) ?? [],
     branchOverview: (branchRes.data as BranchOverview[]) ?? [],
   };
 }

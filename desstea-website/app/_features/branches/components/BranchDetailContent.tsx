@@ -1,37 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { getBranchById } from "../data/mock-data";
 import BranchDetailHeader from "./BranchDetailHeader";
 import BranchStatCards from "./BranchStatCards";
 import BranchSalesChart from "./BranchSalesChart";
-import BranchOrderStatusChart from "./BranchOrderStatusChart";
 import BranchTopProducts from "./BranchTopProducts";
 import BranchRecentOrders from "./BranchRecentOrders";
 import BranchFormModal from "./BranchFormModal";
+import { OrderStatusChart } from "../../dashboard";
 import type { Branch } from "../../../_types";
+import type { BranchDetailData } from "../services/branchesService";
 
 interface BranchDetailContentProps {
   branch: Branch;
+  data: BranchDetailData;
+  periodLabel: string;
 }
 
 export default function BranchDetailContent({
   branch,
+  data,
+  periodLabel,
 }: BranchDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
-
-  // Use mock stats if available for this branch ID, otherwise show zeros
-  const mockStats = getBranchById(branch.id) ?? {
-    ...branch,
-    contact: "—",
-    operatingHours: "—",
-    status: "active" as const,
-    dailyRevenue: 0,
-    ordersToday: 0,
-    topProduct: "—",
-    staffCount: 0,
-  };
 
   return (
     <>
@@ -46,26 +37,26 @@ export default function BranchDetailContent({
 
         {/* KPI Cards */}
         <div className="fade-up fade-up-2">
-          <BranchStatCards branch={mockStats} />
+          <BranchStatCards kpis={data.kpis} periodLabel={periodLabel} />
         </div>
 
         {/* Charts row */}
-        <div className="grid grid-cols-3 gap-3 fade-up fade-up-3 items-stretch">
+        <div className="grid grid-cols-3 gap-3 fade-up fade-up-3 items-stretch" style={{ height: 400 }}>
           <div className="col-span-2 flex flex-col">
-            <BranchSalesChart branchId={branch.id} />
+            <BranchSalesChart salesByDay={data.salesByDay} />
           </div>
           <div className="flex flex-col">
-            <BranchOrderStatusChart branchId={branch.id} />
+            <OrderStatusChart topCategories={data.topCategories} />
           </div>
         </div>
 
         {/* Bottom row */}
-        <div className="grid grid-cols-3 gap-3 fade-up fade-up-4">
-          <div>
-            <BranchTopProducts branchId={branch.id} />
+        <div className="grid grid-cols-3 gap-3 fade-up fade-up-4" style={{ height: 340 }}>
+          <div className="flex flex-col">
+            <BranchTopProducts products={data.topProducts} />
           </div>
-          <div className="col-span-2">
-            <BranchRecentOrders branchId={branch.id} />
+          <div className="col-span-2 flex flex-col min-h-0">
+            <BranchRecentOrders orders={data.recentOrders} />
           </div>
         </div>
       </div>

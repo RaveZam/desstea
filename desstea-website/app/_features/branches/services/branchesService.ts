@@ -1,5 +1,36 @@
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import type { Branch } from "../../../_types";
+import { getDateBounds, type DateRangeKey, type TopCategory, type TopProduct } from "../../dashboard/services/dashboardService";
+
+// ── Branch detail data types ─────────────────────────────────
+
+export type BranchKpis = {
+  total_revenue: number;
+  total_orders: number;
+  avg_order_value: number;
+  items_sold: number;
+  prev_total_revenue: number;
+  prev_total_orders: number;
+  prev_avg_order_value: number;
+};
+
+export type BranchSalesDay = { day: string; revenue: number };
+
+export type BranchRecentOrder = {
+  id: string;
+  customerName: string;
+  itemCount: number;
+  total: number;
+  createdAt: string;
+};
+
+export type BranchDetailData = {
+  kpis: BranchKpis;
+  salesByDay: BranchSalesDay[];
+  topProducts: TopProduct[];
+  topCategories: TopCategory[];
+  recentOrders: BranchRecentOrder[];
+};
 
 function resolveDisplayName(u: { id: string; email?: string; user_metadata?: Record<string, unknown> }): string {
   const meta = u.user_metadata ?? {};
@@ -135,6 +166,61 @@ export async function getTodayOrdersSummary(): Promise<Record<string, BranchDail
     };
   }
   return map;
+}
+
+export async function getBranchDetailData(branchId: string, range: DateRangeKey): Promise<BranchDetailData> {
+  const supabase = createAdminClient();
+  const { start, end } = getDateBounds(range);
+  const startIso = start.toISOString();
+  const endIso = end.toISOString();
+
+  const [kpisRes, salesRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
+    supabase.rpc("get_branch_kpis", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
+    supabase.rpc("get_branch_sales_by_day", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
+    supabase.rpc("get_branch_top_products", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
+    supabase.rpc("get_branch_top_categories", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
+    supabase
+      .from("orders")
+      .select("id, customer_name, total, ordered_at, order_items(count)")
+      .eq("branch_id", branchId)
+      .gte("ordered_at", startIso)
+      .lt("ordered_at", endIso)
+      .order("ordered_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  const rawKpis = (kpisRes.data as BranchKpis[] | null)?.[0];
+  const emptyKpis: BranchKpis = {
+    total_revenue: 0, total_orders: 0, avg_order_value: 0, items_sold: 0,
+    prev_total_revenue: 0, prev_total_orders: 0, prev_avg_order_value: 0,
+  };
+
+  const recentOrders: BranchRecentOrder[] = (ordersRes.data ?? []).map((row) => {
+    const countArr = row.order_items as { count: number }[] | null;
+    return {
+      id: row.id as string,
+      customerName: (row.customer_name as string | null) ?? "Guest",
+      itemCount: Number(countArr?.[0]?.count ?? 0),
+      total: Number(row.total),
+      createdAt: row.ordered_at as string,
+    };
+  });
+
+  return {
+    kpis: rawKpis ? {
+      total_revenue: Number(rawKpis.total_revenue),
+      total_orders: Number(rawKpis.total_orders),
+      avg_order_value: Number(rawKpis.avg_order_value),
+      items_sold: Number(rawKpis.items_sold),
+      prev_total_revenue: Number(rawKpis.prev_total_revenue),
+      prev_total_orders: Number(rawKpis.prev_total_orders),
+      prev_avg_order_value: Number(rawKpis.prev_avg_order_value),
+    } : emptyKpis,
+    salesByDay: (salesRes.data as BranchSalesDay[]) ?? [],
+    topProducts: (productsRes.data as TopProduct[]) ?? [],
+    topCategories: (categoriesRes.data as TopCategory[]) ?? [],
+    recentOrders,
+  };
 }
 
 export async function deleteBranchInSupabase(id: string): Promise<string | null> {

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Branch } from "../../../_types";
+import DateRangeSelector from "../../dashboard/components/DateRangeSelector";
 
 interface BranchDetailHeaderProps {
   branch: Branch;
@@ -30,6 +31,8 @@ export default function BranchDetailHeader({ branch, onEdit }: BranchDetailHeade
           {branch.name}
         </h1>
 
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <DateRangeSelector />
         <button
           onClick={onEdit}
           className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm flex-shrink-0"
@@ -40,6 +43,7 @@ export default function BranchDetailHeader({ branch, onEdit }: BranchDetailHeade
           </svg>
           Edit Branch
         </button>
+        </div>
       </div>
 
       {/* Address */}
