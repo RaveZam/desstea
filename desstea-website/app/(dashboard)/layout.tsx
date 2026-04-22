@@ -1,12 +1,9 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "../_components/layout/Sidebar";
 import Header from "../_components/layout/Header";
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+async function AuthShell({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,5 +26,27 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen overflow-hidden bg-[#F4F6F8] animate-pulse">
+          <div className="w-[250px] bg-gray-200" />
+          <div className="flex-1 flex flex-col">
+            <div className="h-14 bg-gray-200" />
+            <main className="flex-1" />
+          </div>
+        </div>
+      }
+    >
+      <AuthShell>{children}</AuthShell>
+    </Suspense>
   );
 }

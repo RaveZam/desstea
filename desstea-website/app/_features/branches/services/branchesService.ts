@@ -1,6 +1,8 @@
 import { createAdminClient } from "../../../../lib/supabase/admin";
+import { cacheLife, cacheTag } from "next/cache";
 import type { Branch } from "../../../_types";
-import { getDateBounds, type DateRangeKey, type TopCategory, type TopProduct } from "../../dashboard/services/dashboardService";
+import { getDateBounds, type DateRangeKey } from "../../dashboard/services/dateUtils";
+import type { TopCategory, TopProduct } from "../../dashboard/services/dashboardService";
 
 // ── Branch detail data types ─────────────────────────────────
 
@@ -54,6 +56,9 @@ function mapRow(row: Record<string, unknown>, nameMap: Record<string, string>): 
 }
 
 export async function listBranches(): Promise<Branch[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("branches");
   const supabase = createAdminClient();
   const [{ data, error }, { data: usersData, error: usersError }] = await Promise.all([
     supabase.from("branches").select("*").order("created_at", { ascending: false }),
@@ -86,6 +91,9 @@ export async function listBranches(): Promise<Branch[]> {
 }
 
 export async function getBranchByIdFromDB(id: string): Promise<Branch | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("branches");
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("branches")
@@ -152,6 +160,9 @@ export type BranchDailySummary = {
 };
 
 export async function getTodayOrdersSummary(): Promise<Record<string, BranchDailySummary>> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("orders");
   const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("get_today_orders_summary");
   if (error) {
@@ -169,6 +180,9 @@ export async function getTodayOrdersSummary(): Promise<Record<string, BranchDail
 }
 
 export async function getBranchDetailData(branchId: string, range: DateRangeKey): Promise<BranchDetailData> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("dashboard");
   const supabase = createAdminClient();
   const { start, end } = getDateBounds(range);
   const startIso = start.toISOString();

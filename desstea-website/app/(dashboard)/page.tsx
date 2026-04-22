@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   StatCards,
   SalesChart,
@@ -10,6 +11,7 @@ import {
   getDashboardData,
   type DateRangeKey,
 } from "../_features/dashboard/services/dashboardService";
+import Loading from "./loading";
 
 const PERIOD_LABELS: Record<DateRangeKey, string> = {
   today: "yesterday",
@@ -23,7 +25,7 @@ const RANGE_LABELS: Record<DateRangeKey, string> = {
   "30d": "Last 30 days",
 };
 
-export default async function DashboardPage({
+async function DashboardContent({
   searchParams,
 }: {
   searchParams: Promise<{ range?: string }>;
@@ -94,5 +96,17 @@ export default async function DashboardPage({
         <TopProductsCard products={data.topProducts} />
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <DashboardContent searchParams={searchParams} />
+    </Suspense>
   );
 }

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BranchDetailContent } from "../../../_features/branches";
 import { getBranchByIdFromDB, getBranchDetailData } from "../../../_features/branches/services/branchesService";
 import type { DateRangeKey } from "../../../_features/dashboard/services/dashboardService";
-
-export const dynamic = "force-dynamic";
+import Loading from "./loading";
 
 const PERIOD_LABELS: Record<DateRangeKey, string> = {
   today: "yesterday",
@@ -11,7 +11,7 @@ const PERIOD_LABELS: Record<DateRangeKey, string> = {
   "30d": "prior 30 days",
 };
 
-export default async function BranchDetailPage({
+async function BranchDetailContentWrapper({
   params,
   searchParams,
 }: {
@@ -27,4 +27,18 @@ export default async function BranchDetailPage({
   const data = await getBranchDetailData(branch.id, range);
 
   return <BranchDetailContent branch={branch} data={data} periodLabel={PERIOD_LABELS[range]} />;
+}
+
+export default function BranchDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ range?: string }>;
+}) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <BranchDetailContentWrapper params={params} searchParams={searchParams} />
+    </Suspense>
+  );
 }

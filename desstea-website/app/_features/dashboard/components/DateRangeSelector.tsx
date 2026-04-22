@@ -3,8 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { DateRangeKey } from "../services/dashboardService";
-import { getDateBounds } from "../services/dashboardService";
+import { type DateRangeKey, getDateBounds } from "../services/dateUtils";
 
 function formatDate(d: Date) {
   return d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" });

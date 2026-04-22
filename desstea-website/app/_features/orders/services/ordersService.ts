@@ -1,7 +1,11 @@
 import { createAdminClient } from "../../../../lib/supabase/admin";
+import { cacheLife, cacheTag } from "next/cache";
 import type { Order } from "../../../_types";
 
 export async function listOrders(): Promise<Order[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("orders");
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("orders")
@@ -14,7 +18,7 @@ export async function listOrders(): Promise<Order[]> {
       )
     `)
     .order("ordered_at", { ascending: false })
-    .limit(500);
+    .limit(100);
   if (error) throw new Error(error.message);
 
   return (data ?? []).map((row) => {

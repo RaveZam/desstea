@@ -62,7 +62,7 @@ export default function OrderStatusChart({ topCategories }: Props) {
       </div>
 
       <div className="flex-1 min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={140}>
           <PieChart>
             <Tooltip content={<CustomTooltip />} />
             <Pie
@@ -74,7 +74,6 @@ export default function OrderStatusChart({ topCategories }: Props) {
               dataKey="revenue"
               strokeWidth={0}
               paddingAngle={2}
-              activeOuterRadiusOffset={6}
             >
               {topCategories.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
