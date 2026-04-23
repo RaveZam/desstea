@@ -34,6 +34,11 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "autolinking": {
+      "exclude": [
+        "react-native-thermal-receipt-printer-image-qr"
+      ]
+    },
     "plugins": [
       "expo-router",
       [
@@ -49,6 +54,12 @@
         }
       ]
     ],
+    "updates": {
+      "url": "https://u.expo.dev/6ec8140a-3dda-4a11-baae-156125ab4737"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "experiments": {
       "typedRoutes": true
     },

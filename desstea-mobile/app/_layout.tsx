@@ -14,6 +14,7 @@ import * as Network from "expo-network";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { initDatabase } from "@/lib/database";
+import { cleanOldOrders } from "@/features/outbox/services/clean-old-orders";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { syncCatalog } from "@/lib/sync";
 import { SyncProvider, useBumpSync, useSetSyncing } from "@/lib/sync-context";
@@ -76,8 +77,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    initDatabase();
-    console.log("Db Initialized");
+    initDatabase().then(() => {
+      console.log("Db Initialized");
+      cleanOldOrders().catch((err) =>
+        console.error("[clean-old-orders] failed", err)
+      );
+    });
   }, []);
 
   useEffect(() => {
