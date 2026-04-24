@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
-import { LocalProduct, ProductCustomization } from "../types";
+import { LocalProduct, LocalCombo, ProductCustomization, ComboSlotSelection } from "../types";
 import { useCatalog } from "../hooks/use-catalog";
 import { useOrder } from "../hooks/use-order";
 import { useIsSyncing } from "@/lib/sync-context";
@@ -25,6 +25,7 @@ import { ProductCard } from "../components/product-card";
 import { OrderPanel } from "../components/order-panel";
 import { OrderSummary } from "../components/order-summary";
 import { CustomizationModal } from "../components/customization-modal";
+import { ComboDetailModal } from "../components/combo-detail-modal";
 import { SettingsScreen } from "../../settings/screens/settings-screen";
 import { ReportsScreen } from "../../reports/screens/reports-screen";
 
@@ -46,7 +47,7 @@ function generateSessionId() {
 export default function POSScreen() {
   const { user } = useAuth();
   const { branchName } = useBranchName();
-  const { categories, products } = useCatalog();
+  const { categories, products, combos } = useCatalog();
   const isSyncing = useIsSyncing();
   const [cardSize, setCardSize] = useState(130);
   const [activeSidebarItem, setActiveSidebarItem] = useState("pos");
@@ -54,24 +55,39 @@ export default function POSScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [customizingProduct, setCustomizingProduct] = useState<LocalProduct | null>(null);
+  const [previewingCombo, setPreviewingCombo] = useState<LocalCombo | null>(null);
   const {
     orderItems,
     addToOrder,
+    addComboToOrder,
     updateQuantity,
     total,
     commitOrder,
   } = useOrder();
 
+  const COMBOS_TAB_ID = "__combos__";
+
   // Default to first category once loaded
   const activeCategory = selectedCategory ?? categories[0]?.id ?? null;
+  const isComboTab = activeCategory === COMBOS_TAB_ID;
 
-  const filteredProducts = products.filter((p) => {
-    const matchesCategory = p.category_id === activeCategory;
-    const matchesSearch =
-      searchQuery === "" ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredProducts = isComboTab
+    ? []
+    : products.filter((p) => {
+        const matchesCategory = p.category_id === activeCategory;
+        const matchesSearch =
+          searchQuery === "" ||
+          p.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+  const filteredCombos = isComboTab
+    ? combos.filter(
+        (c) =>
+          searchQuery === "" ||
+          c.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   const getCategoryLabel = (product: LocalProduct) => {
     const cat = categories.find((c) => c.id === product.category_id);
@@ -84,6 +100,10 @@ export default function POSScreen() {
     } else {
       addToOrder(product, undefined, getCategoryLabel(product));
     }
+  };
+
+  const handleComboPress = (combo: LocalCombo) => {
+    setPreviewingCombo(combo);
   };
 
   const handleCustomizationConfirm = (
@@ -105,6 +125,23 @@ export default function POSScreen() {
 
   const renderProductCard = ({ item }: { item: LocalProduct }) => (
     <ProductCard product={item} size={cardSize} onPress={handleProductPress} />
+  );
+
+  const renderComboCard = ({ item }: { item: LocalCombo }) => (
+    <ProductCard
+      product={{
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        base_price: item.price,
+        category_id: COMBOS_TAB_ID,
+        has_sizes: 0,
+        is_available: 1,
+        addon_group_id: null,
+      }}
+      size={cardSize}
+      onPress={() => handleComboPress(item)}
+    />
   );
 
   return (
@@ -207,17 +244,31 @@ export default function POSScreen() {
 
               {/* Category Tabs */}
               <CategoryTabs
-                categories={categories}
+                categories={[
+                  ...categories,
+                  { id: COMBOS_TAB_ID, name: "Combos" },
+                ]}
                 selectedCategory={activeCategory ?? ""}
                 onSelect={setSelectedCategory}
               />
 
-              {/* Product Grid */}
+              {/* Product / Combo Grid */}
               {isSyncing ? (
                 <View style={styles.syncingContainer}>
                   <ActivityIndicator size="large" color={BRAND} />
                   <Text style={styles.syncingText}>Syncing catalog…</Text>
                 </View>
+              ) : isComboTab ? (
+                <FlatList
+                  data={filteredCombos}
+                  renderItem={renderComboCard}
+                  keyExtractor={(item) => item.id}
+                  numColumns={4}
+                  style={styles.productList}
+                  contentContainerStyle={styles.productGrid}
+                  columnWrapperStyle={styles.productRow}
+                  showsVerticalScrollIndicator={false}
+                />
               ) : (
                 <FlatList
                   data={filteredProducts}
@@ -259,6 +310,15 @@ export default function POSScreen() {
         product={customizingProduct}
         onConfirm={handleCustomizationConfirm}
         onCancel={() => setCustomizingProduct(null)}
+      />
+      <ComboDetailModal
+        visible={previewingCombo !== null}
+        combo={previewingCombo}
+        onConfirm={(combo, selections) => {
+          addComboToOrder(combo, selections);
+          setPreviewingCombo(null);
+        }}
+        onCancel={() => setPreviewingCombo(null)}
       />
     </SafeAreaView>
   );

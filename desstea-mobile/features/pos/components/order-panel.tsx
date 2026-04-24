@@ -31,6 +31,11 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
               <Text style={styles.orderItemName} numberOfLines={2}>
                 {item.categoryLabel ? `(${item.categoryLabel}) ${item.product.name}` : item.product.name}
               </Text>
+              {item.itemType === "combo" && item.comboSelections && item.comboSelections.length > 0 && (
+                <Text style={styles.customizationLabel}>
+                  {item.comboSelections.map((s) => s.productName).join(", ")}
+                </Text>
+              )}
               {item.customization && (
                 <>
                   {item.customization.size && (
