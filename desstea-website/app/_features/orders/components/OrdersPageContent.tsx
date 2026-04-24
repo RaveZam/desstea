@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Pagination } from "../../../_components/ui";
 import OrderFilters from "./OrderFilters";
 import OrdersTable from "./OrdersTable";
 import OrderDetailPanel from "./OrderDetailPanel";
+import { useOrdersRealtime } from "../hooks/use-orders-realtime";
 import type { Branch, Order } from "../../../_types";
 
 const PAGE_SIZE = 9;
@@ -18,10 +19,22 @@ export default function OrdersPageContent({
   initialOrders,
   initialBranches,
 }: OrdersPageContentProps) {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [search, setSearch] = useState("");
   const [branch, setBranch] = useState("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Order | null>(null);
+
+  const handleNewOrder = useCallback((order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+    setPage(1);
+  }, []);
+
+  const { seedKnownIds } = useOrdersRealtime(initialBranches, handleNewOrder);
+
+  useEffect(() => {
+    seedKnownIds(initialOrders);
+  }, [initialOrders, seedKnownIds]);
 
   const branchOptions = useMemo(
     () => [
@@ -32,7 +45,7 @@ export default function OrdersPageContent({
   );
 
   const filtered = useMemo(() => {
-    return initialOrders.filter((o) => {
+    return orders.filter((o) => {
       const matchSearch =
         !search ||
         o.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -40,7 +53,7 @@ export default function OrdersPageContent({
       const matchBranch = branch === "all" || o.branchId === branch;
       return matchSearch && matchBranch;
     });
-  }, [search, branch, initialOrders]);
+  }, [search, branch, orders]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
