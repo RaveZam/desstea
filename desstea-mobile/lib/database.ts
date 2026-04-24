@@ -55,6 +55,33 @@ export async function initDatabase() {
       synced_at  TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS combos (
+      id           TEXT PRIMARY KEY,
+      name         TEXT NOT NULL,
+      description  TEXT,
+      price        REAL NOT NULL DEFAULT 0.00,
+      is_available INTEGER NOT NULL DEFAULT 1,
+      created_at   TEXT,
+      deleted_at   TEXT,
+      synced_at    TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS combo_slots (
+      id          TEXT PRIMARY KEY,
+      combo_id    TEXT NOT NULL REFERENCES combos(id),
+      category_id TEXT,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      synced_at   TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS combo_slot_products (
+      id            TEXT PRIMARY KEY,
+      combo_slot_id TEXT NOT NULL REFERENCES combo_slots(id),
+      product_id    TEXT NOT NULL,
+      quantity      INTEGER NOT NULL DEFAULT 1,
+      synced_at     TEXT
+    );
+
     -- Watermark table: tracks the last successful sync timestamp
     CREATE TABLE IF NOT EXISTS sync_meta (
       key   TEXT PRIMARY KEY,
@@ -76,6 +103,9 @@ export async function initDatabase() {
     CREATE TABLE IF NOT EXISTS order_items (
       id                     TEXT PRIMARY KEY,
       order_id               TEXT NOT NULL REFERENCES orders(id),
+      item_type              TEXT NOT NULL DEFAULT 'product',
+      combo_id               TEXT,
+      combo_name_snapshot    TEXT,
       product_id             TEXT,
       product_size_id        TEXT,
       product_name_snapshot  TEXT NOT NULL,
@@ -84,6 +114,16 @@ export async function initDatabase() {
       unit_price_snapshot    REAL NOT NULL,
       created_at             TEXT NOT NULL,
       total_price            REAL NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS order_item_combo_selections (
+      id                    TEXT PRIMARY KEY,
+      order_item_id         TEXT NOT NULL REFERENCES order_items(id),
+      combo_slot_id         TEXT NOT NULL,
+      slot_name_snapshot    TEXT NOT NULL,
+      product_id            TEXT NOT NULL,
+      product_name_snapshot TEXT NOT NULL,
+      created_at            TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS order_item_addons (
@@ -106,4 +146,45 @@ export async function initDatabase() {
       created_at TEXT NOT NULL
     );
   `);
+
+  // Migrations for existing databases — safe to re-run (errors ignored)
+  const migrations = [
+    `ALTER TABLE order_items ADD COLUMN item_type TEXT NOT NULL DEFAULT 'product'`,
+    `ALTER TABLE order_items ADD COLUMN combo_id TEXT`,
+    `ALTER TABLE order_items ADD COLUMN combo_name_snapshot TEXT`,
+    `ALTER TABLE combo_slot_products ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1`,
+  ];
+  for (const sql of migrations) {
+    try {
+      await db.execAsync(sql);
+    } catch {
+      // Column already exists on fresh databases — ignore
+    }
+  }
+
+  // Rebuild combo_slots if it still has the legacy 'name' column (schema drift fix)
+  const hasNameCol = db.getFirstSync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM pragma_table_info('combo_slots') WHERE name = 'name'`
+  );
+  if (hasNameCol && hasNameCol.count > 0) {
+    await db.execAsync(`
+      CREATE TABLE combo_slots_new (
+        id          TEXT PRIMARY KEY,
+        combo_id    TEXT NOT NULL REFERENCES combos(id),
+        category_id TEXT,
+        sort_order  INTEGER NOT NULL DEFAULT 0,
+        synced_at   TEXT
+      );
+      DROP TABLE combo_slot_products;
+      DROP TABLE combo_slots;
+      ALTER TABLE combo_slots_new RENAME TO combo_slots;
+      CREATE TABLE combo_slot_products (
+        id            TEXT PRIMARY KEY,
+        combo_slot_id TEXT NOT NULL REFERENCES combo_slots(id),
+        product_id    TEXT NOT NULL,
+        quantity      INTEGER NOT NULL DEFAULT 1,
+        synced_at     TEXT
+      );
+    `);
+  }
 }

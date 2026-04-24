@@ -290,3 +290,218 @@ export async function deleteAddonGroupTemplate(id: string): Promise<string | nul
   const { error } = await supabase.from("addon_groups").delete().eq("id", id);
   return error ? error.message : null;
 }
+
+// ── Combos ────────────────────────────────────────────────────
+
+export interface ComboSlotProductRow {
+  product_id: string;
+  product_name: string;
+  base_price: number;
+  quantity: number;
+}
+
+export interface ComboSlotRow {
+  id: string;
+  sort_order: number;
+  category_id: string;
+  category_name: string;
+  products: ComboSlotProductRow[];
+}
+
+export interface ComboRow {
+  id: string;
+  name: string;
+  price: number;
+  is_available: boolean;
+  created_at: string;
+  slots: ComboSlotRow[];
+  available_branch_ids: string[];
+}
+
+export async function listCombos(): Promise<ComboRow[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("combos")
+    .select(`
+      id, name, price, is_available, created_at,
+      branch_combo_availability ( branch_id, is_available ),
+      combo_slots (
+        id, sort_order, category_id,
+        categories ( name ),
+        combo_slot_products (
+          product_id, quantity,
+          products ( name, base_price )
+        )
+      )
+    `)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => {
+    const available_branch_ids = ((row.branch_combo_availability ?? []) as Record<string, unknown>[])
+      .filter((b) => b.is_available === true)
+      .map((b) => b.branch_id as string);
+
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      price: row.price as number,
+      is_available: row.is_available as boolean,
+      created_at: row.created_at as string,
+      available_branch_ids,
+      slots: ((row.combo_slots ?? []) as Record<string, unknown>[])
+        .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
+        .map((slot) => {
+          const cat = slot.categories as { name: string } | null;
+          return {
+            id: slot.id as string,
+            sort_order: slot.sort_order as number,
+            category_id: slot.category_id as string,
+            category_name: cat?.name ?? "",
+            products: ((slot.combo_slot_products ?? []) as Record<string, unknown>[]).map((sp) => {
+              const prod = sp.products as { name: string; base_price: number } | null;
+              return {
+                product_id: sp.product_id as string,
+                product_name: prod?.name ?? "",
+                base_price: (prod?.base_price as number) ?? 0,
+                quantity: sp.quantity as number,
+              };
+            }),
+          };
+        }),
+    };
+  });
+}
+
+export async function createComboInSupabase(
+  data: {
+    name: string;
+    price: number;
+    is_available: boolean;
+    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    available_branch_ids: string[];
+  },
+  allBranchIds: string[]
+): Promise<string | null> {
+  const supabase = createAdminClient();
+
+  const { data: inserted, error: comboErr } = await supabase
+    .from("combos")
+    .insert({ name: data.name, price: data.price, is_available: data.is_available })
+    .select("id")
+    .single();
+  if (comboErr) return comboErr.message;
+
+  const comboId = inserted.id as string;
+
+  for (let i = 0; i < data.slots.length; i++) {
+    const slot = data.slots[i];
+    const { data: slotInserted, error: slotErr } = await supabase
+      .from("combo_slots")
+      .insert({ combo_id: comboId, category_id: slot.category_id, sort_order: i })
+      .select("id")
+      .single();
+    if (slotErr) return slotErr.message;
+
+    const validProducts = slot.products.filter((p) => p.product_id);
+    if (validProducts.length > 0) {
+      const { error: spErr } = await supabase
+        .from("combo_slot_products")
+        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity })));
+      if (spErr) return spErr.message;
+    }
+  }
+
+  const availRows = allBranchIds.map((branchId) => ({
+    combo_id: comboId,
+    branch_id: branchId,
+    is_available: data.available_branch_ids.includes(branchId),
+  }));
+  const { error: availErr } = await supabase
+    .from("branch_combo_availability")
+    .upsert(availRows, { onConflict: "combo_id,branch_id" });
+  if (availErr) return availErr.message;
+
+  return null;
+}
+
+export async function updateComboInSupabase(
+  id: string,
+  data: {
+    name: string;
+    price: number;
+    is_available: boolean;
+    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    available_branch_ids: string[];
+  },
+  allBranchIds: string[]
+): Promise<string | null> {
+  const supabase = createAdminClient();
+
+  const { error: comboErr } = await supabase
+    .from("combos")
+    .update({ name: data.name, price: data.price, is_available: data.is_available })
+    .eq("id", id);
+  if (comboErr) return comboErr.message;
+
+  const { data: existingSlots, error: fetchErr } = await supabase
+    .from("combo_slots")
+    .select("id")
+    .eq("combo_id", id);
+  if (fetchErr) return fetchErr.message;
+
+  if (existingSlots && existingSlots.length > 0) {
+    const slotIds = existingSlots.map((s) => s.id as string);
+    const { error: delSpErr } = await supabase
+      .from("combo_slot_products")
+      .delete()
+      .in("slot_id", slotIds);
+    if (delSpErr) return delSpErr.message;
+
+    const { error: delSlotErr } = await supabase
+      .from("combo_slots")
+      .delete()
+      .eq("combo_id", id);
+    if (delSlotErr) return delSlotErr.message;
+  }
+
+  for (let i = 0; i < data.slots.length; i++) {
+    const slot = data.slots[i];
+    const { data: slotInserted, error: slotErr } = await supabase
+      .from("combo_slots")
+      .insert({ combo_id: id, category_id: slot.category_id, sort_order: i })
+      .select("id")
+      .single();
+    if (slotErr) return slotErr.message;
+
+    const validProducts = slot.products.filter((p) => p.product_id);
+    if (validProducts.length > 0) {
+      const { error: spErr } = await supabase
+        .from("combo_slot_products")
+        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity })));
+      if (spErr) return spErr.message;
+    }
+  }
+
+  const availRows = allBranchIds.map((branchId) => ({
+    combo_id: id,
+    branch_id: branchId,
+    is_available: data.available_branch_ids.includes(branchId),
+  }));
+  const { error: availErr } = await supabase
+    .from("branch_combo_availability")
+    .upsert(availRows, { onConflict: "combo_id,branch_id" });
+  if (availErr) return availErr.message;
+
+  return null;
+}
+
+export async function deleteComboInSupabase(id: string): Promise<string | null> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("combos")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+  return error ? error.message : null;
+}

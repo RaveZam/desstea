@@ -12,6 +12,9 @@ import {
   createAddonGroupTemplate,
   updateAddonGroupTemplate,
   deleteAddonGroupTemplate,
+  createComboInSupabase,
+  updateComboInSupabase,
+  deleteComboInSupabase,
 } from "./services/productsService";
 import { listBranches } from "../branches/services/branchesService";
 
@@ -97,6 +100,46 @@ export async function updateAddonGroup(
 
 export async function deleteAddonGroup(id: string): Promise<{ error: string | null }> {
   const error = await deleteAddonGroupTemplate(id);
+  if (error) return { error };
+  revalidatePath("/products");
+  return { error: null };
+}
+
+export async function createCombo(data: {
+  name: string;
+  price: number;
+  is_available: boolean;
+  slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+  available_branch_ids: string[];
+}): Promise<{ error: string | null }> {
+  const branches = await listBranches();
+  const allBranchIds = branches.map((b) => b.id);
+  const error = await createComboInSupabase(data, allBranchIds);
+  if (error) return { error };
+  revalidatePath("/products");
+  return { error: null };
+}
+
+export async function updateCombo(
+  id: string,
+  data: {
+    name: string;
+    price: number;
+    is_available: boolean;
+    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    available_branch_ids: string[];
+  }
+): Promise<{ error: string | null }> {
+  const branches = await listBranches();
+  const allBranchIds = branches.map((b) => b.id);
+  const error = await updateComboInSupabase(id, data, allBranchIds);
+  if (error) return { error };
+  revalidatePath("/products");
+  return { error: null };
+}
+
+export async function deleteCombo(id: string): Promise<{ error: string | null }> {
+  const error = await deleteComboInSupabase(id);
   if (error) return { error };
   revalidatePath("/products");
   return { error: null };

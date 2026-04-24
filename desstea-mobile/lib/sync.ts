@@ -55,21 +55,17 @@ async function fullSync(branchId: string, now: string): Promise<void> {
     .select("id, name, description, created_at")
     .is("deleted_at", null);
   if (catErr) throw new Error(`categories: ${catErr.message}`);
-  logTable("categories", categories ?? []);
-
   // 2. All addon groups
   const { data: addonGroups, error: agErr } = await supabase
     .from("addon_groups")
     .select("id, name, category_id");
   if (agErr) throw new Error(`addon_groups: ${agErr.message}`);
-  logTable("addon_groups", addonGroups ?? []);
 
   // 3. All addon options
   const { data: addonOptions, error: aoErr } = await supabase
     .from("addon_options")
     .select("id, addon_group_id, name, price_modifier, is_available, sort_order");
   if (aoErr) throw new Error(`addon_options: ${aoErr.message}`);
-  logTable("addon_options", addonOptions ?? []);
 
   // 4. Branch availability — Supabase is the source of truth; only available products
   const { data: availability, error: avErr } = await supabase
@@ -78,12 +74,56 @@ async function fullSync(branchId: string, now: string): Promise<void> {
     .eq("branch_id", branchId)
     .eq("is_available", true);
   if (avErr) throw new Error(`branch_product_availability: ${avErr.message}`);
-  logTable("branch_product_availability", availability ?? []);
 
   const productIds = (availability ?? []).map((a) => a.product_id);
-  log(`products to fetch: ${productIds.length}`);
 
-  // 5. Products for this branch
+  // 5. Branch combo availability — source of truth for which combos this branch has
+  const { data: comboAvailability, error: caErr } = await supabase
+    .from("branch_combo_availability")
+    .select("combo_id")
+    .eq("branch_id", branchId)
+    .eq("is_available", true);
+  if (caErr) throw new Error(`branch_combo_availability: ${caErr.message}`);
+  logTable("branch_combo_availability", comboAvailability ?? []);
+
+  const comboIds = (comboAvailability ?? []).map((a) => a.combo_id);
+
+  let combos: any[] = [];
+  let comboSlots: any[] = [];
+  let comboSlotProducts: any[] = [];
+  if (comboIds.length > 0) {
+    const { data: c, error: cErr } = await supabase
+      .from("combos")
+      .select("id, name, description, price, is_available, created_at, deleted_at")
+      .in("id", comboIds)
+      .is("deleted_at", null);
+    if (cErr) throw new Error(`combos: ${cErr.message}`);
+    combos = c ?? [];
+    logTable("combos", combos);
+
+    const { data: cs, error: csErr } = await supabase
+      .from("combo_slots")
+      .select("id, combo_id, category_id, sort_order")
+      .in("combo_id", comboIds);
+    if (csErr) throw new Error(`combo_slots: ${csErr.message}`);
+    comboSlots = cs ?? [];
+    logTable("combo_slots", comboSlots);
+
+    const slotIds = comboSlots.map((s) => s.id);
+    if (slotIds.length > 0) {
+      const { data: csp, error: cspErr } = await supabase
+        .from("combo_slot_products")
+        .select("id, slot_id, product_id, quantity")
+        .in("slot_id", slotIds);
+      if (cspErr) throw new Error(`combo_slot_products: ${cspErr.message}`);
+      comboSlotProducts = (csp ?? []).map((r) => ({ ...r, combo_slot_id: r.slot_id }));
+      logTable("combo_slot_products", comboSlotProducts);
+    }
+  } else {
+    log("combos → none available for this branch");
+  }
+
+  // 6. Products for this branch
   let products: any[] = [];
   let productSizes: any[] = [];
   if (productIds.length > 0) {
@@ -94,7 +134,6 @@ async function fullSync(branchId: string, now: string): Promise<void> {
       .is("deleted_at", null);
     if (pErr) throw new Error(`products: ${pErr.message}`);
     products = p ?? [];
-    logTable("products", products);
 
     const activeIds = products.map((p) => p.id);
     if (activeIds.length > 0) {
@@ -104,15 +143,15 @@ async function fullSync(branchId: string, now: string): Promise<void> {
         .in("product_id", activeIds);
       if (psErr) throw new Error(`product_sizes: ${psErr.message}`);
       productSizes = ps ?? [];
-      logTable("product_sizes", productSizes);
     }
-  } else {
-    log("products → none available for this branch");
   }
 
   log("writing to SQLite...");
   await db.withTransactionAsync(async () => {
     // Clear all existing data so deleted/removed rows don't linger
+    await db.runAsync(`DELETE FROM combo_slot_products`);
+    await db.runAsync(`DELETE FROM combo_slots`);
+    await db.runAsync(`DELETE FROM combos`);
     await db.runAsync(`DELETE FROM product_sizes`);
     await db.runAsync(`DELETE FROM products`);
     await db.runAsync(`DELETE FROM addon_options`);
@@ -160,6 +199,29 @@ async function fullSync(branchId: string, now: string): Promise<void> {
         [ps.id, ps.product_id, ps.label, ps.size_price, ps.sort_order, now]
       );
     }
+    for (const c of combos) {
+      await db.runAsync(
+        `INSERT INTO combos
+           (id, name, description, price, is_available, created_at, deleted_at, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [c.id, c.name, c.description ?? null, c.price, c.is_available ? 1 : 0,
+         c.created_at ?? null, null, now]
+      );
+    }
+    for (const cs of comboSlots) {
+      await db.runAsync(
+        `INSERT INTO combo_slots (id, combo_id, category_id, sort_order, synced_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [cs.id, cs.combo_id, cs.category_id ?? null, cs.sort_order, now]
+      );
+    }
+    for (const csp of comboSlotProducts) {
+      await db.runAsync(
+        `INSERT INTO combo_slot_products (id, combo_slot_id, product_id, quantity, synced_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [csp.id, csp.combo_slot_id, csp.product_id, csp.quantity ?? 1, now]
+      );
+    }
   });
 
   log(`✔ FULL SYNC complete — synced_at: ${now}`);
@@ -174,8 +236,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
   // Get locally known product IDs from SQLite products table (source of truth for local state)
   const localProductRows = db.getAllSync<{ id: string }>(`SELECT id FROM products`);
   const localProductIds = localProductRows.map((r) => r.id);
-  log(`local product IDs: ${localProductIds.length}`, localProductIds);
-
   // ── Upsert: products updated since last sync (branch-filtered, not deleted) ──
   let updatedProducts: any[] = [];
   if (localProductIds.length > 0) {
@@ -188,8 +248,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     if (error) throw new Error(`products incremental: ${error.message}`);
     updatedProducts = data ?? [];
   }
-  logTable("products (updated)", updatedProducts);
-
   // Also catch any new/updated availability records for this branch since last sync
   const { data: newAvailability, error: navErr } = await supabase
     .from("branch_product_availability")
@@ -197,8 +255,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     .eq("branch_id", branchId)
     .gt("updated_at", lastSyncedAt);
   if (navErr) throw new Error(`branch_product_availability incremental: ${navErr.message}`);
-  logTable("branch_product_availability (new/updated)", newAvailability ?? []);
-
   // Fetch the current full availability list to detect removed/unavailable products
   const { data: currentAvailability, error: curAvErr } = await supabase
     .from("branch_product_availability")
@@ -208,8 +264,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
   if (curAvErr) throw new Error(`branch_product_availability current: ${curAvErr.message}`);
   const remoteProductIds = new Set((currentAvailability ?? []).map((a) => a.product_id));
   const removedProductIds = localProductIds.filter((id) => !remoteProductIds.has(id));
-  log(`products removed from branch: ${removedProductIds.length}`, removedProductIds);
-
   // New products added to this branch that aren't in local SQLite yet
   const newProductIds = (newAvailability ?? [])
     .filter((a) => a.is_available)
@@ -217,7 +271,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     .filter((id) => !localProductIds.includes(id));
 
   if (newProductIds.length > 0) {
-    log(`new products added to branch: ${newProductIds.length}`, newProductIds);
     const { data, error } = await supabase
       .from("products")
       .select("id, category_id, addon_group_id, name, description, base_price, has_sizes, is_available, created_at, deleted_at")
@@ -225,7 +278,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
       .is("deleted_at", null);
     if (error) throw new Error(`new products: ${error.message}`);
     updatedProducts = [...updatedProducts, ...(data ?? [])];
-    logTable("products (newly added to branch)", data ?? []);
   }
 
   const changedProductIds = updatedProducts.map((p) => p.id);
@@ -240,8 +292,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     if (error) throw new Error(`product_sizes incremental: ${error.message}`);
     updatedSizes = data ?? [];
   }
-  logTable("product_sizes (re-fetched)", updatedSizes);
-
   // Re-fetch addon groups & options for changed products' addon_group_ids
   const addonGroupIds = [
     ...new Set(
@@ -268,9 +318,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     if (aoErr) throw new Error(`addon_options incremental: ${aoErr.message}`);
     updatedAddonOptions = ao ?? [];
   }
-  logTable("addon_groups (re-fetched)", updatedAddonGroups);
-  logTable("addon_options (re-fetched)", updatedAddonOptions);
-
   // Re-fetch categories for changed products
   const categoryIds = [
     ...new Set(updatedProducts.map((p) => p.category_id).filter(Boolean) as string[]),
@@ -285,8 +332,6 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     if (error) throw new Error(`categories incremental: ${error.message}`);
     updatedCategories = data ?? [];
   }
-  logTable("categories (re-fetched)", updatedCategories);
-
   // ── Delete: products soft-deleted since last sync ──────────────────────────
   const { data: deletedProducts, error: delErr } = await supabase
     .from("products")
@@ -294,15 +339,82 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
     .not("deleted_at", "is", null)
     .gt("deleted_at", lastSyncedAt);
   if (delErr) throw new Error(`deleted products: ${delErr.message}`);
-  logTable("products (deleted)", deletedProducts ?? []);
-
   const deletedIds = (deletedProducts ?? []).map((p) => p.id);
+
+  // ── Combos: check branch_combo_availability for changes, then fetch updated combos ──
+  const { data: newComboAvailability, error: ncaErr } = await supabase
+    .from("branch_combo_availability")
+    .select("combo_id, is_available")
+    .eq("branch_id", branchId)
+    .gt("updated_at", lastSyncedAt);
+  if (ncaErr) throw new Error(`branch_combo_availability incremental: ${ncaErr.message}`);
+  logTable("branch_combo_availability (new/updated)", newComboAvailability ?? []);
+
+  // Current full list of available combo IDs for this branch
+  const { data: currentComboAvail, error: ccaErr } = await supabase
+    .from("branch_combo_availability")
+    .select("combo_id")
+    .eq("branch_id", branchId)
+    .eq("is_available", true);
+  if (ccaErr) throw new Error(`branch_combo_availability current: ${ccaErr.message}`);
+  const remoteComboIds = new Set((currentComboAvail ?? []).map((a) => a.combo_id));
+  const localComboRows = db.getAllSync<{ id: string }>(`SELECT id FROM combos`);
+  const localComboIds = localComboRows.map((r) => r.id);
+  const removedComboIds = localComboIds.filter((id) => !remoteComboIds.has(id));
+  log(`combos removed from branch: ${removedComboIds.length}`, removedComboIds);
+
+  // Combos updated since last sync (via availability change)
+  const changedComboAvailIds = (newComboAvailability ?? [])
+    .filter((a) => a.is_available)
+    .map((a) => a.combo_id);
+
+  // Combos currently available remotely but missing from local SQLite (e.g. restored after removal)
+  const missingComboIds = [...remoteComboIds].filter((id) => !localComboIds.includes(id));
+
+  const comboIdsToFetch = [...new Set([...changedComboAvailIds, ...missingComboIds])];
+
+  let updatedCombos: any[] = [];
+  if (comboIdsToFetch.length > 0) {
+    const { data, error } = await supabase
+      .from("combos")
+      .select("id, name, description, price, is_available, created_at, deleted_at")
+      .in("id", comboIdsToFetch)
+      .is("deleted_at", null);
+    if (error) throw new Error(`combos incremental: ${error.message}`);
+    updatedCombos = data ?? [];
+  }
+  logTable("combos (updated)", updatedCombos);
+
+  let updatedComboSlots: any[] = [];
+  let updatedComboSlotProducts: any[] = [];
+  const updatedComboIds = (updatedCombos ?? []).map((c) => c.id);
+  if (updatedComboIds.length > 0) {
+    const { data: cs, error: csErr } = await supabase
+      .from("combo_slots")
+      .select("id, combo_id, category_id, sort_order")
+      .in("combo_id", updatedComboIds);
+    if (csErr) throw new Error(`combo_slots incremental: ${csErr.message}`);
+    updatedComboSlots = cs ?? [];
+
+    const slotIds = updatedComboSlots.map((s) => s.id);
+    if (slotIds.length > 0) {
+      const { data: csp, error: cspErr } = await supabase
+        .from("combo_slot_products")
+        .select("id, slot_id, product_id, quantity")
+        .in("slot_id", slotIds);
+      if (cspErr) throw new Error(`combo_slot_products incremental: ${cspErr.message}`);
+      updatedComboSlotProducts = (csp ?? []).map((r) => ({ ...r, combo_slot_id: r.slot_id }));
+    }
+  }
 
   if (
     updatedProducts.length === 0 &&
     (newAvailability ?? []).length === 0 &&
     deletedIds.length === 0 &&
-    removedProductIds.length === 0
+    removedProductIds.length === 0 &&
+    updatedCombos.length === 0 &&
+    (newComboAvailability ?? []).length === 0 &&
+    removedComboIds.length === 0
   ) {
     log("✔ nothing changed since last sync — skipping write");
     return;
@@ -368,21 +480,47 @@ async function incrementalSync(branchId: string, lastSyncedAt: string, now: stri
       await db.runAsync(`DELETE FROM product_sizes WHERE product_id = ?`, [id]);
       await db.runAsync(`DELETE FROM products WHERE id = ?`, [id]);
     }
+    for (const id of removedComboIds) {
+      await db.runAsync(`DELETE FROM combo_slot_products WHERE combo_slot_id IN (SELECT id FROM combo_slots WHERE combo_id = ?)`, [id]);
+      await db.runAsync(`DELETE FROM combo_slots WHERE combo_id = ?`, [id]);
+      await db.runAsync(`DELETE FROM combos WHERE id = ?`, [id]);
+    }
+    for (const c of updatedCombos) {
+      await db.runAsync(`DELETE FROM combo_slot_products WHERE combo_slot_id IN (SELECT id FROM combo_slots WHERE combo_id = ?)`, [c.id]);
+      await db.runAsync(`DELETE FROM combo_slots WHERE combo_id = ?`, [c.id]);
+      await db.runAsync(
+        `INSERT OR REPLACE INTO combos
+           (id, name, description, price, is_available, created_at, deleted_at, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [c.id, c.name, c.description ?? null, c.price, c.is_available ? 1 : 0,
+         c.created_at ?? null, null, now]
+      );
+    }
+    for (const cs of updatedComboSlots) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO combo_slots (id, combo_id, category_id, sort_order, synced_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [cs.id, cs.combo_id, cs.category_id ?? null, cs.sort_order, now]
+      );
+    }
+    for (const csp of updatedComboSlotProducts) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO combo_slot_products (id, combo_slot_id, product_id, quantity, synced_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [csp.id, csp.combo_slot_id, csp.product_id, csp.quantity ?? 1, now]
+      );
+    }
   });
 
   log(`✔ INCREMENTAL SYNC complete — synced_at: ${now}`);
-  log(`  upserted: ${updatedProducts.length} products, ${updatedSizes.length} sizes, ${updatedAddonGroups.length} addon groups, ${updatedAddonOptions.length} addon options, ${updatedCategories.length} categories`);
-  log(`  deleted:  ${deletedIds.length} products (soft-deleted), ${removedProductIds.length} products (removed from branch)`);
+  log(`  combos: upserted ${updatedCombos.length}, removed ${removedComboIds.length}`);
 }
 
 function logSQLiteTables(): void {
-  log("━━━ SQLite snapshot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  logTable("categories", db.getAllSync(`SELECT * FROM categories`));
-  logTable("addon_groups", db.getAllSync(`SELECT * FROM addon_groups`));
-  logTable("addon_options", db.getAllSync(`SELECT * FROM addon_options`));
-  logTable("products", db.getAllSync(`SELECT * FROM products`));
-  logTable("product_sizes", db.getAllSync(`SELECT * FROM product_sizes`));
-  logTable("sync_meta", db.getAllSync(`SELECT * FROM sync_meta`));
+  log("━━━ SQLite combo snapshot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  logTable("combos", db.getAllSync(`SELECT * FROM combos`));
+  logTable("combo_slots", db.getAllSync(`SELECT * FROM combo_slots`));
+  logTable("combo_slot_products", db.getAllSync(`SELECT * FROM combo_slot_products`));
   log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }
 

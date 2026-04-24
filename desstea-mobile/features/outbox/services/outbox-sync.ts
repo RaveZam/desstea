@@ -33,9 +33,10 @@ export async function processOutbox(): Promise<void> {
       const orderId = payload["order_id"] as string | undefined;
       if (orderId && failedOrderIds.has(orderId)) continue;
     }
-    if (entry.table_name === "order_item_addons") {
-      // We need to find the order_id via the order_item; check against known failed orders
-      // by looking up the order_item's order_id from the local DB
+    if (
+      entry.table_name === "order_item_addons" ||
+      entry.table_name === "order_item_combo_selections"
+    ) {
       const orderItemId = payload["order_item_id"] as string | undefined;
       if (orderItemId) {
         const row = db.getFirstSync<{ order_id: string }>(
