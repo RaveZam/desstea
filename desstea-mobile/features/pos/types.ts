@@ -53,6 +53,8 @@ export type ComboSlotSelection = {
   slotName: string;
   productId: string;
   productName: string;
+  addonGroupId: string | null;
+  addons: AddonWithQty[];
 };
 
 export type OrderItem = {
@@ -66,7 +68,12 @@ export type OrderItem = {
 };
 
 export function getItemPrice(item: OrderItem): number {
-  if (item.itemType === "combo") return item.product.base_price;
+  if (item.itemType === "combo") {
+    const addonTotal = (item.comboSelections ?? []).reduce((sum, sel) => {
+      return sum + sel.addons.reduce((s, aq) => s + aq.option.price_modifier * aq.qty, 0);
+    }, 0);
+    return item.product.base_price + addonTotal;
+  }
   const base = item.customization?.size?.size_price ?? item.product.base_price;
   const addons = (item.customization?.addonOptions ?? []).reduce(
     (sum, aq) => sum + aq.option.price_modifier * aq.qty,
@@ -79,7 +86,14 @@ export function getItemKey(item: OrderItem): string {
   if (item.itemType === "combo") {
     if (item.comboSelections && item.comboSelections.length > 0) {
       const selKey = item.comboSelections
-        .map((s) => `${s.slotId}:${s.productId}`)
+        .map((s) => {
+          const addonKey = s.addons
+            .filter((aq) => aq.qty > 0)
+            .map((aq) => `${aq.option.id}x${aq.qty}`)
+            .sort()
+            .join("|");
+          return `${s.slotId}:${s.productId}:${addonKey}`;
+        })
         .sort()
         .join(",");
       return `combo__${item.product.id}__${selKey}`;

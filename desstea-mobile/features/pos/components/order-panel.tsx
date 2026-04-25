@@ -32,9 +32,22 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
                 {item.categoryLabel ? `(${item.categoryLabel}) ${item.product.name}` : item.product.name}
               </Text>
               {item.itemType === "combo" && item.comboSelections && item.comboSelections.length > 0 && (
-                <Text style={styles.customizationLabel}>
-                  {item.comboSelections.map((s) => s.productName).join(", ")}
-                </Text>
+                <>
+                  <Text style={styles.customizationLabel}>
+                    {item.comboSelections.map((s) => s.productName).join(", ")}
+                  </Text>
+                  {(() => {
+                    const allAddons = item.comboSelections.flatMap((s) => s.addons);
+                    if (allAddons.length === 0) return null;
+                    return (
+                      <Text style={styles.customizationLabel}>
+                        +{allAddons
+                          .map((aq) => aq.qty > 1 ? `${aq.option.name} ×${aq.qty}` : aq.option.name)
+                          .join(", ")}
+                      </Text>
+                    );
+                  })()}
+                </>
               )}
               {item.customization && (
                 <>

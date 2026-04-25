@@ -103,7 +103,6 @@ export async function initDatabase() {
     CREATE TABLE IF NOT EXISTS order_items (
       id                     TEXT PRIMARY KEY,
       order_id               TEXT NOT NULL REFERENCES orders(id),
-      item_type              TEXT NOT NULL DEFAULT 'product',
       combo_id               TEXT,
       combo_name_snapshot    TEXT,
       product_id             TEXT,
@@ -149,7 +148,6 @@ export async function initDatabase() {
 
   // Migrations for existing databases — safe to re-run (errors ignored)
   const migrations = [
-    `ALTER TABLE order_items ADD COLUMN item_type TEXT NOT NULL DEFAULT 'product'`,
     `ALTER TABLE order_items ADD COLUMN combo_id TEXT`,
     `ALTER TABLE order_items ADD COLUMN combo_name_snapshot TEXT`,
     `ALTER TABLE combo_slot_products ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1`,

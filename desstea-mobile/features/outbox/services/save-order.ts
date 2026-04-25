@@ -111,7 +111,6 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             JSON.stringify({
               id: itemId,
               order_id: orderId,
-              item_type: "combo",
               combo_id: combo.id,
               combo_name_snapshot: combo.name,
               product_id: null,
@@ -119,7 +118,6 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,
-              total_price: totalPrice,
             }),
             2,
             now,
@@ -157,6 +155,37 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               now,
             ]
           );
+
+          // INSERT addons for this combo slot selection
+          for (const aq of sel.addons.filter((a) => a.qty > 0)) {
+            const addonId = uuidv4();
+
+            await db.runAsync(
+              `INSERT INTO order_item_addons (id, order_item_id, addon_option_id, addon_name_snapshot, price_modifier_snapshot, quantity, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              [addonId, itemId, aq.option.id, aq.option.name, aq.option.price_modifier, aq.qty, now]
+            );
+
+            await db.runAsync(
+              `INSERT INTO outbox (table_name, record_id, payload, priority, status, created_at)
+               VALUES (?, ?, ?, ?, 'pending', ?)`,
+              [
+                "order_item_addons",
+                addonId,
+                JSON.stringify({
+                  id: addonId,
+                  order_item_id: itemId,
+                  addon_option_id: aq.option.id,
+                  addon_name_snapshot: aq.option.name,
+                  price_modifier_snapshot: aq.option.price_modifier,
+                  quantity: aq.qty,
+                  created_at: now,
+                }),
+                3,
+                now,
+              ]
+            );
+          }
         }
       } else {
         const sizeId = item.customization?.size?.id ?? null;
@@ -165,10 +194,10 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
         // INSERT order_item (product)
         await db.runAsync(
           `INSERT INTO order_items
-             (id, order_id, item_type, combo_id, combo_name_snapshot,
+             (id, order_id, combo_id, combo_name_snapshot,
               product_id, product_size_id, product_name_snapshot,
               size_label_snapshot, quantity, unit_price_snapshot, created_at, total_price)
-           VALUES (?, ?, 'product', NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             orderId,
@@ -193,7 +222,6 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             JSON.stringify({
               id: itemId,
               order_id: orderId,
-              item_type: "product",
               combo_id: null,
               combo_name_snapshot: null,
               product_id: item.product.id,
@@ -203,7 +231,6 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,
-              total_price: totalPrice,
             }),
             2,
             now,
