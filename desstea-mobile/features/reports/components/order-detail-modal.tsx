@@ -11,8 +11,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { CompletedOrder } from "../types";
 
-const BRAND = "#6B4F3A";
-const BRAND_LIGHT = "#F2EBE5";
+const BRAND = "#E8692A";
+const BRAND_LIGHT = "#FFF3ED";
 const DARK = "#1C1C1E";
 const MID = "#48484A";
 const GRAY = "#8E8E93";
