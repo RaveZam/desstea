@@ -120,11 +120,9 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity) })),
       }));
 
-    const cleanPrice = Math.round(Number(price) * 100) / 100;
-
     const { error: err } = combo
-      ? await updateCombo(combo.id, { name: name.trim(), price: cleanPrice, is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
-      : await createCombo({ name: name.trim(), price: cleanPrice, is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
+      ? await updateCombo(combo.id, { name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
+      : await createCombo({ name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
 
     setLoading(false);
     if (err) {
