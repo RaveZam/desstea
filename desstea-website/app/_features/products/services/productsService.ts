@@ -441,7 +441,7 @@ export async function updateComboInSupabase(
 
   const { error: comboErr } = await supabase
     .from("combos")
-    .update({ name: data.name, price: data.price, is_available: data.is_available })
+    .update({ name: data.name, price: data.price, is_available: data.is_available, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (comboErr) return comboErr.message;
 

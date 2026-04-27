@@ -120,9 +120,11 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity) })),
       }));
 
+    const cleanPrice = Math.round(Number(price) * 100) / 100;
+
     const { error: err } = combo
-      ? await updateCombo(combo.id, { name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
-      : await createCombo({ name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
+      ? await updateCombo(combo.id, { name: name.trim(), price: cleanPrice, is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
+      : await createCombo({ name: name.trim(), price: cleanPrice, is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
 
     setLoading(false);
     if (err) {
@@ -145,11 +147,11 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           return product ? product.base_price * p.quantity : null;
         })
         .filter((v): v is number => v !== null);
-      const avgPrice = prices.length > 0 ? prices.reduce((s, v) => s + v, 0) / prices.length : 0;
+      const avgPrice = prices.length > 0 ? Math.round(prices.reduce((s, v) => s + v, 0) / prices.length * 100) / 100 : 0;
       return { cat, avgPrice, count: prices.length };
     })
     .filter((s) => s.count > 0);
-  const slotPricesSum = slotBreakdowns.reduce((sum, s) => sum + s.avgPrice, 0);
+  const slotPricesSum = Math.round(slotBreakdowns.reduce((sum, s) => sum + s.avgPrice, 0) * 100) / 100;
 
   const inputCls = "border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
 
@@ -291,7 +293,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
                               {selectedProduct && (
                                 <span className="text-xs font-medium text-[#6B4F3A] shrink-0 whitespace-nowrap">
-                                  ₱{(selectedProduct.base_price * pd.quantity).toFixed(2)}
+                                  ₱{(Math.round(selectedProduct.base_price * pd.quantity * 100) / 100).toFixed(2)}
                                 </span>
                               )}
 
@@ -366,7 +368,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
             {price !== "" && slotPricesSum > Number(price) && (
               <div className="flex justify-between text-xs text-green-600 font-medium">
                 <span>Customer saves</span>
-                <span>₱{(slotPricesSum - Number(price)).toFixed(2)}</span>
+                <span>₱{(Math.round((slotPricesSum - Number(price)) * 100) / 100).toFixed(2)}</span>
               </div>
             )}
           </div>
