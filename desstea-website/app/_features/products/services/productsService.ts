@@ -122,6 +122,7 @@ export async function updateProductInSupabase(
       has_sizes: data.has_sizes,
       is_available: data.is_available,
       addon_group_id: data.addon_group_id || null,
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id);
   if (prodErr) return prodErr.message;
@@ -263,7 +264,7 @@ export async function updateAddonGroupTemplate(
   const supabase = createAdminClient();
   const { error: groupErr } = await supabase
     .from("addon_groups")
-    .update({ name: data.name, category_id: data.category_id })
+    .update({ name: data.name, category_id: data.category_id, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (groupErr) return groupErr.message;
 
