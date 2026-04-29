@@ -7,8 +7,8 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Classic Milk Tea", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
-      { productName: "Brown Sugar Boba", quantity: 1, size: "M", unitPrice: 110, lineTotal: 110 },
+      { productName: "Classic Milk Tea", quantity: 2, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 240 },
+      { productName: "Brown Sugar Boba", quantity: 1, size: "M", sugarLevel: null, unitPrice: 110, lineTotal: 110 },
     ],
     total: 350,
     status: "completed",
@@ -20,7 +20,7 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Matcha Latte", quantity: 1, size: "L", unitPrice: 135, lineTotal: 135 },
+      { productName: "Matcha Latte", quantity: 1, size: "L", sugarLevel: null, unitPrice: 135, lineTotal: 135 },
     ],
     total: 135,
     status: "pending",
@@ -32,8 +32,8 @@ export const mockOrders: Order[] = [
     branchId: "br-3",
     branchName: "Santiago City",
     items: [
-      { productName: "Taro Tea", quantity: 2, size: "M", unitPrice: 100, lineTotal: 200 },
-      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
+      { productName: "Taro Tea", quantity: 2, size: "M", sugarLevel: null, unitPrice: 100, lineTotal: 200 },
+      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", sugarLevel: null, unitPrice: 30, lineTotal: 60 },
     ],
     total: 260,
     status: "completed",
@@ -45,7 +45,7 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Wintermelon Tea", quantity: 3, size: "L", unitPrice: 115, lineTotal: 345 },
+      { productName: "Wintermelon Tea", quantity: 3, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 345 },
     ],
     total: 345,
     status: "cancelled",
@@ -57,8 +57,8 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Ube Milk Tea", quantity: 1, size: "L", unitPrice: 130, lineTotal: 130 },
-      { productName: "Pandesal Combo", quantity: 1, size: "-", unitPrice: 85, lineTotal: 85 },
+      { productName: "Ube Milk Tea", quantity: 1, size: "L", sugarLevel: null, unitPrice: 130, lineTotal: 130 },
+      { productName: "Pandesal Combo", quantity: 1, size: "-", sugarLevel: null, unitPrice: 85, lineTotal: 85 },
     ],
     total: 215,
     status: "completed",
@@ -70,7 +70,7 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Classic Milk Tea", quantity: 2, size: "S", unitPrice: 90, lineTotal: 180 },
+      { productName: "Classic Milk Tea", quantity: 2, size: "S", sugarLevel: null, unitPrice: 90, lineTotal: 180 },
     ],
     total: 180,
     status: "pending",
@@ -82,8 +82,8 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Matcha Latte", quantity: 1, size: "M", unitPrice: 125, lineTotal: 125 },
-      { productName: "Toasted Siopao", quantity: 2, size: "-", unitPrice: 65, lineTotal: 130 },
+      { productName: "Matcha Latte", quantity: 1, size: "M", sugarLevel: null, unitPrice: 125, lineTotal: 125 },
+      { productName: "Toasted Siopao", quantity: 2, size: "-", sugarLevel: null, unitPrice: 65, lineTotal: 130 },
     ],
     total: 255,
     status: "completed",
@@ -95,7 +95,7 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Brown Sugar Boba", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
+      { productName: "Brown Sugar Boba", quantity: 2, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 240 },
     ],
     total: 240,
     status: "refunded",
@@ -107,8 +107,8 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Taro Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
-      { productName: "Wintermelon Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
+      { productName: "Taro Tea", quantity: 1, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 115 },
+      { productName: "Wintermelon Tea", quantity: 1, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 115 },
     ],
     total: 230,
     status: "completed",
@@ -120,8 +120,8 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Ube Milk Tea", quantity: 2, size: "M", unitPrice: 120, lineTotal: 240 },
-      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
+      { productName: "Ube Milk Tea", quantity: 2, size: "M", sugarLevel: null, unitPrice: 120, lineTotal: 240 },
+      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", sugarLevel: null, unitPrice: 30, lineTotal: 60 },
     ],
     total: 300,
     status: "pending",
@@ -133,7 +133,7 @@ export const mockOrders: Order[] = [
     branchId: "br-3",
     branchName: "Santiago City",
     items: [
-      { productName: "Classic Milk Tea", quantity: 1, size: "L", unitPrice: 120, lineTotal: 120 },
+      { productName: "Classic Milk Tea", quantity: 1, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 120 },
     ],
     total: 120,
     status: "completed",
@@ -145,8 +145,8 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Matcha Latte", quantity: 2, size: "L", unitPrice: 135, lineTotal: 270 },
-      { productName: "Ensaymada Combo", quantity: 1, size: "-", unitPrice: 95, lineTotal: 95 },
+      { productName: "Matcha Latte", quantity: 2, size: "L", sugarLevel: null, unitPrice: 135, lineTotal: 270 },
+      { productName: "Ensaymada Combo", quantity: 1, size: "-", sugarLevel: null, unitPrice: 95, lineTotal: 95 },
     ],
     total: 365,
     status: "completed",
@@ -158,7 +158,7 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Brown Sugar Boba", quantity: 3, size: "M", unitPrice: 110, lineTotal: 330 },
+      { productName: "Brown Sugar Boba", quantity: 3, size: "M", sugarLevel: null, unitPrice: 110, lineTotal: 330 },
     ],
     total: 330,
     status: "cancelled",
@@ -170,8 +170,8 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Taro Tea", quantity: 1, size: "S", unitPrice: 90, lineTotal: 90 },
-      { productName: "Classic Milk Tea", quantity: 1, size: "S", unitPrice: 90, lineTotal: 90 },
+      { productName: "Taro Tea", quantity: 1, size: "S", sugarLevel: null, unitPrice: 90, lineTotal: 90 },
+      { productName: "Classic Milk Tea", quantity: 1, size: "S", sugarLevel: null, unitPrice: 90, lineTotal: 90 },
     ],
     total: 180,
     status: "completed",
@@ -183,8 +183,8 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Wintermelon Tea", quantity: 2, size: "L", unitPrice: 115, lineTotal: 230 },
-      { productName: "Toasted Siopao", quantity: 1, size: "-", unitPrice: 65, lineTotal: 65 },
+      { productName: "Wintermelon Tea", quantity: 2, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 230 },
+      { productName: "Toasted Siopao", quantity: 1, size: "-", sugarLevel: null, unitPrice: 65, lineTotal: 65 },
     ],
     total: 295,
     status: "pending",
@@ -196,7 +196,7 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Matcha Latte", quantity: 1, size: "M", unitPrice: 125, lineTotal: 125 },
+      { productName: "Matcha Latte", quantity: 1, size: "M", sugarLevel: null, unitPrice: 125, lineTotal: 125 },
     ],
     total: 125,
     status: "completed",
@@ -208,8 +208,8 @@ export const mockOrders: Order[] = [
     branchId: "br-3",
     branchName: "Santiago City",
     items: [
-      { productName: "Ube Milk Tea", quantity: 2, size: "L", unitPrice: 130, lineTotal: 260 },
-      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", unitPrice: 30, lineTotal: 60 },
+      { productName: "Ube Milk Tea", quantity: 2, size: "L", sugarLevel: null, unitPrice: 130, lineTotal: 260 },
+      { productName: "Cheese Foam Add-on", quantity: 2, size: "-", sugarLevel: null, unitPrice: 30, lineTotal: 60 },
     ],
     total: 320,
     status: "completed",
@@ -221,7 +221,7 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Classic Milk Tea", quantity: 1, size: "M", unitPrice: 105, lineTotal: 105 },
+      { productName: "Classic Milk Tea", quantity: 1, size: "M", sugarLevel: null, unitPrice: 105, lineTotal: 105 },
     ],
     total: 105,
     status: "refunded",
@@ -233,8 +233,8 @@ export const mockOrders: Order[] = [
     branchId: "br-3",
     branchName: "Santiago City",
     items: [
-      { productName: "Brown Sugar Boba", quantity: 1, size: "L", unitPrice: 120, lineTotal: 120 },
-      { productName: "Pandesal Combo", quantity: 2, size: "-", unitPrice: 85, lineTotal: 170 },
+      { productName: "Brown Sugar Boba", quantity: 1, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 120 },
+      { productName: "Pandesal Combo", quantity: 2, size: "-", sugarLevel: null, unitPrice: 85, lineTotal: 170 },
     ],
     total: 290,
     status: "pending",
@@ -246,7 +246,7 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Taro Tea", quantity: 2, size: "L", unitPrice: 115, lineTotal: 230 },
+      { productName: "Taro Tea", quantity: 2, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 230 },
     ],
     total: 230,
     status: "completed",
@@ -258,7 +258,7 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Matcha Latte", quantity: 3, size: "M", unitPrice: 125, lineTotal: 375 },
+      { productName: "Matcha Latte", quantity: 3, size: "M", sugarLevel: null, unitPrice: 125, lineTotal: 375 },
     ],
     total: 375,
     status: "completed",
@@ -270,8 +270,8 @@ export const mockOrders: Order[] = [
     branchId: "br-4",
     branchName: "Cauayan City",
     items: [
-      { productName: "Wintermelon Tea", quantity: 1, size: "L", unitPrice: 115, lineTotal: 115 },
-      { productName: "Ensaymada Combo", quantity: 1, size: "-", unitPrice: 95, lineTotal: 95 },
+      { productName: "Wintermelon Tea", quantity: 1, size: "L", sugarLevel: null, unitPrice: 115, lineTotal: 115 },
+      { productName: "Ensaymada Combo", quantity: 1, size: "-", sugarLevel: null, unitPrice: 95, lineTotal: 95 },
     ],
     total: 210,
     status: "pending",
@@ -283,8 +283,8 @@ export const mockOrders: Order[] = [
     branchId: "br-1",
     branchName: "Ipil, Echague",
     items: [
-      { productName: "Classic Milk Tea", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
-      { productName: "Ube Milk Tea", quantity: 1, size: "M", unitPrice: 120, lineTotal: 120 },
+      { productName: "Classic Milk Tea", quantity: 2, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 240 },
+      { productName: "Ube Milk Tea", quantity: 1, size: "M", sugarLevel: null, unitPrice: 120, lineTotal: 120 },
     ],
     total: 360,
     status: "completed",
@@ -296,7 +296,7 @@ export const mockOrders: Order[] = [
     branchId: "br-2",
     branchName: "Cabugao, Echague",
     items: [
-      { productName: "Taro Tea", quantity: 1, size: "M", unitPrice: 100, lineTotal: 100 },
+      { productName: "Taro Tea", quantity: 1, size: "M", sugarLevel: null, unitPrice: 100, lineTotal: 100 },
     ],
     total: 100,
     status: "cancelled",
@@ -308,8 +308,8 @@ export const mockOrders: Order[] = [
     branchId: "br-3",
     branchName: "Santiago City",
     items: [
-      { productName: "Brown Sugar Boba", quantity: 2, size: "L", unitPrice: 120, lineTotal: 240 },
-      { productName: "Toasted Siopao", quantity: 2, size: "-", unitPrice: 65, lineTotal: 130 },
+      { productName: "Brown Sugar Boba", quantity: 2, size: "L", sugarLevel: null, unitPrice: 120, lineTotal: 240 },
+      { productName: "Toasted Siopao", quantity: 2, size: "-", sugarLevel: null, unitPrice: 65, lineTotal: 130 },
     ],
     total: 370,
     status: "completed",
