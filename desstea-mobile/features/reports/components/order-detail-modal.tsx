@@ -141,6 +141,11 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
                         {item.size_label_snapshot}
                       </Text>
                     )}
+                    {item.sugar_level_snapshot && (
+                      <Text style={styles.itemCustom}>
+                        {item.sugar_level_snapshot} sugar
+                      </Text>
+                    )}
                     {item.addons.map((a) => (
                       <Text key={a.id} style={styles.itemCustom}>
                         + {a.addon_name_snapshot}

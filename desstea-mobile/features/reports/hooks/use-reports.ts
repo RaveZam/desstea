@@ -83,11 +83,12 @@ export function useReports() {
           id: string;
           product_name_snapshot: string;
           size_label_snapshot: string | null;
+          sugar_level_snapshot: string | null;
           quantity: number;
           unit_price_snapshot: number;
           total_price: number;
         }>(
-          `SELECT id, product_name_snapshot, size_label_snapshot, quantity, unit_price_snapshot, total_price
+          `SELECT id, product_name_snapshot, size_label_snapshot, sugar_level_snapshot, quantity, unit_price_snapshot, total_price
            FROM order_items WHERE order_id = ?`,
           [raw.id]
         );

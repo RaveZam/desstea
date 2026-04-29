@@ -9,6 +9,7 @@ export type DbOrderItem = {
   id: string;
   product_name_snapshot: string;
   size_label_snapshot: string | null;
+  sugar_level_snapshot: string | null;
   quantity: number;
   unit_price_snapshot: number;
   total_price: number;
