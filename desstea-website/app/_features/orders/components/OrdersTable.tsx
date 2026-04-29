@@ -76,8 +76,23 @@ export default function OrdersTable({
               <td className="px-4 py-3 text-gray-500 text-xs">
                 {order.branchName}
               </td>
-              <td className="px-4 py-3 text-gray-500 text-xs">
-                {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+              <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
+                <div className="space-y-0.5">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="truncate">
+                      {item.productName}
+                      {item.size && item.size !== "-" && (
+                        <span className="text-gray-400"> ({item.size})</span>
+                      )}
+                      {item.sugarLevel && (
+                        <span className="text-gray-400"> · Sugar: {item.sugarLevel}</span>
+                      )}
+                      {item.quantity > 1 && (
+                        <span className="text-gray-400"> ×{item.quantity}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </td>
               <td className="px-4 py-3 text-right font-semibold text-gray-900">
                 ₱{order.total.toLocaleString()}

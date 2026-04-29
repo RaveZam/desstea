@@ -8,6 +8,7 @@ import type {
   Combo,
   ComboSlot,
   ComboSlotProduct,
+  SugarLevel,
 } from "./types";
 
 // ── Generic helper ──────────────────────────────────────────────────────────
@@ -87,7 +88,7 @@ export function fetchAddonOptionsUpdatedSince(
 // ── Products ────────────────────────────────────────────────────────────────
 
 const PRODUCT_COLS =
-  "id, category_id, addon_group_id, name, description, base_price, has_sizes, is_available, created_at, deleted_at";
+  "id, category_id, addon_group_id, name, description, base_price, has_sizes, has_sugar_level, is_available, created_at, deleted_at";
 
 export function fetchProductsByIds(ids: string[]): Promise<Product[]> {
   if (ids.length === 0) return Promise.resolve([]);
@@ -194,6 +195,20 @@ export function fetchDeletedCombosSince(
 ): Promise<{ id: string; name: string }[]> {
   return query("combos", "id, name", (q) =>
     q.not("deleted_at", "is", null).gt("deleted_at", since),
+  );
+}
+
+// ── Sugar levels ───────────────────────────────────────────────────────────
+
+export function fetchAllSugarLevels(): Promise<SugarLevel[]> {
+  return query("sugar_levels", "id, label, sort_order");
+}
+
+export function fetchSugarLevelsUpdatedSince(
+  since: string,
+): Promise<SugarLevel[]> {
+  return query("sugar_levels", "id, label, sort_order", (q) =>
+    q.gt("updated_at", since),
   );
 }
 

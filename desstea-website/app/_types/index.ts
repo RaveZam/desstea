@@ -26,6 +26,7 @@ export interface OrderLineItem {
   productName: string;
   quantity: number;
   size: string;
+  sugarLevel: string | null;
   unitPrice: number;
   lineTotal: number;
   addons?: OrderAddon[];
@@ -83,6 +84,7 @@ export interface Product {
   category_id: string;
   category_name: string;
   has_sizes: boolean;
+  has_sugar_level: boolean;
   is_available: boolean;
   sizes: ProductSize[];
   addon_group_id: string | null;
@@ -97,6 +99,7 @@ export interface ProductFormData {
   base_price: number;
   category_id: string;
   has_sizes: boolean;
+  has_sugar_level: boolean;
   is_available: boolean;
   sizes: Omit<ProductSize, "id">[];
   addon_group_id: string | null;

@@ -52,6 +52,7 @@ export async function listProducts(): Promise<Product[]> {
       category_id: row.category_id as string,
       category_name: cat?.name ?? "",
       has_sizes: row.has_sizes as boolean,
+      has_sugar_level: row.has_sugar_level as boolean,
       is_available: row.is_available as boolean,
       sizes,
       addon_group_id: addonGroup?.id ?? null,
@@ -76,6 +77,7 @@ export async function createProductInSupabase(
       base_price: data.base_price,
       category_id: data.category_id,
       has_sizes: data.has_sizes,
+      has_sugar_level: data.has_sugar_level,
       is_available: data.is_available,
       addon_group_id: data.addon_group_id || null,
     })
@@ -120,6 +122,7 @@ export async function updateProductInSupabase(
       base_price: data.base_price,
       category_id: data.category_id,
       has_sizes: data.has_sizes,
+      has_sugar_level: data.has_sugar_level,
       is_available: data.is_available,
       addon_group_id: data.addon_group_id || null,
       updated_at: new Date().toISOString(),

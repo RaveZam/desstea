@@ -47,6 +47,7 @@ export function useOrder() {
       base_price: combo.price,
       category_id: "__combos__",
       has_sizes: 0,
+      has_sugar_level: 0,
       is_available: 1,
       addon_group_id: null,
     };

@@ -5,6 +5,7 @@ export type LocalProduct = {
   base_price: number;
   category_id: string;
   has_sizes: number; // SQLite 0 | 1
+  has_sugar_level: number; // SQLite 0 | 1
   is_available: number;
   addon_group_id: string | null;
 };
@@ -38,6 +39,12 @@ export type LocalAddonOption = {
   sort_order: number;
 };
 
+export type LocalSugarLevel = {
+  id: string;
+  label: string;
+  sort_order: number;
+};
+
 export type AddonWithQty = {
   option: LocalAddonOption;
   qty: number;
@@ -45,6 +52,7 @@ export type AddonWithQty = {
 
 export type ProductCustomization = {
   size: LocalSize | null;
+  sugarLevel: LocalSugarLevel | null;
   addonOptions: AddonWithQty[];
 };
 
@@ -102,10 +110,11 @@ export function getItemKey(item: OrderItem): string {
   }
   if (!item.customization) return item.product.id;
   const sizeKey = item.customization.size?.id ?? "no-size";
+  const sugarKey = item.customization.sugarLevel?.id ?? "no-sugar";
   const addonKey = item.customization.addonOptions
     .filter((aq) => aq.qty > 0)
     .map((aq) => `${aq.option.id}x${aq.qty}`)
     .sort()
     .join(",");
-  return `${item.product.id}__${sizeKey}__${addonKey}`;
+  return `${item.product.id}__${sizeKey}__${sugarKey}__${addonKey}`;
 }

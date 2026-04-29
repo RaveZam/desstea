@@ -1,9 +1,12 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useBranchName } from "@/features/auth/hooks/use-branch-name";
+import { resetSync, syncCatalog } from "@/lib/sync";
+import { useBumpSync } from "@/lib/sync-context";
+import { usePrinter } from "@/features/printer/hooks/use-printer";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -54,15 +57,40 @@ function formatRole(role: string | undefined): string {
 }
 
 export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-  }
-
+  const [refreshing, setRefreshing] = useState(false);
+  const bumpSync = useBumpSync();
+  const { printTestMessage } = usePrinter();
   const meta = user?.user_metadata ?? {};
   const fullName: string = meta.full_name ?? user?.email?.split("@")[0] ?? "—";
   const email: string = user?.email ?? "—";
   const role: string = formatRole(meta.role);
   const { branchName, branchId } = useBranchName();
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+  }
+
+  async function handleRefreshCatalogue() {
+    if (refreshing) return;
+    if (!branchId) {
+      Alert.alert("Error", "No branch ID found. Please sign in again.");
+      return;
+    }
+    setRefreshing(true);
+    try {
+      await resetSync();
+      await syncCatalog(branchId);
+      bumpSync();
+      Alert.alert("Success", "Catalogue refreshed successfully.");
+    } catch (err) {
+      Alert.alert(
+        "Refresh Failed",
+        err instanceof Error ? err.message : "An unknown error occurred.",
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <ScrollView
@@ -90,6 +118,34 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
 
       <Section icon="print-sharp" title="Printer">
         <InfoRow label="Bluetooth Printer" value="Not connected" />
+        <View style={styles.divider} />
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={printTestMessage}
+        >
+          <Ionicons name="print-outline" size={18} color={BRAND} />
+          <Text style={styles.refreshText}>Test Printer</Text>
+        </TouchableOpacity>
+      </Section>
+
+      <Section icon="cube-sharp" title="Data">
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={handleRefreshCatalogue}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color={BRAND} />
+          ) : (
+            <Ionicons name="refresh-sharp" size={18} color={BRAND} />
+          )}
+          <Text style={styles.refreshText}>
+            {refreshing ? "Refreshing…" : "Refresh Catalogue"}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.refreshHint}>
+          Clears all local product data and re-downloads everything from the server.
+        </Text>
       </Section>
 
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -178,5 +234,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#C0392B",
+  },
+  refreshButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 14,
+  },
+  refreshText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: DARK_TEXT,
+  },
+  refreshHint: {
+    fontSize: 12,
+    color: GRAY_TEXT,
+    paddingBottom: 14,
+    lineHeight: 16,
   },
 });

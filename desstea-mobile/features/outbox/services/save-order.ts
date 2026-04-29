@@ -190,14 +190,17 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
       } else {
         const sizeId = item.customization?.size?.id ?? null;
         const sizeLabel = item.customization?.size?.label ?? null;
+        const sugarLevelId = item.customization?.sugarLevel?.id ?? null;
+        const sugarLevelSnapshot = item.customization?.sugarLevel?.label ?? null;
 
         // INSERT order_item (product)
         await db.runAsync(
           `INSERT INTO order_items
              (id, order_id, combo_id, combo_name_snapshot,
               product_id, product_size_id, product_name_snapshot,
-              size_label_snapshot, quantity, unit_price_snapshot, created_at, total_price)
-           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              size_label_snapshot, sugar_level_id, sugar_level_snapshot,
+              quantity, unit_price_snapshot, created_at, total_price)
+           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             orderId,
@@ -205,6 +208,8 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             sizeId,
             item.product.name,
             sizeLabel,
+            sugarLevelId,
+            sugarLevelSnapshot,
             item.quantity,
             unitPrice,
             now,
@@ -228,6 +233,8 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               product_size_id: sizeId,
               product_name_snapshot: item.product.name,
               size_label_snapshot: sizeLabel,
+              sugar_level_id: sugarLevelId,
+              sugar_level_snapshot: sugarLevelSnapshot,
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,

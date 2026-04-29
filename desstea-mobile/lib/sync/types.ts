@@ -28,6 +28,7 @@ export interface Product {
   description: string | null;
   base_price: number;
   has_sizes: boolean;
+  has_sugar_level: boolean;
   is_available: boolean;
   created_at: string | null;
   deleted_at: string | null;
@@ -63,4 +64,10 @@ export interface ComboSlotProduct {
   combo_slot_id: string;
   product_id: string;
   quantity: number;
+}
+
+export interface SugarLevel {
+  id: string;
+  label: string;
+  sort_order: number;
 }

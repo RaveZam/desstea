@@ -11,6 +11,7 @@ import {
   fetchComboSlotProductsBySlotIds,
   fetchProductsByIds,
   fetchProductSizesByProductIds,
+  fetchAllSugarLevels,
 } from "./fetch";
 import {
   clearAllTables,
@@ -19,6 +20,7 @@ import {
   upsertAddonOptions,
   upsertProducts,
   upsertProductSizes,
+  upsertSugarLevels,
   upsertCombos,
   upsertComboSlots,
   upsertComboSlotProducts,
@@ -28,14 +30,18 @@ export async function fullSync(branchId: string, now: string): Promise<void> {
   log(`▶ FULL SYNC — branch: ${branchId}`);
 
   // Fetch all reference data
-  const [categories, addonGroups, addonOptions, productIds, comboIds] =
+  const [categories, addonGroups, addonOptions, productIds, comboIds, sugarLevels] =
     await Promise.all([
       fetchAllCategories(),
       fetchAllAddonGroups(),
       fetchAllAddonOptions(),
       fetchAvailableProductIds(branchId),
       fetchAvailableComboIds(branchId),
+      fetchAllSugarLevels(),
     ]);
+
+  log(`sugar_levels fetched: ${sugarLevels.length}`);
+  logTable("sugar_levels", sugarLevels);
 
   logTable(
     "branch_combo_availability",
@@ -59,6 +65,11 @@ export async function fullSync(branchId: string, now: string): Promise<void> {
 
   // Fetch products + sizes
   const products = await fetchProductsByIds(productIds);
+  const sugarProducts = products.filter((p) => p.has_sugar_level);
+  log(`products with has_sugar_level=true: ${sugarProducts.length}`);
+  if (sugarProducts.length > 0) {
+    logTable("products (has_sugar_level)", sugarProducts.map((p) => ({ id: p.id, name: p.name, has_sugar_level: p.has_sugar_level })));
+  }
   const activeIds = products.map((p) => p.id);
   const productSizes = await fetchProductSizesByProductIds(activeIds);
 
@@ -68,6 +79,7 @@ export async function fullSync(branchId: string, now: string): Promise<void> {
   await db.withTransactionAsync(async () => {
     await clearAllTables();
     await upsertCategories(categories, now);
+    await upsertSugarLevels(sugarLevels, now);
     await upsertAddonGroups(addonGroups, now);
     await upsertAddonOptions(addonOptions, now);
     await upsertProducts(products, now);

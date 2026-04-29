@@ -12,6 +12,7 @@ import {
   fetchAddonGroupsByIds,
   fetchAddonOptionsByGroupIds,
   fetchCategoriesByIds,
+  fetchSugarLevelsUpdatedSince,
   fetchCombosUpdatedSince,
   fetchComboAvailabilityChangedSince,
   fetchAvailableComboIds,
@@ -26,6 +27,7 @@ import {
   upsertAddonOptions,
   upsertProducts,
   upsertProductSizes,
+  upsertSugarLevels,
   upsertCombos,
   upsertComboSlots,
   upsertComboSlotProducts,
@@ -257,6 +259,10 @@ export async function incrementalSync(
 
   const comboChanges = await detectComboChanges(branchId, lastSyncedAt);
 
+  const sugarLevels = await fetchSugarLevelsUpdatedSince(lastSyncedAt);
+  log(`sugar_levels fetched (incremental): ${sugarLevels.length}`);
+  logTable("sugar_levels (incremental)", sugarLevels);
+
   // Check if anything changed
   if (
     productChanges.updatedProducts.length === 0 &&
@@ -267,9 +273,10 @@ export async function incrementalSync(
     comboChanges.updatedCombos.length === 0 &&
     comboChanges.newComboAvailability.length === 0 &&
     comboChanges.deletedComboIds.length === 0 &&
-    comboChanges.removedComboIds.length === 0
+    comboChanges.removedComboIds.length === 0 &&
+    sugarLevels.length === 0
   ) {
-    log("✔ nothing changed since last sync — skipping write");
+    log("✔ nothing changed since last sync");
     return;
   }
 
@@ -277,6 +284,8 @@ export async function incrementalSync(
   log("writing to SQLite...");
   await db.runAsync(`PRAGMA foreign_keys = OFF`);
   await db.withTransactionAsync(async () => {
+    await upsertSugarLevels(sugarLevels, now);
+
     // Categories
     await upsertCategories(productChanges.updatedCategories, now);
 
@@ -288,6 +297,11 @@ export async function incrementalSync(
     // Products: upsert + clear sizes for changed products
     for (const p of productChanges.updatedProducts) {
       await deleteProductSizesByProductId(p.id);
+    }
+    const sugarProducts = productChanges.updatedProducts.filter((p) => p.has_sugar_level);
+    log(`products with has_sugar_level=true (incremental): ${sugarProducts.length}`);
+    if (sugarProducts.length > 0) {
+      logTable("products (has_sugar_level, incremental)", sugarProducts.map((p) => ({ id: p.id, name: p.name, has_sugar_level: p.has_sugar_level })));
     }
     await upsertProducts(productChanges.updatedProducts, now);
     await upsertProductSizes(productChanges.updatedSizes, now);

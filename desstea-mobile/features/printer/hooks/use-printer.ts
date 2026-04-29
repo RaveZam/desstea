@@ -101,16 +101,7 @@ export function usePrinter() {
       // Small delay to let the Bluetooth socket fully establish
       await new Promise((r) => setTimeout(r, 300));
 
-      BLEPrinter.printText("Dear Baby\n", {});
-      BLEPrinter.printText("I Love you lagi\n", {});
-      BLEPrinter.printText("I Miss you so much\n", {});
-      BLEPrinter.printText("You are always pretty and warm\n", {});
-      BLEPrinter.printText(
-        "Sorry lagi akong busy, i promise yayaman tayo\n",
-        {},
-      );
-      BLEPrinter.printText("-Your Future Millionare Husband\n", {});
-      BLEPrinter.printText("-Raven Tih\n\n\n", {});
+      BLEPrinter.printText("Working!\n\n\n", {});
     } catch (err: unknown) {
       Alert.alert(
         "Print Error",

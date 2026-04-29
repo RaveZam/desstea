@@ -32,6 +32,13 @@ export async function initDatabase() {
       synced_at      TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS sugar_levels (
+      id         TEXT PRIMARY KEY,
+      label      TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      synced_at  TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS products (
       id                 TEXT PRIMARY KEY,
       category_id        TEXT NOT NULL REFERENCES categories(id),
@@ -40,6 +47,7 @@ export async function initDatabase() {
       description        TEXT,
       base_price         REAL NOT NULL DEFAULT 0.00,
       has_sizes          INTEGER NOT NULL DEFAULT 0,
+      has_sugar_level    INTEGER NOT NULL DEFAULT 0,
       is_available       INTEGER NOT NULL DEFAULT 1,
       created_at         TEXT,
       deleted_at         TEXT,
@@ -109,6 +117,8 @@ export async function initDatabase() {
       product_size_id        TEXT,
       product_name_snapshot  TEXT NOT NULL,
       size_label_snapshot    TEXT,
+      sugar_level_id         TEXT,
+      sugar_level_snapshot   TEXT,
       quantity               INTEGER NOT NULL CHECK(quantity > 0),
       unit_price_snapshot    REAL NOT NULL,
       created_at             TEXT NOT NULL,
@@ -151,6 +161,9 @@ export async function initDatabase() {
     `ALTER TABLE order_items ADD COLUMN combo_id TEXT`,
     `ALTER TABLE order_items ADD COLUMN combo_name_snapshot TEXT`,
     `ALTER TABLE combo_slot_products ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1`,
+    `ALTER TABLE products ADD COLUMN has_sugar_level INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE order_items ADD COLUMN sugar_level_id TEXT`,
+    `ALTER TABLE order_items ADD COLUMN sugar_level_snapshot TEXT`,
   ];
   for (const sql of migrations) {
     try {

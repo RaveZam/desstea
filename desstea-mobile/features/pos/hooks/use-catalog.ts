@@ -15,7 +15,7 @@ export function useCatalog() {
     );
     const prods = db.getAllSync<LocalProduct>(
       `SELECT id, name, description, base_price, category_id,
-              has_sizes, is_available, addon_group_id
+              has_sizes, has_sugar_level, is_available, addon_group_id
        FROM products
        WHERE is_available = 1
        ORDER BY name`

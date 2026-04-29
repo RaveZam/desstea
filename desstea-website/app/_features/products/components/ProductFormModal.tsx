@@ -25,6 +25,7 @@ function emptyForm(categories: Category[]): ProductFormData {
     base_price: 0,
     category_id: categories[0]?.id ?? "",
     has_sizes: false,
+    has_sugar_level: false,
     is_available: true,
     sizes: [],
     addon_group_id: null,
@@ -50,6 +51,7 @@ export default function ProductFormModal({ open, onClose, product, categories, b
           base_price: product.base_price,
           category_id: product.category_id,
           has_sizes: product.has_sizes,
+          has_sugar_level: product.has_sugar_level,
           is_available: product.is_available,
           sizes: product.sizes.map((s) => ({ label: s.label, size_price: s.size_price, sort_order: s.sort_order })),
           addon_group_id: product.addon_group_id,
@@ -183,6 +185,11 @@ export default function ProductFormModal({ open, onClose, product, categories, b
             checked={form.has_sizes}
             onChange={(v) => setForm((f) => ({ ...f, has_sizes: v }))}
             label="Has Sizes"
+          />
+          <Toggle
+            checked={form.has_sugar_level}
+            onChange={(v) => setForm((f) => ({ ...f, has_sugar_level: v }))}
+            label="Has Sugar Level"
           />
           <Toggle
             checked={form.is_available}

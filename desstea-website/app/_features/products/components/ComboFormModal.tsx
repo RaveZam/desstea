@@ -33,7 +33,7 @@ const emptySlot = (): SlotDraft => ({ category_id: "", products: [emptyProduct()
 export default function ComboFormModal({ open, onClose, combo, categories, products, branches }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [price, setPrice] = useState<number | "">("");
+  const [price, setPrice] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
   const [slots, setSlots] = useState<SlotDraft[]>([]);
   const [availableBranchIds, setAvailableBranchIds] = useState<string[]>([]);
@@ -43,7 +43,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
   useEffect(() => {
     if (open) {
       setName(combo?.name ?? "");
-      setPrice(combo?.price ?? "");
+      setPrice(combo ? combo.price.toFixed(2) : "");
       setIsAvailable(combo?.is_available ?? true);
       setAvailableBranchIds(combo?.available_branch_ids ?? []);
       setSlots(
@@ -107,7 +107,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
   }
 
   async function handleSave() {
-    if (!name.trim() || price === "") return;
+    if (!name.trim() || price === "" || isNaN(parseFloat(price))) return;
     setLoading(true);
     setError(null);
 
@@ -121,8 +121,8 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       }));
 
     const { error: err } = combo
-      ? await updateCombo(combo.id, { name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
-      : await createCombo({ name: name.trim(), price: Number(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
+      ? await updateCombo(combo.id, { name: name.trim(), price: parseFloat(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
+      : await createCombo({ name: name.trim(), price: parseFloat(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
 
     setLoading(false);
     if (err) {
@@ -181,7 +181,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
               <input
                 type="number"
                 value={price}
-                onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
                 className={`w-full ${inputCls} pl-7`}
                 min={0}
@@ -361,12 +361,12 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
             </div>
             <div className="flex justify-between text-sm font-bold text-gray-900">
               <span>Combo price</span>
-              <span className="text-[#E8692A]">₱{price !== "" ? Number(price).toFixed(2) : "—"}</span>
+              <span className="text-[#E8692A]">₱{price !== "" && !isNaN(parseFloat(price)) ? parseFloat(price).toFixed(2) : "—"}</span>
             </div>
-            {price !== "" && slotPricesSum > Number(price) && (
+            {price !== "" && !isNaN(parseFloat(price)) && slotPricesSum > parseFloat(price) && (
               <div className="flex justify-between text-xs text-green-600 font-medium">
                 <span>Customer saves</span>
-                <span>₱{(Math.round((slotPricesSum - Number(price)) * 100) / 100).toFixed(2)}</span>
+                <span>₱{(Math.round((slotPricesSum - parseFloat(price)) * 100) / 100).toFixed(2)}</span>
               </div>
             )}
           </div>
@@ -377,7 +377,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleSave}
-            disabled={loading || !name.trim() || price === ""}
+            disabled={loading || !name.trim() || price === "" || isNaN(parseFloat(price))}
             className="flex-1 px-4 py-2.5 rounded-xl bg-[#E8692A] text-white text-sm font-semibold hover:bg-[#d45c20] transition-colors disabled:opacity-50"
           >
             {loading ? "Saving…" : combo ? "Save Changes" : "Create Combo"}

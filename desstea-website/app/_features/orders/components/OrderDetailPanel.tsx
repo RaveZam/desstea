@@ -72,7 +72,9 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-800 font-medium truncate">{item.productName}</p>
                       <p className="text-xs text-gray-400">
-                        {item.size !== "-" ? `${item.size} · ` : ""}×{item.quantity} @ ₱{item.unitPrice}
+                        {item.size !== "-" ? `${item.size} · ` : ""}
+                        {item.sugarLevel ? `Sugar: ${item.sugarLevel} · ` : ""}
+                        ×{item.quantity} @ ₱{item.unitPrice}
                       </p>
                     </div>
                     <p className="font-semibold text-gray-900 ml-3">₱{item.lineTotal.toLocaleString()}</p>

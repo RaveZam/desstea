@@ -11,6 +11,7 @@ import { db } from "@/lib/database";
 import {
   LocalProduct,
   LocalSize,
+  LocalSugarLevel,
   LocalAddonOption,
   AddonWithQty,
   ProductCustomization,
@@ -40,12 +41,15 @@ export function CustomizationModal({
   onCancel,
 }: Props) {
   const [sizes, setSizes] = useState<LocalSize[]>([]);
+  const [sugarLevels, setSugarLevels] = useState<LocalSugarLevel[]>([]);
   const [addonOptions, setAddonOptions] = useState<LocalAddonOption[]>([]);
   const [selectedSize, setSelectedSize] = useState<LocalSize | null>(null);
+  const [selectedSugarLevel, setSelectedSugarLevel] = useState<LocalSugarLevel | null>(null);
   const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!product) return;
+    console.log("[CustomizationModal] product:", product.id, product.name, "has_sugar_level:", product.has_sugar_level);
 
     if (product.has_sizes) {
       const s = db.getAllSync<LocalSize>(
@@ -60,6 +64,21 @@ export function CustomizationModal({
     } else {
       setSizes([]);
       setSelectedSize(null);
+    }
+
+    if (product.has_sugar_level) {
+      const sl = db.getAllSync<LocalSugarLevel>(
+        `SELECT id, label, sort_order
+         FROM sugar_levels
+         ORDER BY sort_order`,
+      );
+      console.log("[CustomizationModal] sugar_levels from SQLite:", sl.length, JSON.stringify(sl));
+      setSugarLevels(sl);
+      setSelectedSugarLevel(sl.find((s) => s.label === "100%") ?? sl[0] ?? null);
+    } else {
+      console.log("[CustomizationModal] product does NOT have sugar level");
+      setSugarLevels([]);
+      setSelectedSugarLevel(null);
     }
 
     if (product.addon_group_id) {
@@ -94,7 +113,7 @@ export function CustomizationModal({
     const activeAddons: AddonWithQty[] = addonOptions
       .filter((ao) => (addonQtys[ao.id] ?? 0) > 0)
       .map((ao) => ({ option: ao, qty: addonQtys[ao.id] }));
-    onConfirm(product, { size: selectedSize, addonOptions: activeAddons });
+    onConfirm(product, { size: selectedSize, sugarLevel: selectedSugarLevel, addonOptions: activeAddons });
     setAddonQtys({});
   };
 
@@ -141,6 +160,33 @@ export function CustomizationModal({
                         ]}
                       >
                         ₱{s.size_price.toFixed(2)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {sugarLevels.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>Sugar Level</Text>
+                <View style={styles.pillRow}>
+                  {sugarLevels.map((sl) => (
+                    <TouchableOpacity
+                      key={sl.id}
+                      style={[
+                        styles.pill,
+                        selectedSugarLevel?.id === sl.id && styles.pillActive,
+                      ]}
+                      onPress={() => setSelectedSugarLevel(sl)}
+                    >
+                      <Text
+                        style={[
+                          styles.pillText,
+                          selectedSugarLevel?.id === sl.id && styles.pillTextActive,
+                        ]}
+                      >
+                        {sl.label}
                       </Text>
                     </TouchableOpacity>
                   ))}

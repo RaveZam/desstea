@@ -8,6 +8,7 @@ import type {
   Combo,
   ComboSlot,
   ComboSlotProduct,
+  SugarLevel,
 } from "./types";
 
 // ── Upserts ─────────────────────────────────────────────────────────────────
@@ -51,13 +52,23 @@ export async function upsertAddonOptions(rows: AddonOption[], now: string) {
   }
 }
 
+export async function upsertSugarLevels(rows: SugarLevel[], now: string) {
+  for (const sl of rows) {
+    await db.runAsync(
+      `INSERT OR REPLACE INTO sugar_levels (id, label, sort_order, synced_at)
+       VALUES (?, ?, ?, ?)`,
+      [sl.id, sl.label, sl.sort_order, now],
+    );
+  }
+}
+
 export async function upsertProducts(rows: Product[], now: string) {
   for (const p of rows) {
     await db.runAsync(
       `INSERT OR REPLACE INTO products
          (id, category_id, addon_group_id, name, description, base_price,
-          has_sizes, is_available, created_at, deleted_at, synced_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          has_sizes, has_sugar_level, is_available, created_at, deleted_at, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         p.id,
         p.category_id,
@@ -66,6 +77,7 @@ export async function upsertProducts(rows: Product[], now: string) {
         p.description ?? null,
         p.base_price,
         p.has_sizes ? 1 : 0,
+        p.has_sugar_level ? 1 : 0,
         p.is_available ? 1 : 0,
         p.created_at ?? null,
         null,
@@ -169,6 +181,7 @@ export async function clearAllTables() {
   await db.runAsync(`DELETE FROM products`);
   await db.runAsync(`DELETE FROM addon_options`);
   await db.runAsync(`DELETE FROM addon_groups`);
+  await db.runAsync(`DELETE FROM sugar_levels`);
   await db.runAsync(`DELETE FROM categories`);
 }
 
