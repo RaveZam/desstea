@@ -103,7 +103,7 @@ export default function OrdersPageContent({
         </div>
 
         {/* Table — scrollable */}
-        <div className="flex-1 px-5 fade-up fade-up-3">
+        <div className="flex-1 overflow-y-auto px-5 fade-up fade-up-3">
           <OrdersTable
             orders={paginated}
             selectedId={selected?.id ?? null}

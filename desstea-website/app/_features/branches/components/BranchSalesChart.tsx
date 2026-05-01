@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import type { BranchSalesDay } from "../services/branchesService";
 
-const formatRevenue = (value: number) => `₱${(value / 1000).toFixed(0)}K`;
+const formatRevenue = (value: number) => `₱${Number((value / 1000).toFixed(1))}K`;
 
 interface BranchSalesChartProps {
   salesByDay: BranchSalesDay[];
@@ -19,7 +19,7 @@ interface BranchSalesChartProps {
 
 export default function BranchSalesChart({ salesByDay }: BranchSalesChartProps) {
   const total = salesByDay.reduce((sum, d) => sum + Number(d.revenue), 0);
-  const tickInterval = salesByDay.length > 14 ? 4 : 0;
+  const tickInterval = salesByDay.length > 14 ? 3 : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 flex-1 flex flex-col">

@@ -21,11 +21,20 @@ interface OrderDetailPanelProps {
 
 export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelProps) {
   return (
-    <div
-      className={`fixed inset-y-0 right-0 z-40 w-[400px] bg-white shadow-2xl border-l border-gray-100 flex flex-col transition-transform duration-300 ${
-        order ? "translate-x-0" : "translate-x-full"
-      }`}
-    >
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-30 bg-black/20 transition-opacity duration-300 ${
+          order ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onClose}
+      />
+
+      <div
+        className={`fixed inset-y-0 right-0 z-40 w-[400px] bg-white shadow-2xl border-l border-gray-100 flex flex-col transition-transform duration-300 ${
+          order ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <div>
@@ -123,5 +132,6 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
         </div>
       )}
     </div>
+    </>
   );
 }

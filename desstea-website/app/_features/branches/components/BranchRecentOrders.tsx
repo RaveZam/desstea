@@ -13,9 +13,10 @@ function formatDate(iso: string) {
 
 interface BranchRecentOrdersProps {
   orders: BranchRecentOrder[];
+  onOrderClick?: (id: string) => void;
 }
 
-export default function BranchRecentOrders({ orders }: BranchRecentOrdersProps) {
+export default function BranchRecentOrders({ orders, onOrderClick }: BranchRecentOrdersProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
       <div className="px-4 py-3 border-b border-gray-100 shrink-0">
@@ -44,7 +45,8 @@ export default function BranchRecentOrders({ orders }: BranchRecentOrdersProps) 
             {orders.map((order) => (
               <tr
                 key={order.id}
-                className="border-b border-gray-50 hover:bg-[#FDFAF7] transition-colors"
+                onClick={() => onOrderClick?.(order.id)}
+                className={`border-b border-gray-50 hover:bg-[#FDFAF7] transition-colors ${onOrderClick ? "cursor-pointer" : ""}`}
               >
                 <td className="px-4 py-3 font-mono text-xs text-gray-700">{order.id.slice(0, 8)}…</td>
                 <td className="px-4 py-3 font-medium text-gray-800">{order.customerName}</td>

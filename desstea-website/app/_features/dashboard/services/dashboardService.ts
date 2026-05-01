@@ -44,7 +44,9 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
 
   const [kpisRes, salesRes, productsRes, categoriesRes, branchRes] = await Promise.all([
     supabase.rpc("get_dashboard_kpis", { start_date: startIso, end_date: endIso }),
-    supabase.rpc("get_sales_by_day", { start_date: startIso, end_date: endIso }),
+    range === "today"
+      ? supabase.from("orders").select("ordered_at, total").gte("ordered_at", startIso).lt("ordered_at", endIso)
+      : supabase.rpc("get_sales_by_day", { start_date: startIso, end_date: endIso }),
     supabase.rpc("get_top_products", { start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_top_categories", { start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_branch_overview", { start_date: startIso, end_date: endIso }),
@@ -56,12 +58,27 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   if (categoriesRes.error) throw new Error(categoriesRes.error.message);
   if (branchRes.error) throw new Error(branchRes.error.message);
 
+  let salesByDay: SalesDay[];
+  if (range === "today") {
+    const hourlyMap: Record<number, number> = {};
+    for (const row of (salesRes.data as { ordered_at: string; total: number }[] ?? [])) {
+      const phHour = new Date(new Date(row.ordered_at).getTime() + 8 * 60 * 60 * 1000).getUTCHours();
+      hourlyMap[phHour] = (hourlyMap[phHour] ?? 0) + Number(row.total);
+    }
+    salesByDay = Array.from({ length: 24 }, (_, hr) => ({
+      day: hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`,
+      revenue: hourlyMap[hr] ?? 0,
+    }));
+  } else {
+    salesByDay = (salesRes.data as SalesDay[]) ?? [];
+  }
+
   return {
     kpis: (kpisRes.data as DashboardKpis[])[0] ?? {
       total_revenue: 0, total_orders: 0, avg_order_value: 0, avg_revenue_per_branch: 0,
       prev_total_revenue: 0, prev_total_orders: 0, prev_avg_order_value: 0, prev_avg_revenue_per_branch: 0,
     },
-    salesByDay: (salesRes.data as SalesDay[]) ?? [],
+    salesByDay,
     topProducts: (productsRes.data as TopProduct[]) ?? [],
     topCategories: (categoriesRes.data as TopCategory[]) ?? [],
     branchOverview: (branchRes.data as BranchOverview[]) ?? [],

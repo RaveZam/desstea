@@ -3,14 +3,12 @@ import type { DashboardKpis } from "../services/dashboardService";
 type Props = { kpis: DashboardKpis; periodLabel: string };
 
 function pctChange(current: number, previous: number) {
-  if (previous === 0) return { text: "N/A", favorable: true };
+  if (previous === 0) return null;
   const diff = ((current - previous) / previous) * 100;
   return { text: `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%`, favorable: diff >= 0 };
 }
 
 function formatCurrency(n: number) {
-  if (n >= 1_000_000) return `₱${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `₱${(n / 1_000).toFixed(1)}K`;
   return `₱${n.toFixed(2)}`;
 }
 
@@ -67,10 +65,10 @@ export default function StatCards({ kpis, periodLabel }: Props) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {items.map((kpi) => {
-        const isPositive = kpi.change.text.startsWith("+");
+        const isPositive = kpi.change?.text.startsWith("+");
         const trendColor = kpi.dark
-          ? kpi.change.favorable ? "text-emerald-300" : "text-red-300"
-          : kpi.change.favorable ? "text-emerald-600" : "text-red-500";
+          ? kpi.change?.favorable ? "text-emerald-300" : "text-red-300"
+          : kpi.change?.favorable ? "text-emerald-600" : "text-red-500";
 
         return (
           <div
@@ -102,10 +100,12 @@ export default function StatCards({ kpis, periodLabel }: Props) {
               {kpi.value}
             </p>
 
-            <span className={`relative flex items-center gap-1 text-sm font-medium ${trendColor}`}>
-              {isPositive ? <UpArrow /> : <DownArrow />}
-              {kpi.change.text} vs {periodLabel}
-            </span>
+            {kpi.change ? (
+              <span className={`relative flex items-center gap-1 text-sm font-medium ${trendColor}`}>
+                {isPositive ? <UpArrow /> : <DownArrow />}
+                {kpi.change.text} vs {periodLabel}
+              </span>
+            ) : null}
           </div>
         );
       })}

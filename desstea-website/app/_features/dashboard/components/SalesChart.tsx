@@ -66,7 +66,7 @@ export default function SalesChart({ salesByDay, rangeLabel }: Props) {
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke="#EDE0D8" strokeWidth={1} />
-            <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#B0A090" }} axisLine={false} tickLine={false} dy={6} />
+            <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#B0A090" }} axisLine={false} tickLine={false} dy={6} interval={salesByDay.length > 14 ? 3 : 0} />
             <YAxis
               tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}K`}
               tick={{ fontSize: 12, fill: "#B0A090" }}

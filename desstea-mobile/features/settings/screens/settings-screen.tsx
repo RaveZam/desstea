@@ -120,19 +120,13 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
         <InfoRow label="Branch Name" value={branchName} />
       </Section>
 
-      <Section icon="key-sharp" title="Session">
-        <InfoRow label="Session ID" value={sessionId} />
-      </Section>
-
-      <Section icon="print-sharp" title="Printer">
-        <InfoRow label="Bluetooth Printer" value="Not connected" />
-        <View style={styles.divider} />
+<Section icon="print-sharp" title="Printer">
         <TouchableOpacity
           style={styles.refreshButton}
           onPress={printTestMessage}
         >
           <Ionicons name="print-outline" size={18} color={BRAND} />
-          <Text style={styles.refreshText}>Test Printer!!</Text>
+          <Text style={styles.refreshText}>Test Printer</Text>
         </TouchableOpacity>
       </Section>
 

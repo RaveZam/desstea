@@ -190,7 +190,9 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
 
   const [kpisRes, salesRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
     supabase.rpc("get_branch_kpis", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
-    supabase.rpc("get_branch_sales_by_day", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
+    range === "today"
+      ? supabase.from("orders").select("ordered_at, total").eq("branch_id", branchId).gte("ordered_at", startIso).lt("ordered_at", endIso)
+      : supabase.rpc("get_branch_sales_by_day", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
     supabase.rpc("get_branch_top_products", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_branch_top_categories", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
     supabase
@@ -220,6 +222,21 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
     };
   });
 
+  let salesByDay: BranchSalesDay[];
+  if (range === "today") {
+    const hourlyMap: Record<number, number> = {};
+    for (const row of (salesRes.data as { ordered_at: string; total: number }[] ?? [])) {
+      const phHour = new Date(new Date(row.ordered_at).getTime() + 8 * 60 * 60 * 1000).getUTCHours();
+      hourlyMap[phHour] = (hourlyMap[phHour] ?? 0) + Number(row.total);
+    }
+    salesByDay = Array.from({ length: 24 }, (_, hr) => ({
+      day: hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`,
+      revenue: hourlyMap[hr] ?? 0,
+    }));
+  } else {
+    salesByDay = (salesRes.data as BranchSalesDay[]) ?? [];
+  }
+
   return {
     kpis: rawKpis ? {
       total_revenue: Number(rawKpis.total_revenue),
@@ -230,7 +247,7 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
       prev_total_orders: Number(rawKpis.prev_total_orders),
       prev_avg_order_value: Number(rawKpis.prev_avg_order_value),
     } : emptyKpis,
-    salesByDay: (salesRes.data as BranchSalesDay[]) ?? [],
+    salesByDay,
     topProducts: (productsRes.data as TopProduct[]) ?? [],
     topCategories: (categoriesRes.data as TopCategory[]) ?? [],
     recentOrders,

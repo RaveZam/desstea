@@ -8,7 +8,9 @@ import BranchTopProducts from "./BranchTopProducts";
 import BranchRecentOrders from "./BranchRecentOrders";
 import BranchFormModal from "./BranchFormModal";
 import { OrderStatusChart } from "../../dashboard";
-import type { Branch } from "../../../_types";
+import OrderDetailPanel from "../../orders/components/OrderDetailPanel";
+import { fetchOrderById } from "../../orders/actions/fetchOrderById";
+import type { Branch, Order } from "../../../_types";
 import type { BranchDetailData } from "../services/branchesService";
 
 interface BranchDetailContentProps {
@@ -23,6 +25,12 @@ export default function BranchDetailContent({
   periodLabel,
 }: BranchDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  async function handleOrderClick(id: string) {
+    const order = await fetchOrderById(id);
+    setSelectedOrder(order);
+  }
 
   return (
     <>
@@ -56,7 +64,7 @@ export default function BranchDetailContent({
             <BranchTopProducts products={data.topProducts} />
           </div>
           <div className="col-span-2 flex flex-col min-h-0">
-            <BranchRecentOrders orders={data.recentOrders} />
+            <BranchRecentOrders orders={data.recentOrders} onOrderClick={handleOrderClick} />
           </div>
         </div>
       </div>
@@ -65,6 +73,11 @@ export default function BranchDetailContent({
         open={editOpen}
         onClose={() => setEditOpen(false)}
         branch={branch}
+      />
+
+      <OrderDetailPanel
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
       />
     </>
   );
