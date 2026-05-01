@@ -5,7 +5,8 @@ import {
   PrinterWidth,
 } from "react-native-thermal-receipt-printer-image-qr";
 import { OrderItem } from "../../../store";
-import { getItemPrice } from "../../pos/data/products";
+import { getItemPrice } from "../../pos/types";
+import { useBranchName } from "../../auth/hooks/use-branch-name";
 
 export type ReceiptDetails = {
   customerName: string;
@@ -58,6 +59,8 @@ function withTimeout<T>(
 }
 
 export function usePrinter() {
+  const { branchName } = useBranchName();
+
   const printTestMessage = async () => {
     try {
       await BLEPrinter.init();
@@ -101,7 +104,7 @@ export function usePrinter() {
       // Small delay to let the Bluetooth socket fully establish
       await new Promise((r) => setTimeout(r, 300));
 
-      BLEPrinter.printText("Working!\n\n\n", {});
+      BLEPrinter.printText("Working!!!!\n\n\n", {});
     } catch (err: unknown) {
       Alert.alert(
         "Print Error",
@@ -163,8 +166,8 @@ export function usePrinter() {
         await new Promise((r) => setTimeout(r, 400));
       }
 
-      BLEPrinter.printText("Desstea Ipil Echauge Branch", {});
-      BLEPrinter.printText("Order Invoice", {});
+      await BLEPrinter.printText(`Desstea ${branchName}`, {});
+      await BLEPrinter.printText("Order Invoice", {});
 
       const d = order.completedAt ?? new Date();
       const dateStr = d.toLocaleDateString("en-PH", {
@@ -180,7 +183,10 @@ export function usePrinter() {
 
       await BLEPrinter.printText("================================\n", {});
 
-      await BLEPrinter.printText(`Order #: 284731d212`, {});
+      const displayRef = order.orderRef
+        ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
+        : "—";
+      await BLEPrinter.printText(`Order ${displayRef}`, {});
 
       await BLEPrinter.printText(`Date: ${dateStr} ${timeStr}`, {});
       await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
@@ -189,13 +195,53 @@ export function usePrinter() {
       for (const item of order.items) {
         const price = getItemPrice(item);
         const lineTotal = price * item.quantity;
-        const name = item.customization
-          ? `${item.product.name} (${item.customization.size})`
-          : item.product.name;
-        await BLEPrinter.printText(
-          `${name}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
-          {},
-        );
+
+        if (item.itemType === "combo" && item.combo) {
+          // Combo item: show combo name, then each selected product
+          await BLEPrinter.printText(
+            `${item.combo.name}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
+            {},
+          );
+          if (item.comboSelections?.length) {
+            for (const sel of item.comboSelections) {
+              await BLEPrinter.printText(`  - ${sel.productName}`, {});
+              if (sel.addons?.length) {
+                for (const aq of sel.addons) {
+                  await BLEPrinter.printText(
+                    `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                    {},
+                  );
+                }
+              }
+            }
+          }
+        } else {
+          // Regular product
+          const parts: string[] = [];
+          if (item.customization?.size) {
+            parts.push(item.customization.size.label);
+          }
+          if (item.customization?.sugarLevel) {
+            parts.push(item.customization.sugarLevel.label);
+          }
+          const suffix = parts.length ? ` (${parts.join(", ")})` : "";
+          const catPrefix =
+            item.categoryLabel && item.customization
+              ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
+              : "";
+          await BLEPrinter.printText(
+            `${catPrefix}${item.product.name}${suffix}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
+            {},
+          );
+          if (item.customization?.addonOptions?.length) {
+            for (const aq of item.customization.addonOptions) {
+              await BLEPrinter.printText(
+                `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                {},
+              );
+            }
+          }
+        }
       }
 
       await BLEPrinter.printText("--------------------------------\n", {});

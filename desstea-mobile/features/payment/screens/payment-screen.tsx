@@ -18,6 +18,7 @@ const WHITE = "#FFFFFF";
 
 export default function PaymentScreen() {
   const {
+    orderId,
     orderItems,
     total,
     phase,
@@ -48,6 +49,7 @@ export default function PaymentScreen() {
       total,
       cashTendered: paymentMethod === "Cash" ? cashAmount : undefined,
       change: paymentMethod === "Cash" ? change : undefined,
+      orderRef: orderId,
     });
   };
 

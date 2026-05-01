@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { getOrder, completeOrder, setCustomerName } from "../../../store";
 import { getItemPrice } from "../../pos/types";
 
-import { saveOrderLocally } from "../../outbox/services/save-order";
+import { saveOrderLocally, uuidv4 } from "../../outbox/services/save-order";
 import { processOutbox } from "../../outbox/services/outbox-sync";
 import { supabase } from "@/lib/supabase";
 
@@ -18,6 +18,7 @@ export function usePayment() {
     0,
   );
 
+  const [orderId] = useState(() => uuidv4());
   const [phase, setPhase] = useState<Phase>("name-input");
   const [cashInput, setCashInput] = useState("");
   const [customerName, setCustomerNameState] = useState("");
@@ -69,6 +70,7 @@ export function usePayment() {
       sessionData?.session?.user?.user_metadata?.branch_id ?? "";
 
     await saveOrderLocally({
+      orderId,
       orderItems,
       customerName,
       paymentMethod,
@@ -97,6 +99,7 @@ export function usePayment() {
   };
 
   return {
+    orderId,
     orderItems,
     total,
     phase,

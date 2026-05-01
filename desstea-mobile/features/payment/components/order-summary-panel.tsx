@@ -41,11 +41,28 @@ export function OrderSummaryPanel({ orderItems, total }: Props) {
                 <Text style={styles.itemName} numberOfLines={1}>
                   {item.product.name}
                 </Text>
+                {item.itemType === "combo" && item.comboSelections && item.comboSelections.length > 0 && (
+                  <>
+                    {item.comboSelections.map((s) => (
+                      <Text key={s.slotId} style={styles.customizationLabel}>
+                        • {s.productName}
+                        {s.addons.length > 0
+                          ? ` (+${s.addons.map((aq) => aq.qty > 1 ? `${aq.option.name} ×${aq.qty}` : aq.option.name).join(", ")})`
+                          : ""}
+                      </Text>
+                    ))}
+                  </>
+                )}
                 {item.customization && (
                   <>
                     {item.customization.size && (
                       <Text style={styles.customizationLabel}>
                         {item.customization.size.label}
+                      </Text>
+                    )}
+                    {item.customization.sugarLevel && (
+                      <Text style={styles.customizationLabel}>
+                        Sugar: {item.customization.sugarLevel.label}
                       </Text>
                     )}
                     {item.customization.addonOptions.length > 0 && (

@@ -28,7 +28,7 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
         return (
           <View key={key} style={styles.orderItem}>
             <View style={styles.orderItemInfo}>
-              <Text style={styles.orderItemName} numberOfLines={2}>
+              <Text style={styles.orderItemName}>
                 {item.categoryLabel ? `(${item.categoryLabel}) ${item.product.name}` : item.product.name}
               </Text>
               {item.itemType === "combo" && item.comboSelections && item.comboSelections.length > 0 && (

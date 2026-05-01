@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -124,7 +132,7 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
           onPress={printTestMessage}
         >
           <Ionicons name="print-outline" size={18} color={BRAND} />
-          <Text style={styles.refreshText}>Test Printer</Text>
+          <Text style={styles.refreshText}>Test Printer!!</Text>
         </TouchableOpacity>
       </Section>
 
@@ -144,7 +152,8 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
           </Text>
         </TouchableOpacity>
         <Text style={styles.refreshHint}>
-          Clears all local product data and re-downloads everything from the server.
+          Clears all local product data and re-downloads everything from the
+          server.
         </Text>
       </Section>
 

@@ -26,8 +26,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.ravenzam.desstea"
     },
     "web": {
@@ -52,7 +50,11 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-web-browser"
     ],
     "updates": {
       "url": "https://u.expo.dev/6ec8140a-3dda-4a11-baae-156125ab4737"

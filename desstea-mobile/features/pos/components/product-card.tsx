@@ -21,7 +21,7 @@ export function ProductCard({ product, size, onPress }: Props) {
       activeOpacity={0.7}
     >
       <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>
+        <Text style={styles.productName}>
           {product.name}
         </Text>
         {product.description ? (

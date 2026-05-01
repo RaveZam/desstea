@@ -1,7 +1,7 @@
 import { db } from "@/lib/database";
 import { OrderItem, getItemPrice } from "@/features/pos/types";
 
-function uuidv4(): string {
+export function uuidv4(): string {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -10,6 +10,7 @@ function uuidv4(): string {
 }
 
 export type SaveOrderParams = {
+  orderId?: string;
   orderItems: OrderItem[];
   customerName: string;
   paymentMethod: "Cash" | "GCash";
@@ -20,6 +21,7 @@ export type SaveOrderParams = {
 
 export async function saveOrderLocally(params: SaveOrderParams): Promise<string> {
   const {
+    orderId: preGeneratedId,
     orderItems,
     customerName,
     paymentMethod,
@@ -28,7 +30,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
     branchId,
   } = params;
 
-  const orderId = uuidv4();
+  const orderId = preGeneratedId ?? uuidv4();
   const now = new Date().toISOString();
   const cashChange =
     cashTendered != null ? cashTendered - total : null;
