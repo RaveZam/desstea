@@ -106,7 +106,7 @@ export default function LoginPage() {
         </form>
 
         {/* Toggle */}
-        <p className="text-center text-xs text-gray-500 mt-6">
+        {/* <p className="text-center text-xs text-gray-500 mt-6">
           {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
@@ -114,6 +114,9 @@ export default function LoginPage() {
           >
             {mode === "signin" ? "Sign up" : "Sign in"}
           </button>
+        </p> */}
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Admin Only Web App
         </p>
       </div>
     </div>

@@ -79,20 +79,20 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
         {/* Price summary */}
         {combo.slots.some((s) => s.products.length > 0) && (
           <div className="border-t border-gray-100 pt-3 space-y-1.5">
-            <div className="flex justify-between text-xs text-gray-400">
+            {/* <div className="flex justify-between text-xs text-gray-400">
               <span>Items total</span>
               <span>₱{itemsTotal.toFixed(2)}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between text-sm font-bold text-gray-900">
               <span>Combo price</span>
               <span className="text-[#E8692A]">₱{Number(combo.price).toFixed(2)}</span>
             </div>
-            {savings > 0 && (
+            {/* {savings > 0 && (
               <div className="flex justify-between text-xs font-medium text-green-600">
                 <span>Customer saves</span>
                 <span>₱{savings.toFixed(2)}</span>
               </div>
-            )}
+            )} */}
           </div>
         )}
 

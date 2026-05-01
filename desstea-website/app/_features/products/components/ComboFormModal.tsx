@@ -151,6 +151,19 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
     .filter((s) => s.count > 0);
   const slotPricesSum = Math.round(slotBreakdowns.reduce((sum, s) => sum + s.avgPrice, 0) * 100) / 100;
 
+  // Detect duplicate products within each slot
+  const hasDuplicateProducts = slots.some((slot) => {
+    const ids = slot.products.map((p) => p.product_id).filter(Boolean);
+    return ids.length !== new Set(ids).size;
+  });
+
+  function isProductDuplicate(slotIdx: number, pidIdx: number): boolean {
+    const slot = slots[slotIdx];
+    const pid = slot.products[pidIdx].product_id;
+    if (!pid) return false;
+    return slot.products.some((p, j) => j !== pidIdx && p.product_id === pid);
+  }
+
   const inputCls = "border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
 
   return (
@@ -254,6 +267,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                       <div className="ml-3 space-y-1.5">
                         {slot.products.map((pd, pidIdx) => {
                           const selectedProduct = products.find((p) => p.id === pd.product_id);
+                          const isDuplicate = isProductDuplicate(slotIdx, pidIdx);
                           return (
                             <div key={pidIdx} className="flex items-center gap-2">
                               {/* Quantity stepper */}
@@ -278,16 +292,22 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                               </div>
 
                               {/* Product dropdown */}
-                              <select
-                                value={pd.product_id}
-                                onChange={(e) => updateProductRow(slotIdx, pidIdx, { product_id: e.target.value })}
-                                className={`flex-1 ${inputCls} text-xs`}
-                              >
-                                <option value="">Select product…</option>
-                                {catProducts.map((p) => (
-                                  <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                              </select>
+                              <div className="relative flex-1">
+                                <select
+                                  value={pd.product_id}
+                                  onChange={(e) => updateProductRow(slotIdx, pidIdx, { product_id: e.target.value })}
+                                  className={`w-full ${inputCls} text-xs ${isDuplicate ? "!border-red-400 !ring-red-200 !bg-red-50" : ""}`}
+                                  title={isDuplicate ? "Duplicate Product" : undefined}
+                                >
+                                  <option value="">Select product…</option>
+                                  {catProducts.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                  ))}
+                                </select>
+                                {isDuplicate && (
+                                  <span className="text-[10px] text-red-500 font-medium mt-0.5 block">Duplicate Product</span>
+                                )}
+                              </div>
 
                               {selectedProduct && (
                                 <span className="text-xs font-medium text-[#6B4F3A] shrink-0 whitespace-nowrap">
@@ -377,7 +397,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleSave}
-            disabled={loading || !name.trim() || price === "" || isNaN(parseFloat(price))}
+            disabled={loading || !name.trim() || price === "" || isNaN(parseFloat(price)) || hasDuplicateProducts}
             className="flex-1 px-4 py-2.5 rounded-xl bg-[#E8692A] text-white text-sm font-semibold hover:bg-[#d45c20] transition-colors disabled:opacity-50"
           >
             {loading ? "Saving…" : combo ? "Save Changes" : "Create Combo"}
