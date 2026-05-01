@@ -136,7 +136,7 @@ export default function Sidebar({ email, displayName, initials }: Props) {
                 </span>
                 {"badge" in item && item.badge && (
                   <span className="bg-[#E8692A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                    {item.badge}
+                    {item.badge as React.ReactNode}
                   </span>
                 )}
               </Link>

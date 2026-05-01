@@ -104,7 +104,7 @@ export function usePrinter() {
       // Small delay to let the Bluetooth socket fully establish
       await new Promise((r) => setTimeout(r, 300));
 
-      BLEPrinter.printText("Working!!!!\n\n\n", {});
+      BLEPrinter.printText("Working\n\n\n", {});
     } catch (err: unknown) {
       Alert.alert(
         "Print Error",
