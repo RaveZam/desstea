@@ -17,7 +17,7 @@ export async function processOutbox(): Promise<void> {
   if (!state.isConnected) return;
 
   const rows = db.getAllSync<OutboxRow>(
-    `SELECT * FROM outbox WHERE status = 'pending' ORDER BY priority ASC, id ASC`
+    `SELECT * FROM outbox WHERE status = 'pending' ORDER BY priority ASC, id ASC`,
   );
 
   if (rows.length === 0) return;
@@ -45,7 +45,7 @@ export async function processOutbox(): Promise<void> {
       if (orderItemId) {
         const row = db.getFirstSync<{ order_id: string }>(
           `SELECT order_id FROM order_items WHERE id = ?`,
-          [orderItemId]
+          [orderItemId],
         );
         if (row && failedOrderIds.has(row.order_id)) continue;
       }
@@ -56,9 +56,7 @@ export async function processOutbox(): Promise<void> {
       delete payload["total_price"];
     }
 
-    const { error } = await supabase
-      .from(entry.table_name)
-      .insert(payload);
+    const { error } = await supabase.from(entry.table_name).insert(payload);
 
     if (!error) {
       db.runSync(`DELETE FROM outbox WHERE id = ?`, [entry.id]);
@@ -79,6 +77,9 @@ export async function processOutbox(): Promise<void> {
       failedOrderItemIds.add(entry.record_id);
     }
 
-    console.warn(`[outbox] failed to sync ${entry.table_name}#${entry.record_id}:`, error.message);
+    console.warn(
+      `[outbox] failed to sync ${entry.table_name}#${entry.record_id}:`,
+      error.message,
+    );
   }
 }

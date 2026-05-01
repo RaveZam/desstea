@@ -22,6 +22,11 @@ export interface OrderAddon {
   quantity: number;
 }
 
+export interface OrderComboSelection {
+  slotName: string;
+  productName: string;
+}
+
 export interface OrderLineItem {
   productName: string;
   quantity: number;
@@ -30,6 +35,7 @@ export interface OrderLineItem {
   unitPrice: number;
   lineTotal: number;
   addons?: OrderAddon[];
+  comboSelections?: OrderComboSelection[];
 }
 
 export interface Order {

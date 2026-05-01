@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/lib/database";
-import { CompletedOrder, DbOrderItem, DbAddon } from "../types";
+import { CompletedOrder, DbOrderItem, DbAddon, DbComboSelection } from "../types";
 
 function isSameDay(a: Date, b: Date): boolean {
   return (
@@ -81,6 +81,7 @@ export function useReports() {
       for (const raw of rawOrders) {
         const rawItems = await db.getAllAsync<{
           id: string;
+          combo_id: string | null;
           product_name_snapshot: string;
           size_label_snapshot: string | null;
           sugar_level_snapshot: string | null;
@@ -88,7 +89,7 @@ export function useReports() {
           unit_price_snapshot: number;
           total_price: number;
         }>(
-          `SELECT id, product_name_snapshot, size_label_snapshot, sugar_level_snapshot, quantity, unit_price_snapshot, total_price
+          `SELECT id, combo_id, product_name_snapshot, size_label_snapshot, sugar_level_snapshot, quantity, unit_price_snapshot, total_price
            FROM order_items WHERE order_id = ?`,
           [raw.id]
         );
@@ -100,7 +101,12 @@ export function useReports() {
              FROM order_item_addons WHERE order_item_id = ?`,
             [ri.id]
           );
-          items.push({ ...ri, addons });
+          const comboSelections = await db.getAllAsync<DbComboSelection>(
+            `SELECT id, combo_slot_id, slot_name_snapshot, product_id, product_name_snapshot
+             FROM order_item_combo_selections WHERE order_item_id = ?`,
+            [ri.id]
+          );
+          items.push({ ...ri, addons, comboSelections });
         }
 
         completed.push({

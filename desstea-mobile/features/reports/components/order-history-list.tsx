@@ -39,7 +39,11 @@ function buildItemSummary(order: CompletedOrder): string {
     const qty = i.quantity > 1 ? ` ×${i.quantity}` : "";
     const size = i.size_label_snapshot ? ` (${i.size_label_snapshot[0]})` : "";
     const sugar = i.sugar_level_snapshot ? ` · ${i.sugar_level_snapshot}` : "";
-    return `${base}${size}${sugar}${qty}`;
+    const comboSelections =
+      i.comboSelections.length > 0
+        ? ` [${i.comboSelections.map((s) => s.product_name_snapshot).join(" + ")}]`
+        : "";
+    return `${base}${size}${sugar}${comboSelections}${qty}`;
   });
   if (names.length <= 2) return names.join(", ");
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;

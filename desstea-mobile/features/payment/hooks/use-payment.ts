@@ -47,17 +47,11 @@ export function usePayment() {
     } else if (key === ".") {
       if (!cashInput.includes(".")) setCashInput((p) => p + ".");
     } else {
-      const digit = parseInt(key, 10);
       if (cashInput.includes(".")) {
         const dec = cashInput.split(".")[1];
         if (dec && dec.length >= 2) return;
-        setCashInput((p) => p + key);
-      } else {
-        setCashInput((prev) => {
-          const current = parseFloat(prev) || 0;
-          return String(current + digit);
-        });
       }
+      setCashInput((p) => p + key);
     }
   };
 

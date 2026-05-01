@@ -5,8 +5,17 @@ export type DbAddon = {
   quantity: number;
 };
 
+export type DbComboSelection = {
+  id: string;
+  combo_slot_id: string;
+  slot_name_snapshot: string;
+  product_id: string;
+  product_name_snapshot: string;
+};
+
 export type DbOrderItem = {
   id: string;
+  combo_id: string | null;
   product_name_snapshot: string;
   size_label_snapshot: string | null;
   sugar_level_snapshot: string | null;
@@ -14,6 +23,7 @@ export type DbOrderItem = {
   unit_price_snapshot: number;
   total_price: number;
   addons: DbAddon[];
+  comboSelections: DbComboSelection[];
 };
 
 export type CompletedOrder = {

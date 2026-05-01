@@ -34,7 +34,8 @@ export function useOrdersRealtime(
           *,
           order_items (
             *,
-            order_item_addons ( * )
+            order_item_addons ( * ),
+            order_item_combo_selections ( * )
           )
         `)
         .order("ordered_at", { ascending: false })
@@ -57,6 +58,14 @@ export function useOrdersRealtime(
             priceModifier: a.price_modifier_snapshot as number,
             quantity: a.quantity as number,
           }));
+          const rawComboSelections = (item.order_item_combo_selections ?? []) as Record<
+            string,
+            unknown
+          >[];
+          const comboSelections = rawComboSelections.map((selection) => ({
+            slotName: selection.slot_name_snapshot as string,
+            productName: selection.product_name_snapshot as string,
+          }));
 
           const unitPrice = item.unit_price_snapshot as number;
           const qty = item.quantity as number;
@@ -69,6 +78,7 @@ export function useOrdersRealtime(
             unitPrice,
             lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
             addons,
+            comboSelections,
           };
         });
 

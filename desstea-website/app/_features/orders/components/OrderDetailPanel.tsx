@@ -105,6 +105,17 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                       ))}
                     </div>
                   )}
+
+                  {/* Combo selections */}
+                  {(item.comboSelections ?? []).length > 0 && (
+                    <div className="mt-1 ml-3 space-y-0.5">
+                      {(item.comboSelections ?? []).map((selection, sidx) => (
+                        <div key={sidx} className="text-xs text-gray-500">
+                          {selection.slotName}: {selection.productName}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

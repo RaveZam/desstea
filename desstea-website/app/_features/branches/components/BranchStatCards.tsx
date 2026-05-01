@@ -7,7 +7,7 @@ function pctChange(current: number, previous: number) {
 }
 
 function formatCurrency(n: number) {
-  return `₱${n.toFixed(2)}`;
+  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const UpArrow = () => (

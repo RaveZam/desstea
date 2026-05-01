@@ -19,7 +19,9 @@ export type SaveOrderParams = {
   branchId: string;
 };
 
-export async function saveOrderLocally(params: SaveOrderParams): Promise<string> {
+export async function saveOrderLocally(
+  params: SaveOrderParams,
+): Promise<string> {
   const {
     orderId: preGeneratedId,
     orderItems,
@@ -32,8 +34,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
 
   const orderId = preGeneratedId ?? uuidv4();
   const now = new Date().toISOString();
-  const cashChange =
-    cashTendered != null ? cashTendered - total : null;
+  const cashChange = cashTendered != null ? cashTendered - total : null;
 
   await db.withTransactionAsync(async () => {
     // INSERT order
@@ -50,7 +51,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
         now,
         cashTendered ?? null,
         cashChange,
-      ]
+      ],
     );
 
     // Outbox entry for order (priority 1)
@@ -72,7 +73,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
         }),
         1,
         now,
-      ]
+      ],
     );
 
     for (const item of orderItems) {
@@ -82,6 +83,12 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
 
       if (item.itemType === "combo") {
         const combo = item.combo!;
+
+        console.log(
+          `[save-order] combo "${combo.name}" | comboSelections count:`,
+          item.comboSelections?.length ?? "undefined",
+          JSON.stringify(item.comboSelections?.map((s) => ({ slotId: s.slotId, productName: s.productName })) ?? []),
+        );
 
         // INSERT order_item (combo)
         await db.runAsync(
@@ -100,7 +107,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             unitPrice,
             now,
             totalPrice,
-          ]
+          ],
         );
 
         // Outbox entry for order_item (priority 2)
@@ -116,25 +123,39 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               combo_id: combo.id,
               combo_name_snapshot: combo.name,
               product_id: null,
+              product_size_id: null,
               product_name_snapshot: combo.name,
+              size_label_snapshot: null,
+              sugar_level_id: null,
+              sugar_level_snapshot: null,
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,
             }),
             2,
             now,
-          ]
+          ],
         );
 
         // INSERT order_item_combo_selections (one per slot pick)
+        console.log(`[save-order] entering comboSelections loop, length:`, (item.comboSelections ?? []).length);
         for (const sel of item.comboSelections ?? []) {
           const selId = uuidv4();
+          console.log(`[save-order] inserting selection: slot=${sel.slotId} product=${sel.productName}`);
           await db.runAsync(
             `INSERT INTO order_item_combo_selections
                (id, order_item_id, combo_slot_id, slot_name_snapshot,
                 product_id, product_name_snapshot, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [selId, itemId, sel.slotId, sel.slotName, sel.productId, sel.productName, now]
+            [
+              selId,
+              itemId,
+              sel.slotId,
+              sel.slotName,
+              sel.productId,
+              sel.productName,
+              now,
+            ],
           );
 
           // Outbox entry for selection (priority 3)
@@ -155,7 +176,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               }),
               3,
               now,
-            ]
+            ],
           );
 
           // INSERT addons for this combo slot selection
@@ -165,7 +186,15 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             await db.runAsync(
               `INSERT INTO order_item_addons (id, order_item_id, addon_option_id, addon_name_snapshot, price_modifier_snapshot, quantity, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-              [addonId, itemId, aq.option.id, aq.option.name, aq.option.price_modifier, aq.qty, now]
+              [
+                addonId,
+                itemId,
+                aq.option.id,
+                aq.option.name,
+                aq.option.price_modifier,
+                aq.qty,
+                now,
+              ],
             );
 
             await db.runAsync(
@@ -185,7 +214,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
                 }),
                 3,
                 now,
-              ]
+              ],
             );
           }
         }
@@ -193,7 +222,8 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
         const sizeId = item.customization?.size?.id ?? null;
         const sizeLabel = item.customization?.size?.label ?? null;
         const sugarLevelId = item.customization?.sugarLevel?.id ?? null;
-        const sugarLevelSnapshot = item.customization?.sugarLevel?.label ?? null;
+        const sugarLevelSnapshot =
+          item.customization?.sugarLevel?.label ?? null;
 
         // INSERT order_item (product)
         await db.runAsync(
@@ -216,7 +246,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             unitPrice,
             now,
             totalPrice,
-          ]
+          ],
         );
 
         // Outbox entry for order_item (priority 2)
@@ -243,11 +273,11 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
             }),
             2,
             now,
-          ]
+          ],
         );
 
         const activeAddons = (item.customization?.addonOptions ?? []).filter(
-          (aq) => aq.qty > 0
+          (aq) => aq.qty > 0,
         );
 
         for (const aq of activeAddons) {
@@ -265,7 +295,7 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               aq.option.price_modifier,
               aq.qty,
               now,
-            ]
+            ],
           );
 
           // Outbox entry for addon (priority 3)
@@ -286,12 +316,69 @@ export async function saveOrderLocally(params: SaveOrderParams): Promise<string>
               }),
               3,
               now,
-            ]
+            ],
           );
         }
       }
     }
   });
+
+  const savedOrder = await db.getFirstAsync<{
+    id: string;
+    customer_name: string | null;
+    total: number;
+    payment_method: string;
+    ordered_at: string;
+  }>(
+    `SELECT id, customer_name, total, payment_method, ordered_at
+     FROM orders
+     WHERE id = ?`,
+    [orderId],
+  );
+  const savedItemsCount = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM order_items WHERE order_id = ?`,
+    [orderId],
+  );
+  const savedComboSelectionsCount = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count
+     FROM order_item_combo_selections s
+     WHERE EXISTS (
+       SELECT 1 FROM order_items oi
+       WHERE oi.id = s.order_item_id AND oi.order_id = ?
+     )`,
+    [orderId],
+  );
+  const savedComboSelections = await db.getAllAsync<{
+    id: string;
+    order_item_id: string;
+    combo_slot_id: string;
+    slot_name_snapshot: string;
+    product_id: string;
+    product_name_snapshot: string;
+    created_at: string;
+  }>(
+    `SELECT s.id, s.order_item_id, s.combo_slot_id, s.slot_name_snapshot,
+            s.product_id, s.product_name_snapshot, s.created_at
+     FROM order_item_combo_selections s
+     INNER JOIN order_items oi ON oi.id = s.order_item_id
+     WHERE oi.order_id = ?
+     ORDER BY s.created_at ASC`,
+    [orderId],
+  );
+
+  console.log("[save-order][sqlite] orders row:", savedOrder);
+  console.log(
+    "[save-order][sqlite] order graph counts:",
+    JSON.stringify({
+      orderId,
+      orderItems: savedItemsCount?.count ?? 0,
+      comboSelections: savedComboSelectionsCount?.count ?? 0,
+    }),
+  );
+  console.log(
+    "[save-order][sqlite] order_item_combo_selections rows:",
+    JSON.stringify(savedComboSelections),
+  );
 
   return orderId;
 }

@@ -146,6 +146,12 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
                         {item.sugar_level_snapshot} sugar
                       </Text>
                     )}
+                    {item.comboSelections.map((selection) => (
+                      <Text key={selection.id} style={styles.itemCustom}>
+                        {selection.slot_name_snapshot}:{" "}
+                        {selection.product_name_snapshot}
+                      </Text>
+                    ))}
                     {item.addons.map((a) => (
                       <Text key={a.id} style={styles.itemCustom}>
                         + {a.addon_name_snapshot}

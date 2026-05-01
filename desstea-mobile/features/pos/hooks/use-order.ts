@@ -23,8 +23,18 @@ export function useOrder() {
     }, []),
   );
 
-  const addToOrder = (product: LocalProduct, customization?: ProductCustomization, categoryLabel?: string) => {
-    const newItem: OrderItem = { itemType: "product", product, quantity: 1, customization, categoryLabel };
+  const addToOrder = (
+    product: LocalProduct,
+    customization?: ProductCustomization,
+    categoryLabel?: string,
+  ) => {
+    const newItem: OrderItem = {
+      itemType: "product",
+      product,
+      quantity: 1,
+      customization,
+      categoryLabel,
+    };
     const key = getItemKey(newItem);
     setOrderItems((prev) => {
       const existing = prev.find((item) => getItemKey(item) === key);
@@ -39,7 +49,15 @@ export function useOrder() {
     });
   };
 
-  const addComboToOrder = (combo: LocalCombo, selections: ComboSlotSelection[] = []) => {
+  const addComboToOrder = (
+    combo: LocalCombo,
+    selections: ComboSlotSelection[] = [],
+  ) => {
+    console.log(
+      `[use-order] addComboToOrder "${combo.name}" selections:`,
+      selections.length,
+      JSON.stringify(selections.map((s) => ({ slotId: s.slotId, productName: s.productName }))),
+    );
     const proxyProduct: LocalProduct = {
       id: combo.id,
       name: combo.name,
