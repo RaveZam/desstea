@@ -250,6 +250,7 @@ export default function ProductsPageContent({ initialProducts, initialCategories
         categories={initialCategories}
         branches={initialBranches}
         addonGroupTemplates={initialAddonGroupTemplates}
+        defaultCategoryId={selectedTab !== "all" ? selectedTab : undefined}
       />
 
       <CategoryFormModal

@@ -16,14 +16,15 @@ interface Props {
   categories: Category[];
   branches: Branch[];
   addonGroupTemplates: AddonGroupRow[];
+  defaultCategoryId?: string;
 }
 
-function emptyForm(categories: Category[]): ProductFormData {
+function emptyForm(categories: Category[], defaultCategoryId?: string): ProductFormData {
   return {
     name: "",
     description: "",
     base_price: 0,
-    category_id: categories[0]?.id ?? "",
+    category_id: defaultCategoryId ?? categories[0]?.id ?? "",
     has_sizes: false,
     has_sugar_level: false,
     is_available: true,
@@ -33,9 +34,9 @@ function emptyForm(categories: Category[]): ProductFormData {
   };
 }
 
-export default function ProductFormModal({ open, onClose, product, categories, branches, addonGroupTemplates }: Props) {
+export default function ProductFormModal({ open, onClose, product, categories, branches, addonGroupTemplates, defaultCategoryId }: Props) {
   const router = useRouter();
-  const [form, setForm] = useState<ProductFormData>(() => emptyForm(categories));
+  const [form, setForm] = useState<ProductFormData>(() => emptyForm(categories, defaultCategoryId));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -58,7 +59,7 @@ export default function ProductFormModal({ open, onClose, product, categories, b
           available_branch_ids: product.available_branch_ids,
         });
       } else {
-        setForm(emptyForm(categories));
+        setForm(emptyForm(categories, defaultCategoryId));
       }
     }
   }, [product, open, categories]);

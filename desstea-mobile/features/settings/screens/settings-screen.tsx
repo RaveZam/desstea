@@ -21,6 +21,7 @@ const GRAY_TEXT = "#8E8E93";
 const DARK_TEXT = "#1C1C1E";
 const WHITE = "#FFFFFF";
 const BRAND = "#6B4F3A";
+const APP_VERSION = "1.0.0";
 
 interface SettingsScreenProps {
   sessionId: string;
@@ -155,6 +156,8 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
         <Ionicons name="log-out-outline" size={18} color="#C0392B" />
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
+
+      <Text style={styles.versionText}>Version {APP_VERSION}</Text>
     </ScrollView>
   );
 }
@@ -254,5 +257,11 @@ const styles = StyleSheet.create({
     color: GRAY_TEXT,
     paddingBottom: 14,
     lineHeight: 16,
+  },
+  versionText: {
+    marginTop: 14,
+    fontSize: 12,
+    color: GRAY_TEXT,
+    textAlign: "center",
   },
 });

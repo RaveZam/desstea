@@ -74,7 +74,7 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
             <View style={styles.headerLeft}>
               <View style={styles.orderBadge}>
                 <Text style={styles.orderBadgeText}>
-                  #{order.id.slice(0, 6).toUpperCase()}
+                  #{order.id.slice(0, 3).toUpperCase()}
                 </Text>
               </View>
               <View style={styles.headerMeta}>
