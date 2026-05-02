@@ -4,7 +4,7 @@
     "slug": "desstea",
     "version": "1.0.0",
     "orientation": "landscape",
-    "icon": "./assets/images/logo.jpg",
+    "icon": "./assets/images/logo.png",
     "scheme": "desstea",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -21,10 +21,8 @@
         "android.permission.ACCESS_COARSE_LOCATION"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/images/logo.png"
       },
       "package": "com.ravenzam.desstea"
     },
@@ -42,8 +40,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.jpg",
-          "imageWidth": 200,
+          "image": "./assets/images/logo.png",
+          "imageWidth": 300,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {

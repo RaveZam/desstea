@@ -288,71 +288,71 @@ export function usePrinter() {
       await BLEPrinter.printText("      Thank you Come again!\n", {});
       await BLEPrinter.printText("\n\n\n", {});
 
-      // Fire kitchen copy after a delay (detached so it waits for printer to finish the customer receipt)
-      setTimeout(async () => {
-        try {
-          await BLEPrinter.printText("---- KITCHEN ORDER ----\n", {});
+      // Wait for the customer receipt to finish printing, then print the kitchen copy
+      await new Promise((r) => setTimeout(r, 4000));
 
-          const kitchenRef = order.orderRef
-            ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
-            : "—";
-          await BLEPrinter.printText(`Order ${kitchenRef}`, {});
-          await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
-          await BLEPrinter.printText("--------------------------------\n", {});
+      try {
+        await BLEPrinter.printText("---- KITCHEN ORDER ----\n", {});
 
-          for (const item of order.items) {
-            if (item.itemType === "combo" && item.combo) {
-              await BLEPrinter.printText(
-                `${item.combo.name} x${item.quantity}`,
-                {},
-              );
-              if (item.comboSelections?.length) {
-                for (const sel of item.comboSelections) {
-                  await BLEPrinter.printText(`  - ${sel.productName}`, {});
-                  if (sel.addons?.length) {
-                    for (const aq of sel.addons) {
-                      await BLEPrinter.printText(
-                        `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                        {},
-                      );
-                    }
+        const kitchenRef = order.orderRef
+          ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
+          : "—";
+        await BLEPrinter.printText(`Order ${kitchenRef}`, {});
+        await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
+        await BLEPrinter.printText("--------------------------------\n", {});
+
+        for (const item of order.items) {
+          if (item.itemType === "combo" && item.combo) {
+            await BLEPrinter.printText(
+              `${item.combo.name} x${item.quantity}`,
+              {},
+            );
+            if (item.comboSelections?.length) {
+              for (const sel of item.comboSelections) {
+                await BLEPrinter.printText(`  - ${sel.productName}`, {});
+                if (sel.addons?.length) {
+                  for (const aq of sel.addons) {
+                    await BLEPrinter.printText(
+                      `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                      {},
+                    );
                   }
                 }
               }
-            } else {
-              const parts: string[] = [];
-              if (item.customization?.size) {
-                parts.push(item.customization.size.label);
-              }
-              if (item.customization?.sugarLevel) {
-                parts.push(item.customization.sugarLevel.label);
-              }
-              const suffix = parts.length ? ` (${parts.join(", ")})` : "";
-              const catPrefix =
-                item.categoryLabel && item.customization
-                  ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
-                  : "";
-              await BLEPrinter.printText(
-                `${catPrefix}${item.product.name}${suffix} x${item.quantity}`,
-                {},
-              );
-              if (item.customization?.addonOptions?.length) {
-                for (const aq of item.customization.addonOptions) {
-                  await BLEPrinter.printText(
-                    `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                    {},
-                  );
-                }
+            }
+          } else {
+            const parts: string[] = [];
+            if (item.customization?.size) {
+              parts.push(item.customization.size.label);
+            }
+            if (item.customization?.sugarLevel) {
+              parts.push(item.customization.sugarLevel.label);
+            }
+            const suffix = parts.length ? ` (${parts.join(", ")})` : "";
+            const catPrefix =
+              item.categoryLabel && item.customization
+                ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
+                : "";
+            await BLEPrinter.printText(
+              `${catPrefix}${item.product.name}${suffix} x${item.quantity}`,
+              {},
+            );
+            if (item.customization?.addonOptions?.length) {
+              for (const aq of item.customization.addonOptions) {
+                await BLEPrinter.printText(
+                  `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                  {},
+                );
               }
             }
           }
-
-          await BLEPrinter.printText("--------------------------------\n", {});
-          await BLEPrinter.printText("\n\n\n", {});
-        } catch (e) {
-          console.warn("Kitchen print failed:", e);
         }
-      }, 5000);
+
+        await BLEPrinter.printText("--------------------------------\n", {});
+        await BLEPrinter.printText("\n\n\n", {});
+      } catch (e) {
+        console.warn("Kitchen print failed:", e);
+      }
     } catch (err: unknown) {
       Alert.alert("Print Error", `Could not print receipt.\n\n${String(err)}`);
     }
