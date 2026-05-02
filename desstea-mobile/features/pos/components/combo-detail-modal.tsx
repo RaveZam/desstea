@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { db } from "@/lib/database";
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxWidth: 520,
-    height: "75%",
+    height: Dimensions.get("window").height * 0.75,
     backgroundColor: WHITE,
     borderRadius: 24,
     overflow: "hidden",
@@ -526,26 +527,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 10,
+    backgroundColor: BRAND,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.08)",
   },
   slotIndexBubble: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: BRAND_LIGHT,
+    backgroundColor: "rgba(255,255,255,0.25)",
     alignItems: "center",
     justifyContent: "center",
   },
   slotIndexText: {
     fontSize: 11,
     fontWeight: "800",
-    color: BRAND,
+    color: WHITE,
   },
   slotLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: BRAND,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+    fontSize: 14,
+    fontWeight: "800",
+    color: WHITE,
+    letterSpacing: -0.2,
   },
   optionsContainer: {
     borderTopWidth: 1,

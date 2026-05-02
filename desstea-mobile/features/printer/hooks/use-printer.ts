@@ -1,5 +1,6 @@
-import { Alert } from "react-native";
+import { Alert, PermissionsAndroid, Platform } from "react-native";
 import { Asset } from "expo-asset";
+import { File } from "expo-file-system";
 import {
   BLEPrinter,
   PrinterWidth,
@@ -22,24 +23,29 @@ export type ReceiptDetails = {
 async function getLogoBase64(): Promise<string | null> {
   try {
     const asset = Asset.fromModule(
-      require("../../../assets/images/logo-padding.jpg"),
+      require("../../../assets/images/logo-padding.png"),
     );
     await asset.downloadAsync();
-    if (!asset.localUri) return null;
-    const response = await fetch(asset.localUri);
-    const blob = await response.blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        resolve(result.split(",")[1]);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
+    const uri = asset.localUri ?? asset.uri;
+    if (!uri) return null;
+    const file = new File(uri);
+    return await file.base64();
+  } catch (e) {
+    console.warn("getLogoBase64 failed:", e);
     return null;
   }
+}
+
+async function requestBluetoothPermissions(): Promise<boolean> {
+  if (Platform.OS !== "android" || Platform.Version < 31) return true;
+  const granted = await PermissionsAndroid.requestMultiple([
+    PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+    PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+  ]);
+  return (
+    granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN] === "granted" &&
+    granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] === "granted"
+  );
 }
 
 function withTimeout<T>(
@@ -63,6 +69,14 @@ export function usePrinter() {
 
   const printTestMessage = async () => {
     try {
+      const hasPermission = await requestBluetoothPermissions();
+      if (!hasPermission) {
+        Alert.alert(
+          "Permission Denied",
+          "Bluetooth permission is required to print.",
+        );
+        return;
+      }
       await BLEPrinter.init();
 
       const devices: { device_name: string; inner_mac_address: string }[] =
@@ -115,6 +129,14 @@ export function usePrinter() {
 
   const printReceipt = async (order: ReceiptDetails) => {
     try {
+      const hasPermission = await requestBluetoothPermissions();
+      if (!hasPermission) {
+        Alert.alert(
+          "Permission Denied",
+          "Bluetooth permission is required to print.",
+        );
+        return;
+      }
       await BLEPrinter.init();
 
       const devices: { device_name: string; inner_mac_address: string }[] =
@@ -166,7 +188,7 @@ export function usePrinter() {
         await new Promise((r) => setTimeout(r, 400));
       }
 
-      await BLEPrinter.printText(`Desstea ${branchName}`, {});
+      await BLEPrinter.printText("Desstea " + branchName, {});
       await BLEPrinter.printText("Order Invoice", {});
 
       const d = order.completedAt ?? new Date();
@@ -175,11 +197,13 @@ export function usePrinter() {
         day: "numeric",
         year: "numeric",
       });
-      const timeStr = d.toLocaleTimeString("en-PH", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+      const timeStr = d
+        .toLocaleTimeString("en-PH", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .replace(/\u202f/g, " ");
 
       await BLEPrinter.printText("================================\n", {});
 
@@ -263,6 +287,72 @@ export function usePrinter() {
       await BLEPrinter.printText("================================\n", {});
       await BLEPrinter.printText("      Thank you Come again!\n", {});
       await BLEPrinter.printText("\n\n\n", {});
+
+      // Fire kitchen copy after a delay (detached so it waits for printer to finish the customer receipt)
+      setTimeout(async () => {
+        try {
+          await BLEPrinter.printText("---- KITCHEN ORDER ----\n", {});
+
+          const kitchenRef = order.orderRef
+            ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
+            : "—";
+          await BLEPrinter.printText(`Order ${kitchenRef}`, {});
+          await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
+          await BLEPrinter.printText("--------------------------------\n", {});
+
+          for (const item of order.items) {
+            if (item.itemType === "combo" && item.combo) {
+              await BLEPrinter.printText(
+                `${item.combo.name} x${item.quantity}`,
+                {},
+              );
+              if (item.comboSelections?.length) {
+                for (const sel of item.comboSelections) {
+                  await BLEPrinter.printText(`  - ${sel.productName}`, {});
+                  if (sel.addons?.length) {
+                    for (const aq of sel.addons) {
+                      await BLEPrinter.printText(
+                        `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                        {},
+                      );
+                    }
+                  }
+                }
+              }
+            } else {
+              const parts: string[] = [];
+              if (item.customization?.size) {
+                parts.push(item.customization.size.label);
+              }
+              if (item.customization?.sugarLevel) {
+                parts.push(item.customization.sugarLevel.label);
+              }
+              const suffix = parts.length ? ` (${parts.join(", ")})` : "";
+              const catPrefix =
+                item.categoryLabel && item.customization
+                  ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
+                  : "";
+              await BLEPrinter.printText(
+                `${catPrefix}${item.product.name}${suffix} x${item.quantity}`,
+                {},
+              );
+              if (item.customization?.addonOptions?.length) {
+                for (const aq of item.customization.addonOptions) {
+                  await BLEPrinter.printText(
+                    `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
+                    {},
+                  );
+                }
+              }
+            }
+          }
+
+          await BLEPrinter.printText("--------------------------------\n", {});
+          await BLEPrinter.printText("\n\n\n", {});
+        } catch (e) {
+          console.warn("Kitchen print failed:", e);
+        }
+      }, 5000);
     } catch (err: unknown) {
       Alert.alert("Print Error", `Could not print receipt.\n\n${String(err)}`);
     }

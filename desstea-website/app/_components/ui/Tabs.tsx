@@ -12,8 +12,9 @@ interface TabsProps {
 }
 
 export default function Tabs({ tabs, active, onChange, className = "" }: TabsProps) {
+  const multiRow = tabs.length > 9;
   return (
-    <div className={`flex gap-1 ${className}`}>
+    <div className={`flex gap-1 ${multiRow ? "flex-wrap" : ""} ${className}`}>
       {tabs.map((tab) => (
         <button
           key={tab.value}

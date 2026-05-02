@@ -181,7 +181,7 @@ export default function ProductsPageContent({ initialProducts, initialCategories
         {view === "products" ? (
           <>
             {/* Filters */}
-            <div className="flex items-center justify-between gap-4 fade-up fade-up-2">
+            <div className={`flex justify-between gap-4 fade-up fade-up-2 ${categoryTabs.length > 9 ? "items-start" : "items-center"}`}>
               <Tabs
                 tabs={categoryTabs}
                 active={selectedTab}

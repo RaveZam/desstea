@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const GRAY_TEXT = "#8E8E93";
@@ -14,6 +14,44 @@ type Props = {
   onPrintReceipt: () => void;
 };
 
+function CyclingDots() {
+  const anims = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    const createDotLoop = (anim: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration: 400, useNativeDriver: true }),
+          Animated.delay(600 - delay),
+        ])
+      );
+
+    const loops = anims.map((a, i) => createDotLoop(a, i * 200));
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, []);
+
+  return (
+    <View style={styles.dotRow}>
+      {anims.map((anim, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.dot,
+            {
+              backgroundColor: GCASH_BLUE,
+              opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] }),
+              transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.3] }) }],
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
 export function GcashWait({ total, onComplete, onChangeMethod, onPrintReceipt }: Props) {
   return (
     <View style={[styles.phaseWrap, styles.phaseCentered]}>
@@ -27,11 +65,7 @@ export function GcashWait({ total, onComplete, onChangeMethod, onPrintReceipt }:
       <View style={[styles.changeCard, { borderColor: "#BFDBFE" }]}>
         <Text style={styles.gcashAmount}>₱{total.toFixed(2)}</Text>
         <Text style={styles.gcashWaitText}>Waiting for payment...</Text>
-        <View style={styles.dotRow}>
-          <View style={[styles.dot, { backgroundColor: GCASH_BLUE }]} />
-          <View style={[styles.dot, { backgroundColor: GCASH_BLUE, opacity: 0.5 }]} />
-          <View style={[styles.dot, { backgroundColor: GCASH_BLUE, opacity: 0.2 }]} />
-        </View>
+        <CyclingDots />
       </View>
 
       <TouchableOpacity
