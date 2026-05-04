@@ -29,9 +29,19 @@ export interface Product {
   base_price: number;
   has_sizes: boolean;
   has_sugar_level: boolean;
+  is_hot_cold: boolean;
+  has_flavors: boolean;
   is_available: boolean;
   created_at: string | null;
   deleted_at: string | null;
+}
+
+export interface ProductFlavor {
+  id: string;
+  product_id: string;
+  label: string;
+  temperature: string | null;
+  sort_order: number;
 }
 
 export interface ProductSize {

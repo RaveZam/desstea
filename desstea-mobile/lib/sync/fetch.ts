@@ -5,6 +5,7 @@ import type {
   AddonOption,
   Product,
   ProductSize,
+  ProductFlavor,
   Combo,
   ComboSlot,
   ComboSlotProduct,
@@ -88,7 +89,7 @@ export function fetchAddonOptionsUpdatedSince(
 // ── Products ────────────────────────────────────────────────────────────────
 
 const PRODUCT_COLS =
-  "id, category_id, addon_group_id, name, description, base_price, has_sizes, has_sugar_level, is_available, created_at, deleted_at";
+  "id, category_id, addon_group_id, name, description, base_price, has_sizes, has_sugar_level, is_hot_cold, has_flavors, is_available, created_at, deleted_at";
 
 export function fetchProductsByIds(ids: string[]): Promise<Product[]> {
   if (ids.length === 0) return Promise.resolve([]);
@@ -112,6 +113,19 @@ export function fetchDeletedProductsSince(
 ): Promise<{ id: string; name: string }[]> {
   return query("products", "id, name", (q) =>
     q.not("deleted_at", "is", null).gt("deleted_at", since),
+  );
+}
+
+// ── Product flavors ──────────────────────────────────────────────────────────
+
+export function fetchProductFlavorsByProductIds(
+  productIds: string[],
+): Promise<ProductFlavor[]> {
+  if (productIds.length === 0) return Promise.resolve([]);
+  return query(
+    "product_flavors",
+    "id, product_id, label, temperature, sort_order",
+    (q) => q.in("product_id", productIds),
   );
 }
 

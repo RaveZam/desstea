@@ -11,6 +11,7 @@ import {
   fetchComboSlotProductsBySlotIds,
   fetchProductsByIds,
   fetchProductSizesByProductIds,
+  fetchProductFlavorsByProductIds,
   fetchAllSugarLevels,
 } from "./fetch";
 import {
@@ -20,6 +21,7 @@ import {
   upsertAddonOptions,
   upsertProducts,
   upsertProductSizes,
+  upsertProductFlavors,
   upsertSugarLevels,
   upsertCombos,
   upsertComboSlots,
@@ -71,7 +73,10 @@ export async function fullSync(branchId: string, now: string): Promise<void> {
     logTable("products (has_sugar_level)", sugarProducts.map((p) => ({ id: p.id, name: p.name, has_sugar_level: p.has_sugar_level })));
   }
   const activeIds = products.map((p) => p.id);
-  const productSizes = await fetchProductSizesByProductIds(activeIds);
+  const [productSizes, productFlavors] = await Promise.all([
+    fetchProductSizesByProductIds(activeIds),
+    fetchProductFlavorsByProductIds(activeIds),
+  ]);
 
   // Write everything in one transaction
   log("writing to SQLite...");
@@ -84,6 +89,7 @@ export async function fullSync(branchId: string, now: string): Promise<void> {
     await upsertAddonOptions(addonOptions, now);
     await upsertProducts(products, now);
     await upsertProductSizes(productSizes, now);
+    await upsertProductFlavors(productFlavors, now);
     await upsertCombos(combos, now);
     await upsertComboSlots(comboSlots, now);
     await upsertComboSlotProducts(comboSlotProducts, now);

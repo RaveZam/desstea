@@ -128,6 +128,8 @@ export async function saveOrderLocally(
               size_label_snapshot: null,
               sugar_level_id: null,
               sugar_level_snapshot: null,
+              temp_snapshot: null,
+              flavor_snapshot: null,
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,
@@ -224,6 +226,8 @@ export async function saveOrderLocally(
         const sugarLevelId = item.customization?.sugarLevel?.id ?? null;
         const sugarLevelSnapshot =
           item.customization?.sugarLevel?.label ?? null;
+        const tempSnapshot = item.customization?.temperature ?? null;
+        const flavorSnapshot = item.customization?.flavor?.label ?? null;
 
         // INSERT order_item (product)
         await db.runAsync(
@@ -231,8 +235,9 @@ export async function saveOrderLocally(
              (id, order_id, combo_id, combo_name_snapshot,
               product_id, product_size_id, product_name_snapshot,
               size_label_snapshot, sugar_level_id, sugar_level_snapshot,
+              temp_snapshot, flavor_snapshot,
               quantity, unit_price_snapshot, created_at, total_price)
-           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             orderId,
@@ -242,6 +247,8 @@ export async function saveOrderLocally(
             sizeLabel,
             sugarLevelId,
             sugarLevelSnapshot,
+            tempSnapshot,
+            flavorSnapshot,
             item.quantity,
             unitPrice,
             now,
@@ -267,6 +274,8 @@ export async function saveOrderLocally(
               size_label_snapshot: sizeLabel,
               sugar_level_id: sugarLevelId,
               sugar_level_snapshot: sugarLevelSnapshot,
+              temp_snapshot: tempSnapshot,
+              flavor_snapshot: flavorSnapshot,
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,

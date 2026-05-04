@@ -6,6 +6,7 @@ import {
   fetchAvailableProductIds,
   fetchProductsByIds,
   fetchProductSizesByProductIds,
+  fetchProductFlavorsByProductIds,
   fetchDeletedProductsSince,
   fetchAddonGroupsUpdatedSince,
   fetchAddonOptionsUpdatedSince,
@@ -27,12 +28,14 @@ import {
   upsertAddonOptions,
   upsertProducts,
   upsertProductSizes,
+  upsertProductFlavors,
   upsertSugarLevels,
   upsertCombos,
   upsertComboSlots,
   upsertComboSlotProducts,
   deleteProductAndSizes,
   deleteProductSizesByProductId,
+  deleteProductFlavorsByProductId,
   deleteAddonOptionsByGroupIds,
   deleteComboAndChildren,
   cleanupOrphans,
@@ -40,6 +43,7 @@ import {
 import type {
   Product,
   ProductSize,
+  ProductFlavor,
   Category,
   AddonGroup,
   AddonOption,
@@ -53,6 +57,7 @@ import type {
 interface ProductChanges {
   updatedProducts: Product[];
   updatedSizes: ProductSize[];
+  updatedFlavors: ProductFlavor[];
   deletedIds: string[];
   removedProductIds: string[];
   updatedCategories: Category[];
@@ -96,9 +101,12 @@ async function detectProductChanges(
     updatedProducts = [...updatedProducts, ...newProducts];
   }
 
-  // Sizes for all changed products
+  // Sizes and flavors for all changed products
   const changedProductIds = updatedProducts.map((p) => p.id);
-  const updatedSizes = await fetchProductSizesByProductIds(changedProductIds);
+  const [updatedSizes, updatedFlavors] = await Promise.all([
+    fetchProductSizesByProductIds(changedProductIds),
+    fetchProductFlavorsByProductIds(changedProductIds),
+  ]);
 
   // Deleted products
   const deletedProducts = await fetchDeletedProductsSince(lastSyncedAt);
@@ -115,6 +123,7 @@ async function detectProductChanges(
   return {
     updatedProducts,
     updatedSizes,
+    updatedFlavors,
     deletedIds,
     removedProductIds,
     updatedCategories,
@@ -294,9 +303,10 @@ export async function incrementalSync(
     await deleteAddonOptionsByGroupIds(addonChanges.addonGroupIds);
     await upsertAddonOptions(addonChanges.updatedAddonOptions, now);
 
-    // Products: upsert + clear sizes for changed products
+    // Products: upsert + clear sizes/flavors for changed products
     for (const p of productChanges.updatedProducts) {
       await deleteProductSizesByProductId(p.id);
+      await deleteProductFlavorsByProductId(p.id);
     }
     const sugarProducts = productChanges.updatedProducts.filter((p) => p.has_sugar_level);
     log(`products with has_sugar_level=true (incremental): ${sugarProducts.length}`);
@@ -305,6 +315,7 @@ export async function incrementalSync(
     }
     await upsertProducts(productChanges.updatedProducts, now);
     await upsertProductSizes(productChanges.updatedSizes, now);
+    await upsertProductFlavors(productChanges.updatedFlavors, now);
 
     // Delete soft-deleted and removed products
     for (const id of productChanges.deletedIds) {

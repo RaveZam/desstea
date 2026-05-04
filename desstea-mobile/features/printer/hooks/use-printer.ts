@@ -248,6 +248,12 @@ export function usePrinter() {
           if (item.customization?.sugarLevel) {
             parts.push(item.customization.sugarLevel.label);
           }
+          if (item.customization?.temperature) {
+            parts.push(item.customization.temperature);
+          }
+          if (item.customization?.flavor) {
+            parts.push(item.customization.flavor.label);
+          }
           const suffix = parts.length ? ` (${parts.join(", ")})` : "";
           const catPrefix =
             item.categoryLabel && item.customization
@@ -327,6 +333,12 @@ export function usePrinter() {
             }
             if (item.customization?.sugarLevel) {
               parts.push(item.customization.sugarLevel.label);
+            }
+            if (item.customization?.temperature) {
+              parts.push(item.customization.temperature);
+            }
+            if (item.customization?.flavor) {
+              parts.push(item.customization.flavor.label);
             }
             const suffix = parts.length ? ` (${parts.join(", ")})` : "";
             const catPrefix =

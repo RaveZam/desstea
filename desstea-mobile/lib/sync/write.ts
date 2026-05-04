@@ -5,6 +5,7 @@ import type {
   AddonOption,
   Product,
   ProductSize,
+  ProductFlavor,
   Combo,
   ComboSlot,
   ComboSlotProduct,
@@ -67,8 +68,9 @@ export async function upsertProducts(rows: Product[], now: string) {
     await db.runAsync(
       `INSERT OR REPLACE INTO products
          (id, category_id, addon_group_id, name, description, base_price,
-          has_sizes, has_sugar_level, is_available, created_at, deleted_at, synced_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          has_sizes, has_sugar_level, is_hot_cold, has_flavors,
+          is_available, created_at, deleted_at, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         p.id,
         p.category_id,
@@ -78,11 +80,23 @@ export async function upsertProducts(rows: Product[], now: string) {
         p.base_price,
         p.has_sizes ? 1 : 0,
         p.has_sugar_level ? 1 : 0,
+        p.is_hot_cold ? 1 : 0,
+        p.has_flavors ? 1 : 0,
         p.is_available ? 1 : 0,
         p.created_at ?? null,
         null,
         now,
       ],
+    );
+  }
+}
+
+export async function upsertProductFlavors(rows: ProductFlavor[], now: string) {
+  for (const pf of rows) {
+    await db.runAsync(
+      `INSERT OR REPLACE INTO product_flavors (id, product_id, label, temperature, sort_order, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [pf.id, pf.product_id, pf.label, pf.temperature ?? null, pf.sort_order, now],
     );
   }
 }
@@ -145,6 +159,7 @@ export async function upsertComboSlotProducts(
 
 export async function deleteProductAndSizes(id: string) {
   await db.runAsync(`DELETE FROM product_sizes WHERE product_id = ?`, [id]);
+  await db.runAsync(`DELETE FROM product_flavors WHERE product_id = ?`, [id]);
   await db.runAsync(`DELETE FROM products WHERE id = ?`, [id]);
 }
 
@@ -152,6 +167,10 @@ export async function deleteProductSizesByProductId(productId: string) {
   await db.runAsync(`DELETE FROM product_sizes WHERE product_id = ?`, [
     productId,
   ]);
+}
+
+export async function deleteProductFlavorsByProductId(productId: string) {
+  await db.runAsync(`DELETE FROM product_flavors WHERE product_id = ?`, [productId]);
 }
 
 export async function deleteComboAndChildren(id: string) {
@@ -178,6 +197,7 @@ export async function clearAllTables() {
   await db.runAsync(`DELETE FROM combo_slots`);
   await db.runAsync(`DELETE FROM combos`);
   await db.runAsync(`DELETE FROM product_sizes`);
+  await db.runAsync(`DELETE FROM product_flavors`);
   await db.runAsync(`DELETE FROM products`);
   await db.runAsync(`DELETE FROM addon_options`);
   await db.runAsync(`DELETE FROM addon_groups`);

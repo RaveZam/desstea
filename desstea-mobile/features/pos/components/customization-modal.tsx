@@ -10,6 +10,7 @@ import {
 import { db } from "@/lib/database";
 import {
   LocalProduct,
+  LocalProductFlavor,
   LocalSize,
   LocalSugarLevel,
   LocalAddonOption,
@@ -42,14 +43,21 @@ export function CustomizationModal({
 }: Props) {
   const [sizes, setSizes] = useState<LocalSize[]>([]);
   const [sugarLevels, setSugarLevels] = useState<LocalSugarLevel[]>([]);
+  const [flavors, setFlavors] = useState<LocalProductFlavor[]>([]);
   const [addonOptions, setAddonOptions] = useState<LocalAddonOption[]>([]);
   const [selectedSize, setSelectedSize] = useState<LocalSize | null>(null);
   const [selectedSugarLevel, setSelectedSugarLevel] = useState<LocalSugarLevel | null>(null);
+  const [selectedTemp, setSelectedTemp] = useState<string | null>(null);
+  const [selectedFlavor, setSelectedFlavor] = useState<LocalProductFlavor | null>(null);
   const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!product) return;
-    console.log("[CustomizationModal] product:", product.id, product.name, "has_sugar_level:", product.has_sugar_level);
+    console.log("[CustomizationModal] product:", product.id, product.name, {
+      has_sugar_level: product.has_sugar_level,
+      is_hot_cold: product.is_hot_cold,
+      has_flavors: product.has_flavors,
+    });
 
     if (product.has_sizes) {
       const s = db.getAllSync<LocalSize>(
@@ -79,6 +87,28 @@ export function CustomizationModal({
       console.log("[CustomizationModal] product does NOT have sugar level");
       setSugarLevels([]);
       setSelectedSugarLevel(null);
+    }
+
+    if (product.is_hot_cold) {
+      setSelectedTemp("Hot");
+    } else {
+      setSelectedTemp(null);
+    }
+
+    if (product.has_flavors) {
+      const fl = db.getAllSync<LocalProductFlavor>(
+        `SELECT id, label, temperature, sort_order
+         FROM product_flavors
+         WHERE product_id = ?
+         ORDER BY sort_order`,
+        [product.id],
+      );
+      console.log("[CustomizationModal] product_flavors from SQLite:", fl.length, JSON.stringify(fl));
+      setFlavors(fl);
+      setSelectedFlavor(fl[0] ?? null);
+    } else {
+      setFlavors([]);
+      setSelectedFlavor(null);
     }
 
     if (product.addon_group_id) {
@@ -113,7 +143,13 @@ export function CustomizationModal({
     const activeAddons: AddonWithQty[] = addonOptions
       .filter((ao) => (addonQtys[ao.id] ?? 0) > 0)
       .map((ao) => ({ option: ao, qty: addonQtys[ao.id] }));
-    onConfirm(product, { size: selectedSize, sugarLevel: selectedSugarLevel, addonOptions: activeAddons });
+    onConfirm(product, {
+      size: selectedSize,
+      sugarLevel: selectedSugarLevel,
+      temperature: selectedTemp,
+      flavor: selectedFlavor,
+      addonOptions: activeAddons,
+    });
     setAddonQtys({});
   };
 
@@ -187,6 +223,60 @@ export function CustomizationModal({
                         ]}
                       >
                         {sl.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {product.is_hot_cold ? (
+              <>
+                <Text style={styles.sectionLabel}>Temperature</Text>
+                <View style={styles.pillRow}>
+                  {["Hot", "Cold"].map((temp) => (
+                    <TouchableOpacity
+                      key={temp}
+                      style={[
+                        styles.pill,
+                        selectedTemp === temp && styles.pillActive,
+                      ]}
+                      onPress={() => setSelectedTemp(temp)}
+                    >
+                      <Text
+                        style={[
+                          styles.pillText,
+                          selectedTemp === temp && styles.pillTextActive,
+                        ]}
+                      >
+                        {temp}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {flavors.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>Flavor</Text>
+                <View style={styles.pillRow}>
+                  {flavors.map((fl) => (
+                    <TouchableOpacity
+                      key={fl.id}
+                      style={[
+                        styles.pill,
+                        selectedFlavor?.id === fl.id && styles.pillActive,
+                      ]}
+                      onPress={() => setSelectedFlavor(fl)}
+                    >
+                      <Text
+                        style={[
+                          styles.pillText,
+                          selectedFlavor?.id === fl.id && styles.pillTextActive,
+                        ]}
+                      >
+                        {fl.label}
                       </Text>
                     </TouchableOpacity>
                   ))}

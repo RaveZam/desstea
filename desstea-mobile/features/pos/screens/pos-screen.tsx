@@ -95,8 +95,17 @@ export default function POSScreen() {
   };
 
   const handleProductPress = (product: LocalProduct) => {
-    console.log("[POS] product tapped:", product.id, product.name, "has_sugar_level:", product.has_sugar_level, "has_sizes:", product.has_sizes, "addon_group_id:", product.addon_group_id);
-    if (product.has_sizes || product.has_sugar_level || product.addon_group_id) {
+    console.log("[POS] product tapped:", {
+      id: product.id,
+      name: product.name,
+      has_sizes: product.has_sizes,
+      has_sugar_level: product.has_sugar_level,
+      is_hot_cold: product.is_hot_cold,
+      has_flavors: product.has_flavors,
+      addon_group_id: product.addon_group_id,
+      hasCustomization: !!(product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors),
+    });
+    if (product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors) {
       setCustomizingProduct(product);
     } else {
       addToOrder(product, undefined, getCategoryLabel(product));
@@ -138,6 +147,8 @@ export default function POSScreen() {
         category_id: COMBOS_TAB_ID,
         has_sizes: 0,
         has_sugar_level: 0,
+        is_hot_cold: 0,
+        has_flavors: 0,
         is_available: 1,
         addon_group_id: null,
       }}

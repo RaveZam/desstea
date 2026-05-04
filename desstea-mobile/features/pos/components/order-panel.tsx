@@ -61,6 +61,16 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
                       Sugar: {item.customization.sugarLevel.label}
                     </Text>
                   )}
+                  {item.customization.temperature && (
+                    <Text style={styles.customizationLabel}>
+                      {item.customization.temperature}
+                    </Text>
+                  )}
+                  {item.customization.flavor && (
+                    <Text style={styles.customizationLabel}>
+                      Flavor: {item.customization.flavor.label}
+                    </Text>
+                  )}
                   {item.customization.addonOptions.length > 0 && (
                     <Text style={styles.customizationLabel}>
                       +{item.customization.addonOptions
