@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/login/actions";
+import AccountModal from "./AccountModal";
 
 const navItems = [
   {
@@ -98,42 +100,24 @@ const navItems = [
 
 const generalItems: { label: string; href?: string; icon: React.ReactNode }[] =
   [
-    {
-      label: "Settings",
-      href: "/settings",
-      icon: (
-        <svg
-          className="w-4 h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-        </svg>
-      ),
-    },
-    {
-      label: "Logout",
-      icon: (
-        <svg
-          className="w-4 h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-          <polyline points="16,17 21,12 16,7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-      ),
-    },
+    // {
+    //   label: "Settings",
+    //   href: "/settings",
+    //   icon: (
+    //     <svg
+    //       className="w-4 h-4"
+    //       viewBox="0 0 24 24"
+    //       fill="none"
+    //       stroke="currentColor"
+    //       strokeWidth={2}
+    //       strokeLinecap="round"
+    //       strokeLinejoin="round"
+    //     >
+    //       <circle cx="12" cy="12" r="3" />
+    //       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+    //     </svg>
+    //   ),
+    // },
   ];
 
 type Props = {
@@ -144,6 +128,7 @@ type Props = {
 
 export default function Sidebar({ email, displayName, initials }: Props) {
   const pathname = usePathname();
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -203,50 +188,47 @@ export default function Sidebar({ email, displayName, initials }: Props) {
           })}
         </nav>
 
-        <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">
-          General
-        </p>
-        <nav className="space-y-0.5">
-          {generalItems.map((item) => {
-            if (item.href) {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex items-center gap-2.5 py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
-                    active
-                      ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
-                      : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
-                  }`}
-                >
-                  <span
-                    className={active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}
-                  >
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              );
-            }
-            return (
-              <form key={item.label} action={logout}>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-sm text-gray-600 hover:bg-[#F5EDE7]/60 transition-colors w-full text-left"
-                >
-                  <span className="text-[#C4B4A6]">{item.icon}</span>
-                  {item.label}
-                </button>
-              </form>
-            );
-          })}
-        </nav>
+        {generalItems.length > 0 && (
+          <>
+            <p className="text-[10px] font-semibold text-[#C4B4A6] uppercase tracking-widest px-2 mb-1.5">
+              General
+            </p>
+            <nav className="space-y-0.5">
+              {generalItems.map((item) => {
+                if (item.href) {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className={`flex items-center gap-2.5 py-2 pr-3 pl-3 rounded-r-xl text-sm transition-colors border-l-[3px] ${
+                        active
+                          ? "bg-[#F2EBE5] text-[#6B4F3A] font-semibold border-[#6B4F3A] rounded-l-none"
+                          : "text-gray-600 hover:bg-[#F5EDE7]/60 border-transparent rounded-xl"
+                      }`}
+                    >
+                      <span
+                        className={active ? "text-[#6B4F3A]" : "text-[#C4B4A6]"}
+                      >
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return null;
+              })}
+            </nav>
+          </>
+        )}
       </div>
 
       {/* User profile footer */}
       <div className="px-3 py-3 border-t border-[#EDE8E3]">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#F2EBE5] transition-colors cursor-pointer">
+        <button
+          onClick={() => setIsAccountModalOpen(true)}
+          className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#F2EBE5] transition-colors cursor-pointer w-full text-left group"
+        >
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
             {initials}
           </div>
@@ -257,7 +239,7 @@ export default function Sidebar({ email, displayName, initials }: Props) {
             <p className="text-[10px] text-[#A08C7A] truncate">{email}</p>
           </div>
           <svg
-            className="w-3 h-3 text-[#C4B4A6] ml-auto flex-shrink-0"
+            className="w-3 h-3 text-[#C4B4A6] ml-auto flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -267,8 +249,16 @@ export default function Sidebar({ email, displayName, initials }: Props) {
           >
             <polyline points="9 18 15 12 9 6" />
           </svg>
-        </div>
+        </button>
       </div>
+
+      {/* Account Modal */}
+      <AccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        displayName={displayName}
+        email={email}
+      />
     </aside>
   );
 }

@@ -43,7 +43,7 @@ export default function SalesChart({ salesByDay, rangeLabel }: Props) {
     : `₱${total.toFixed(2)}`;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 h-full flex flex-col" style={{ border: "1px solid #F5EDE7" }}>
+    <div className="bg-white rounded-2xl shadow-sm p-4 h-full flex flex-col overflow-hidden" style={{ border: "1px solid #F5EDE7" }}>
       <div className="shrink-0 flex items-start justify-between mb-4">
         <div>
           <h3 className="font-semibold text-gray-900 text-base">Sales Revenue</h3>

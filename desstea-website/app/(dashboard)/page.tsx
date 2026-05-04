@@ -77,8 +77,8 @@ async function DashboardContent({
 
       {/* Row 2: Sales chart + Top Products donut */}
       <div
-        className="shrink-0 grid gap-4 fade-up fade-up-3"
-        style={{ gridTemplateColumns: "2fr 1fr", height: 320 }}
+        className="shrink-0 grid gap-4 fade-up fade-up-3 overflow-hidden"
+        style={{ gridTemplateColumns: "2fr 1fr", height: 380 }}
       >
         <SalesChart
           salesByDay={data.salesByDay}

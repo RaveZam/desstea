@@ -43,15 +43,16 @@ const CustomTooltip = ({
 type Props = { topCategories: TopCategory[] };
 
 export default function OrderStatusChart({ topCategories }: Props) {
-  const totalRevenue = topCategories.reduce(
+  const categories = topCategories.slice(0, 5);
+  const totalRevenue = categories.reduce(
     (sum, d) => sum + Number(d.revenue),
     0,
   );
-  const maxRevenue = topCategories[0]?.revenue ?? 1;
+  const maxRevenue = categories[0]?.revenue ?? 1;
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-sm p-4 h-full flex flex-col"
+      className="bg-white rounded-2xl shadow-sm p-4 h-full flex flex-col overflow-hidden"
       style={{ border: "1px solid #F5EDE7" }}
     >
       <div className="shrink-0 mb-2">
@@ -66,7 +67,7 @@ export default function OrderStatusChart({ topCategories }: Props) {
           <PieChart>
             <Tooltip content={<CustomTooltip />} />
             <Pie
-              data={topCategories}
+              data={categories}
               cx="50%"
               cy="50%"
               innerRadius="52%"
@@ -75,7 +76,7 @@ export default function OrderStatusChart({ topCategories }: Props) {
               strokeWidth={0}
               paddingAngle={2}
             >
-              {topCategories.map((_, index) => (
+              {categories.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -84,7 +85,7 @@ export default function OrderStatusChart({ topCategories }: Props) {
       </div>
 
       <div className="shrink-0 space-y-2 mt-1">
-        {topCategories.map((entry, index) => (
+        {categories.map((entry, index) => (
           <div key={entry.name}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1.5">
