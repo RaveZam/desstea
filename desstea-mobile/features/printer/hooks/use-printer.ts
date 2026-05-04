@@ -292,6 +292,10 @@ export function usePrinter() {
 
       await BLEPrinter.printText("================================\n", {});
       await BLEPrinter.printText("      Thank you Come again!\n", {});
+      await BLEPrinter.printText(
+        "      This Document is not\n      valid for claim of input tax\n",
+        {},
+      );
       await BLEPrinter.printText("\n\n\n", {});
 
       // Wait for the customer receipt to finish printing, then print the kitchen copy

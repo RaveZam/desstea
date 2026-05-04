@@ -83,6 +83,8 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                       <p className="text-xs text-gray-400">
                         {item.size !== "-" ? `${item.size} · ` : ""}
                         {item.sugarLevel ? `Sugar: ${item.sugarLevel} · ` : ""}
+                        {item.temp ? `${item.temp} · ` : ""}
+                        {item.flavor ? `Flavor: ${item.flavor} · ` : ""}
                         ×{item.quantity} @ ₱{item.unitPrice}
                       </p>
                     </div>
