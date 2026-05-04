@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Pressable,
 } from "react-native";
 import { db } from "@/lib/database";
 import {
@@ -46,9 +47,11 @@ export function CustomizationModal({
   const [flavors, setFlavors] = useState<LocalProductFlavor[]>([]);
   const [addonOptions, setAddonOptions] = useState<LocalAddonOption[]>([]);
   const [selectedSize, setSelectedSize] = useState<LocalSize | null>(null);
-  const [selectedSugarLevel, setSelectedSugarLevel] = useState<LocalSugarLevel | null>(null);
+  const [selectedSugarLevel, setSelectedSugarLevel] =
+    useState<LocalSugarLevel | null>(null);
   const [selectedTemp, setSelectedTemp] = useState<string | null>(null);
-  const [selectedFlavor, setSelectedFlavor] = useState<LocalProductFlavor | null>(null);
+  const [selectedFlavor, setSelectedFlavor] =
+    useState<LocalProductFlavor | null>(null);
   const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -80,9 +83,15 @@ export function CustomizationModal({
          FROM sugar_levels
          ORDER BY sort_order`,
       );
-      console.log("[CustomizationModal] sugar_levels from SQLite:", sl.length, JSON.stringify(sl));
+      console.log(
+        "[CustomizationModal] sugar_levels from SQLite:",
+        sl.length,
+        JSON.stringify(sl),
+      );
       setSugarLevels(sl);
-      setSelectedSugarLevel(sl.find((s) => s.label === "100%") ?? sl[0] ?? null);
+      setSelectedSugarLevel(
+        sl.find((s) => s.label === "100%") ?? sl[0] ?? null,
+      );
     } else {
       console.log("[CustomizationModal] product does NOT have sugar level");
       setSugarLevels([]);
@@ -103,7 +112,11 @@ export function CustomizationModal({
          ORDER BY sort_order`,
         [product.id],
       );
-      console.log("[CustomizationModal] product_flavors from SQLite:", fl.length, JSON.stringify(fl));
+      console.log(
+        "[CustomizationModal] product_flavors from SQLite:",
+        fl.length,
+        JSON.stringify(fl),
+      );
       setFlavors(fl);
       setSelectedFlavor(fl[0] ?? null);
     } else {
@@ -159,197 +172,227 @@ export function CustomizationModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.title}>{product.name}</Text>
-            <Text style={styles.basePrice}>
-              Base ₱{product.base_price.toFixed(2)}
-            </Text>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleCancel}
+    >
+      <Pressable style={styles.overlay} onPress={handleCancel}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
+          style={styles.card}
+        >
+          <Pressable
+            onPress={() => {
+              console.log("hello");
+            }}
+          >
+            <View style={styles.parent}>
+              <View>
+                <Text style={styles.title}>{product.name}</Text>
+                <Text style={styles.basePrice}>
+                  Base ₱{product.base_price.toFixed(2)}
+                </Text>
 
-            {sizes.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Size</Text>
-                <View style={styles.pillRow}>
-                  {sizes.map((s) => (
-                    <TouchableOpacity
-                      key={s.id}
-                      style={[
-                        styles.pill,
-                        selectedSize?.id === s.id && styles.pillActive,
-                      ]}
-                      onPress={() => setSelectedSize(s)}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          selectedSize?.id === s.id && styles.pillTextActive,
-                        ]}
-                      >
-                        {s.label}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.pillSub,
-                          selectedSize?.id === s.id && styles.pillSubActive,
-                        ]}
-                      >
-                        ₱{s.size_price.toFixed(2)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {sugarLevels.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Sugar Level</Text>
-                <View style={styles.pillRow}>
-                  {sugarLevels.map((sl) => (
-                    <TouchableOpacity
-                      key={sl.id}
-                      style={[
-                        styles.pill,
-                        selectedSugarLevel?.id === sl.id && styles.pillActive,
-                      ]}
-                      onPress={() => setSelectedSugarLevel(sl)}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          selectedSugarLevel?.id === sl.id && styles.pillTextActive,
-                        ]}
-                      >
-                        {sl.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {product.is_hot_cold ? (
-              <>
-                <Text style={styles.sectionLabel}>Temperature</Text>
-                <View style={styles.pillRow}>
-                  {["Hot", "Cold"].map((temp) => (
-                    <TouchableOpacity
-                      key={temp}
-                      style={[
-                        styles.pill,
-                        selectedTemp === temp && styles.pillActive,
-                      ]}
-                      onPress={() => setSelectedTemp(temp)}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          selectedTemp === temp && styles.pillTextActive,
-                        ]}
-                      >
-                        {temp}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            {flavors.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Flavor</Text>
-                <View style={styles.pillRow}>
-                  {flavors.map((fl) => (
-                    <TouchableOpacity
-                      key={fl.id}
-                      style={[
-                        styles.pill,
-                        selectedFlavor?.id === fl.id && styles.pillActive,
-                      ]}
-                      onPress={() => setSelectedFlavor(fl)}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          selectedFlavor?.id === fl.id && styles.pillTextActive,
-                        ]}
-                      >
-                        {fl.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {addonOptions.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Add-ons</Text>
-                <View style={styles.addonPillRow}>
-                  {addonOptions.map((ao) => {
-                    const qty = addonQtys[ao.id] ?? 0;
-                    const active = qty > 0;
-                    return (
-                      <View key={ao.id} style={styles.addonPillWrapper}>
+                {sizes.length > 0 && (
+                  <>
+                    <Text style={styles.sectionLabel}>Size</Text>
+                    <View style={styles.pillRow}>
+                      {sizes.map((s) => (
                         <TouchableOpacity
+                          key={s.id}
                           style={[
-                            styles.addonPill,
-                            active && styles.addonPillActive,
+                            styles.pill,
+                            selectedSize?.id === s.id && styles.pillActive,
                           ]}
-                          onPress={() => setAddonQty(ao.id, qty + 1)}
-                          activeOpacity={0.75}
+                          onPress={() => setSelectedSize(s)}
                         >
                           <Text
                             style={[
-                              styles.addonPillName,
-                              active && styles.addonPillNameActive,
+                              styles.pillText,
+                              selectedSize?.id === s.id &&
+                                styles.pillTextActive,
                             ]}
                           >
-                            {ao.name}
+                            {s.label}
                           </Text>
-                          {ao.price_modifier > 0 && (
-                            <Text
-                              style={[
-                                styles.addonPillPrice,
-                                active && styles.addonPillPriceActive,
-                              ]}
-                            >
-                              +₱{ao.price_modifier.toFixed(2)}
-                            </Text>
-                          )}
-                          {active && (
-                            <Text style={styles.addonPillQty}>×{qty}</Text>
-                          )}
-                        </TouchableOpacity>
-                        {active && (
-                          <TouchableOpacity
-                            style={styles.addonMinusBadge}
-                            onPress={() => setAddonQty(ao.id, qty - 1)}
-                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          <Text
+                            style={[
+                              styles.pillSub,
+                              selectedSize?.id === s.id && styles.pillSubActive,
+                            ]}
                           >
-                            <Text style={styles.addonMinusText}>−</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
+                            ₱{s.size_price.toFixed(2)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                )}
 
-            <Text style={styles.adjustedPrice}>₱{totalPrice.toFixed(2)}</Text>
+                {sugarLevels.length > 0 && (
+                  <>
+                    <Text style={styles.sectionLabel}>Sugar Level</Text>
+                    <View style={styles.pillRow}>
+                      {sugarLevels.map((sl) => (
+                        <TouchableOpacity
+                          key={sl.id}
+                          style={[
+                            styles.pill,
+                            selectedSugarLevel?.id === sl.id &&
+                              styles.pillActive,
+                          ]}
+                          onPress={() => setSelectedSugarLevel(sl)}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              selectedSugarLevel?.id === sl.id &&
+                                styles.pillTextActive,
+                            ]}
+                          >
+                            {sl.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                )}
 
-            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-              <Text style={styles.confirmBtnText}>Add to Order</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </View>
+                {product.is_hot_cold ? (
+                  <>
+                    <Text style={styles.sectionLabel}>Temperature</Text>
+                    <View style={styles.pillRow}>
+                      {["Hot", "Cold"].map((temp) => (
+                        <TouchableOpacity
+                          key={temp}
+                          style={[
+                            styles.pill,
+                            selectedTemp === temp && styles.pillActive,
+                          ]}
+                          onPress={() => setSelectedTemp(temp)}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              selectedTemp === temp && styles.pillTextActive,
+                            ]}
+                          >
+                            {temp}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                ) : null}
+
+                {flavors.length > 0 && (
+                  <>
+                    <Text style={styles.sectionLabel}>Flavor</Text>
+                    <View style={styles.pillRow}>
+                      {flavors.map((fl) => (
+                        <TouchableOpacity
+                          key={fl.id}
+                          style={[
+                            styles.pill,
+                            selectedFlavor?.id === fl.id && styles.pillActive,
+                          ]}
+                          onPress={() => setSelectedFlavor(fl)}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              selectedFlavor?.id === fl.id &&
+                                styles.pillTextActive,
+                            ]}
+                          >
+                            {fl.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                )}
+
+                {addonOptions.length > 0 && (
+                  <>
+                    <Text style={styles.sectionLabel}>Add-ons</Text>
+                    <View style={styles.addonPillRow}>
+                      {addonOptions.map((ao) => {
+                        const qty = addonQtys[ao.id] ?? 0;
+                        const active = qty > 0;
+                        return (
+                          <View key={ao.id} style={styles.addonPillWrapper}>
+                            <TouchableOpacity
+                              style={[
+                                styles.addonPill,
+                                active && styles.addonPillActive,
+                              ]}
+                              onPress={() => setAddonQty(ao.id, qty + 1)}
+                              activeOpacity={0.75}
+                            >
+                              <Text
+                                style={[
+                                  styles.addonPillName,
+                                  active && styles.addonPillNameActive,
+                                ]}
+                              >
+                                {ao.name}
+                              </Text>
+                              {ao.price_modifier > 0 && (
+                                <Text
+                                  style={[
+                                    styles.addonPillPrice,
+                                    active && styles.addonPillPriceActive,
+                                  ]}
+                                >
+                                  +₱{ao.price_modifier.toFixed(2)}
+                                </Text>
+                              )}
+                              {active && (
+                                <Text style={styles.addonPillQty}>×{qty}</Text>
+                              )}
+                            </TouchableOpacity>
+                            {active && (
+                              <TouchableOpacity
+                                style={styles.addonMinusBadge}
+                                onPress={() => setAddonQty(ao.id, qty - 1)}
+                                hitSlop={{
+                                  top: 6,
+                                  bottom: 6,
+                                  left: 6,
+                                  right: 6,
+                                }}
+                              >
+                                <Text style={styles.addonMinusText}>−</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </>
+                )}
+              </View>
+              <View style={styles.bottom}>
+                <Text style={styles.adjustedPrice}>
+                  ₱{totalPrice.toFixed(2)}
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={handleConfirm}
+                >
+                  <Text style={styles.confirmBtnText}>Add to Order</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </ScrollView>
+      </Pressable>
     </Modal>
   );
 }
@@ -362,11 +405,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
+    flex: 1,
     backgroundColor: WHITE,
     borderRadius: 16,
     padding: 24,
+    paddingBottom: 48,
     width: 320,
-    maxHeight: "80%",
+    maxHeight: "75%",
+  },
+  parent: {
+    flex: 1,
+    justifyContent: "space-between",
+    height: "100%",
+  },
+  bottom: {
+    marginTop: "auto",
   },
   title: {
     fontSize: 20,
@@ -491,6 +544,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     color: DARK_TEXT,
+
     marginBottom: 20,
     letterSpacing: -0.5,
     textAlign: "center",
@@ -501,20 +555,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     width: "100%",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 32,
   },
   confirmBtnText: {
     fontSize: 16,
     fontWeight: "700",
     color: WHITE,
-  },
-  cancelBtn: {
-    paddingVertical: 10,
-    width: "100%",
-    alignItems: "center",
-  },
-  cancelBtnText: {
-    fontSize: 14,
-    color: GRAY_TEXT,
   },
 });
