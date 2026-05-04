@@ -20,6 +20,7 @@ export async function listProducts(): Promise<Product[]> {
       *,
       categories ( name ),
       product_sizes ( * ),
+      product_flavors ( * ),
       addon_groups ( id, name ),
       branch_product_availability ( branch_id, is_available )
     `)
@@ -35,6 +36,15 @@ export async function listProducts(): Promise<Product[]> {
         label: s.label as string,
         size_price: s.size_price as number,
         sort_order: s.sort_order as number,
+      }));
+
+    const flavors = ((row.product_flavors ?? []) as Record<string, unknown>[])
+      .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
+      .map((f) => ({
+        id: f.id as string,
+        label: f.label as string,
+        temperature: (f.temperature as string | null) ?? null,
+        sort_order: f.sort_order as number,
       }));
 
     const available_branch_ids = ((row.branch_product_availability ?? []) as Record<string, unknown>[])
@@ -53,8 +63,11 @@ export async function listProducts(): Promise<Product[]> {
       category_name: cat?.name ?? "",
       has_sizes: row.has_sizes as boolean,
       has_sugar_level: row.has_sugar_level as boolean,
+      is_hot_cold: row.is_hot_cold as boolean,
+      has_flavors: row.has_flavors as boolean,
       is_available: row.is_available as boolean,
       sizes,
+      flavors,
       addon_group_id: addonGroup?.id ?? null,
       addon_group_name: addonGroup?.name ?? null,
       available_branch_ids,
@@ -78,6 +91,8 @@ export async function createProductInSupabase(
       category_id: data.category_id,
       has_sizes: data.has_sizes,
       has_sugar_level: data.has_sugar_level,
+      is_hot_cold: data.is_hot_cold,
+      has_flavors: data.has_flavors,
       is_available: data.is_available,
       addon_group_id: data.addon_group_id || null,
     })
@@ -90,6 +105,13 @@ export async function createProductInSupabase(
   if (data.sizes.length > 0) {
     const { error } = await supabase.from("product_sizes").insert(
       data.sizes.map((s) => ({ product_id: productId, label: s.label, size_price: s.size_price, sort_order: s.sort_order }))
+    );
+    if (error) return error.message;
+  }
+
+  if (data.flavors.length > 0) {
+    const { error } = await supabase.from("product_flavors").insert(
+      data.flavors.map((f) => ({ product_id: productId, label: f.label, temperature: f.temperature || null, sort_order: f.sort_order }))
     );
     if (error) return error.message;
   }
@@ -123,6 +145,8 @@ export async function updateProductInSupabase(
       category_id: data.category_id,
       has_sizes: data.has_sizes,
       has_sugar_level: data.has_sugar_level,
+      is_hot_cold: data.is_hot_cold,
+      has_flavors: data.has_flavors,
       is_available: data.is_available,
       addon_group_id: data.addon_group_id || null,
       updated_at: new Date().toISOString(),
@@ -136,6 +160,16 @@ export async function updateProductInSupabase(
   if (data.sizes.length > 0) {
     const { error } = await supabase.from("product_sizes").insert(
       data.sizes.map((s) => ({ product_id: id, label: s.label, size_price: s.size_price, sort_order: s.sort_order }))
+    );
+    if (error) return error.message;
+  }
+
+  const { error: delFlavorsErr } = await supabase.from("product_flavors").delete().eq("product_id", id);
+  if (delFlavorsErr) return delFlavorsErr.message;
+
+  if (data.flavors.length > 0) {
+    const { error } = await supabase.from("product_flavors").insert(
+      data.flavors.map((f) => ({ product_id: id, label: f.label, temperature: f.temperature || null, sort_order: f.sort_order }))
     );
     if (error) return error.message;
   }

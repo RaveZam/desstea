@@ -50,6 +50,8 @@ export async function listOrders(): Promise<Order[]> {
         quantity: qty,
         size: (item.size_label_snapshot as string | null) ?? "-",
         sugarLevel: (item.sugar_level_snapshot as string | null) ?? null,
+        temp: (item.temp_snapshot as string | null) ?? null,
+        flavor: (item.flavor_snapshot as string | null) ?? null,
         unitPrice,
         lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
         addons,

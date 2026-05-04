@@ -27,8 +27,11 @@ function emptyForm(categories: Category[], defaultCategoryId?: string): ProductF
     category_id: defaultCategoryId ?? categories[0]?.id ?? "",
     has_sizes: false,
     has_sugar_level: false,
+    is_hot_cold: false,
+    has_flavors: false,
     is_available: true,
     sizes: [],
+    flavors: [],
     addon_group_id: null,
     available_branch_ids: [],
   };
@@ -53,8 +56,11 @@ export default function ProductFormModal({ open, onClose, product, categories, b
           category_id: product.category_id,
           has_sizes: product.has_sizes,
           has_sugar_level: product.has_sugar_level,
+          is_hot_cold: product.is_hot_cold,
+          has_flavors: product.has_flavors,
           is_available: product.is_available,
           sizes: product.sizes.map((s) => ({ label: s.label, size_price: s.size_price, sort_order: s.sort_order })),
+          flavors: product.flavors.map((f) => ({ label: f.label, temperature: f.temperature, sort_order: f.sort_order })),
           addon_group_id: product.addon_group_id,
           available_branch_ids: product.available_branch_ids,
         });
@@ -81,6 +87,25 @@ export default function ProductFormModal({ open, onClose, product, categories, b
 
   function removeSize(idx: number) {
     setForm((f) => ({ ...f, sizes: f.sizes.filter((_, i) => i !== idx) }));
+  }
+
+  // ── Flavors ─────────────────────────────────────────────────────────────
+  function addFlavor() {
+    setForm((f) => ({
+      ...f,
+      flavors: [...f.flavors, { label: "", temperature: null, sort_order: f.flavors.length }],
+    }));
+  }
+
+  function updateFlavor(idx: number, patch: Partial<{ label: string; temperature: string | null }>) {
+    setForm((f) => ({
+      ...f,
+      flavors: f.flavors.map((fl, i) => (i === idx ? { ...fl, ...patch } : fl)),
+    }));
+  }
+
+  function removeFlavor(idx: number) {
+    setForm((f) => ({ ...f, flavors: f.flavors.filter((_, i) => i !== idx) }));
   }
 
   // ── Branch availability ─────────────────────────────────────────────────
@@ -193,6 +218,16 @@ export default function ProductFormModal({ open, onClose, product, categories, b
             label="Has Sugar Level"
           />
           <Toggle
+            checked={form.is_hot_cold}
+            onChange={(v) => setForm((f) => ({ ...f, is_hot_cold: v }))}
+            label="Hot/Cold"
+          />
+          <Toggle
+            checked={form.has_flavors}
+            onChange={(v) => setForm((f) => ({ ...f, has_flavors: v }))}
+            label="Has Flavors"
+          />
+          <Toggle
             checked={form.is_available}
             onChange={(v) => setForm((f) => ({ ...f, is_available: v }))}
             label="Available"
@@ -240,6 +275,42 @@ export default function ProductFormModal({ open, onClose, product, categories, b
                 className="text-xs text-[#6B4F3A] font-medium hover:underline"
               >
                 + Add Size
+              </button>
+            </div>
+          </FormField>
+        )}
+
+        {/* Flavors */}
+        {form.has_flavors && (
+          <FormField label="Flavors">
+            <div className="space-y-2">
+              {form.flavors.map((fl, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={fl.label}
+                    onChange={(e) => updateFlavor(idx, { label: e.target.value })}
+                    placeholder="Flavor name"
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFlavor(idx)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addFlavor}
+                className="text-xs text-[#6B4F3A] font-medium hover:underline"
+              >
+                + Add Flavor
               </button>
             </div>
           </FormField>

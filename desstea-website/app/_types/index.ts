@@ -33,6 +33,8 @@ export interface OrderLineItem {
   quantity: number;
   size: string;
   sugarLevel: string | null;
+  temp: string | null;
+  flavor: string | null;
   unitPrice: number;
   lineTotal: number;
   addons?: OrderAddon[];
@@ -68,6 +70,13 @@ export interface ProductSize {
   sort_order: number;
 }
 
+export interface ProductFlavor {
+  id?: string;
+  label: string;
+  temperature: string | null;
+  sort_order: number;
+}
+
 export interface AddonOption {
   id?: string;
   name: string;
@@ -92,8 +101,11 @@ export interface Product {
   category_name: string;
   has_sizes: boolean;
   has_sugar_level: boolean;
+  is_hot_cold: boolean;
+  has_flavors: boolean;
   is_available: boolean;
   sizes: ProductSize[];
+  flavors: ProductFlavor[];
   addon_group_id: string | null;
   addon_group_name: string | null;
   available_branch_ids: string[];
@@ -107,8 +119,11 @@ export interface ProductFormData {
   category_id: string;
   has_sizes: boolean;
   has_sugar_level: boolean;
+  is_hot_cold: boolean;
+  has_flavors: boolean;
   is_available: boolean;
   sizes: Omit<ProductSize, "id">[];
+  flavors: Omit<ProductFlavor, "id">[];
   addon_group_id: string | null;
   available_branch_ids: string[];
 }
