@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BranchCard from "./BranchCard";
 import BranchComparisonChart from "./BranchComparisonChart";
 import BranchFormModal from "./BranchFormModal";
+import BranchDeleteModal from "./BranchDeleteModal";
 import { deleteBranch } from "../actions";
 import type { Branch } from "../../../_types";
 import type { BranchDailySummary } from "../services/branchesService";
@@ -21,6 +22,7 @@ export default function BranchesPageContent({ initialBranches, summary }: Branch
   const [view, setView] = useState<ViewMode>("grid");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [deletingBranch, setDeletingBranch] = useState<Branch | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function openAdd() {
@@ -33,13 +35,17 @@ export default function BranchesPageContent({ initialBranches, summary }: Branch
     setModalOpen(true);
   }
 
-  async function handleDelete(branch: Branch) {
-    if (!confirm(`Delete branch "${branch.name}"? This cannot be undone.`)) return;
+  function handleDelete(branch: Branch) {
+    setDeletingBranch(branch);
+  }
+
+  function handleConfirmDelete(branch: Branch) {
     startTransition(async () => {
       const result = await deleteBranch(branch.id);
       if (result.error) {
         alert(result.error);
       } else {
+        setDeletingBranch(null);
         router.refresh();
       }
     });
@@ -139,6 +145,13 @@ export default function BranchesPageContent({ initialBranches, summary }: Branch
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         branch={editingBranch}
+      />
+
+      <BranchDeleteModal
+        branch={deletingBranch}
+        onClose={() => setDeletingBranch(null)}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isPending}
       />
     </>
   );

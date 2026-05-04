@@ -42,7 +42,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   const startIso = start.toISOString();
   const endIso = end.toISOString();
 
-  const [kpisRes, salesRes, productsRes, categoriesRes, branchRes] = await Promise.all([
+  const [kpisRes, salesRes, productsRes, categoriesRes, branchRes, activeBranchesRes] = await Promise.all([
     supabase.rpc("get_dashboard_kpis", { start_date: startIso, end_date: endIso }),
     range === "today"
       ? supabase.from("orders").select("ordered_at, total").gte("ordered_at", startIso).lt("ordered_at", endIso)
@@ -50,6 +50,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
     supabase.rpc("get_top_products", { start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_top_categories", { start_date: startIso, end_date: endIso, lim: 5 }),
     supabase.rpc("get_branch_overview", { start_date: startIso, end_date: endIso }),
+    supabase.from("branches").select("branch_name").is("deleted_at", null),
   ]);
 
   if (kpisRes.error) throw new Error(kpisRes.error.message);
@@ -57,6 +58,10 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   if (productsRes.error) throw new Error(productsRes.error.message);
   if (categoriesRes.error) throw new Error(categoriesRes.error.message);
   if (branchRes.error) throw new Error(branchRes.error.message);
+
+  const activeBranchNames = new Set(
+    (activeBranchesRes.data ?? []).map((b) => (b as { branch_name: string }).branch_name)
+  );
 
   let salesByDay: SalesDay[];
   if (range === "today") {
@@ -81,6 +86,6 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
     salesByDay,
     topProducts: (productsRes.data as TopProduct[]) ?? [],
     topCategories: (categoriesRes.data as TopCategory[]) ?? [],
-    branchOverview: (branchRes.data as BranchOverview[]) ?? [],
+    branchOverview: ((branchRes.data as BranchOverview[]) ?? []).filter((b) => activeBranchNames.has(b.branch_name)),
   };
 }

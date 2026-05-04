@@ -52,6 +52,7 @@ function mapRow(row: Record<string, unknown>, nameMap: Record<string, string>): 
     assigned_account_name: accountId ? (nameMap[accountId] ?? null) : null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
+    deleted_at: (row.deleted_at as string | null) ?? null,
   };
 }
 
@@ -61,7 +62,7 @@ export async function listBranches(): Promise<Branch[]> {
   cacheTag("branches");
   const supabase = createAdminClient();
   const [{ data, error }, { data: usersData, error: usersError }] = await Promise.all([
-    supabase.from("branches").select("*").order("created_at", { ascending: false }),
+    supabase.from("branches").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
   ]);
   if (error) throw new Error(error.message);
@@ -99,6 +100,7 @@ export async function getBranchByIdFromDB(id: string): Promise<Branch | null> {
     .from("branches")
     .select("*")
     .eq("branch_id", id)
+    .is("deleted_at", null)
     .single();
   if (!data) return null;
 
@@ -258,7 +260,7 @@ export async function deleteBranchInSupabase(id: string): Promise<string | null>
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("branches")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("branch_id", id);
   return error ? error.message : null;
 }

@@ -10,6 +10,7 @@ export interface Branch {
   assigned_account_name: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 // ── Order ────────────────────────────────────────────────────

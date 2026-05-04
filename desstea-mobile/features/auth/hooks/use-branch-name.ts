@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "./use-auth";
+
+function cacheKey(branchId: string) {
+  return `branch_name_${branchId}`;
+}
 
 export function useBranchName() {
   const { user } = useAuth();
@@ -12,13 +17,25 @@ export function useBranchName() {
       setBranchName("—");
       return;
     }
+
+    // Load cached name immediately so it shows even when offline
+    SecureStore.getItemAsync(cacheKey(branchId)).then((cached) => {
+      if (cached) setBranchName(cached);
+    });
+
+    // Try to fetch fresh from Supabase and update cache
     supabase
       .from("branches")
       .select("branch_name")
       .eq("branch_id", branchId)
       .single()
       .then(({ data }) => {
-        setBranchName(data?.branch_name ?? branchId);
+        if (data?.branch_name) {
+          setBranchName(data.branch_name);
+          SecureStore.setItemAsync(cacheKey(branchId), data.branch_name).catch(
+            () => {},
+          );
+        }
       });
   }, [branchId]);
 
