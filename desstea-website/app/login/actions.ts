@@ -8,13 +8,18 @@ type ActionState = { error?: string } | undefined;
 export async function login(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: formData.get("email") as string,
     password: formData.get("password") as string,
   });
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (data.user?.user_metadata?.role !== "super_admin") {
+    await supabase.auth.signOut();
+    return { error: "Access denied. Super admin accounts only." };
   }
 
   redirect("/");

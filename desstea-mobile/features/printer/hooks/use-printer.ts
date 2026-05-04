@@ -174,23 +174,17 @@ export function usePrinter() {
       await new Promise((r) => setTimeout(r, 300));
 
       // Print logo — centered on 58mm paper
-      // paddingX pushes the image right; adjust if still off-center
       const logoBase64 = await getLogoBase64();
       if (logoBase64) {
-        const imageWidth = 350;
-        const imageHeight = 180;
-
         BLEPrinter.printImageBase64(logoBase64, {
-          imageWidth,
-          imageHeight: imageHeight,
+          imageWidth: 350,
+          imageHeight: 180,
           printerWidthType: PrinterWidth["58mm"],
         });
         await new Promise((r) => setTimeout(r, 400));
       }
 
-      await BLEPrinter.printText("Desstea " + branchName, {});
-      await BLEPrinter.printText("Order Invoice", {});
-
+      // Build the entire customer receipt as a single string
       const d = order.completedAt ?? new Date();
       const dateStr = d.toLocaleDateString("en-PH", {
         month: "short",
@@ -205,42 +199,40 @@ export function usePrinter() {
         })
         .replace(/\u202f/g, " ");
 
-      await BLEPrinter.printText("================================\n", {});
-
       const displayRef = order.orderRef
         ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
         : "—";
-      await BLEPrinter.printText(`Order ${displayRef}`, {});
 
-      await BLEPrinter.printText(`Date: ${dateStr} ${timeStr}`, {});
-      await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
-      await BLEPrinter.printText("--------------------------------\n", {});
+      const lines: string[] = [];
+      lines.push(`Desstea ${branchName}`);
+      lines.push("Order Invoice");
+      lines.push("================================");
+      lines.push(`Order ${displayRef}`);
+      lines.push(`Date: ${dateStr} ${timeStr}`);
+      lines.push(`Customer: ${order.customerName}`);
+      lines.push("--------------------------------");
 
       for (const item of order.items) {
         const price = getItemPrice(item);
         const lineTotal = price * item.quantity;
 
         if (item.itemType === "combo" && item.combo) {
-          // Combo item: show combo name, then each selected product
-          await BLEPrinter.printText(
+          lines.push(
             `${item.combo.name}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
-            {},
           );
           if (item.comboSelections?.length) {
             for (const sel of item.comboSelections) {
-              await BLEPrinter.printText(`  - ${sel.productName}`, {});
+              lines.push(`  - ${sel.productName}`);
               if (sel.addons?.length) {
                 for (const aq of sel.addons) {
-                  await BLEPrinter.printText(
+                  lines.push(
                     `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                    {},
                   );
                 }
               }
             }
           }
         } else {
-          // Regular product
           const parts: string[] = [];
           if (item.customization?.size) {
             parts.push(item.customization.size.label);
@@ -259,44 +251,35 @@ export function usePrinter() {
             item.categoryLabel && item.customization
               ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
               : "";
-          await BLEPrinter.printText(
+          lines.push(
             `${catPrefix}${item.product.name}${suffix}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
-            {},
           );
           if (item.customization?.addonOptions?.length) {
             for (const aq of item.customization.addonOptions) {
-              await BLEPrinter.printText(
+              lines.push(
                 `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                {},
               );
             }
           }
         }
       }
 
-      await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(`TOTAL:     ${order.total.toFixed(2)}`, {});
-      await BLEPrinter.printText("--------------------------------\n", {});
-      await BLEPrinter.printText(`Payment: ${order.paymentMethod}`, {});
+      lines.push("--------------------------------");
+      lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
+      lines.push("--------------------------------");
+      lines.push(`Payment: ${order.paymentMethod}`);
 
       if (order.paymentMethod === "Cash" && order.cashTendered != null) {
-        await BLEPrinter.printText(
-          `Cash:    ${order.cashTendered.toFixed(2)}`,
-          {},
-        );
-        await BLEPrinter.printText(
-          `Change:  ${(order.change ?? 0).toFixed(2)}`,
-          {},
-        );
+        lines.push(`Cash:    ${order.cashTendered.toFixed(2)}`);
+        lines.push(`Change:  ${(order.change ?? 0).toFixed(2)}`);
       }
 
-      await BLEPrinter.printText("================================\n", {});
-      await BLEPrinter.printText("      Thank you Come again!\n", {});
-      await BLEPrinter.printText(
-        "      This Document is not\n  valid for claim of input tax\n",
-        {},
-      );
-      await BLEPrinter.printText("\n\n\n", {});
+      lines.push("================================\n");
+      lines.push("      Thank you Come again!\n");
+      lines.push("      This Document is not\n  valid for claim of input tax");
+      lines.push("\n\n\n");
+
+      await BLEPrinter.printText(lines.join("\n"), {});
 
       // Wait for the customer receipt to finish printing, then print the kitchen copy
       // Base 3s + 300ms per item to account for longer receipts
@@ -304,29 +287,26 @@ export function usePrinter() {
       await new Promise((r) => setTimeout(r, receiptDelay));
 
       try {
-        await BLEPrinter.printText("---- KITCHEN ORDER ----\n", {});
-
         const kitchenRef = order.orderRef
           ? `#${order.orderRef.slice(0, 6).toUpperCase()}`
           : "—";
-        await BLEPrinter.printText(`Order ${kitchenRef}`, {});
-        await BLEPrinter.printText(`Customer: ${order.customerName}`, {});
-        await BLEPrinter.printText("--------------------------------\n", {});
+
+        const kitchenLines: string[] = [];
+        kitchenLines.push("---- KITCHEN ORDER ----");
+        kitchenLines.push(`Order ${kitchenRef}`);
+        kitchenLines.push(`Customer: ${order.customerName}`);
+        kitchenLines.push("--------------------------------");
 
         for (const item of order.items) {
           if (item.itemType === "combo" && item.combo) {
-            await BLEPrinter.printText(
-              `${item.combo.name} x${item.quantity}`,
-              {},
-            );
+            kitchenLines.push(`${item.combo.name} x${item.quantity}`);
             if (item.comboSelections?.length) {
               for (const sel of item.comboSelections) {
-                await BLEPrinter.printText(`  - ${sel.productName}`, {});
+                kitchenLines.push(`  - ${sel.productName}`);
                 if (sel.addons?.length) {
                   for (const aq of sel.addons) {
-                    await BLEPrinter.printText(
+                    kitchenLines.push(
                       `    + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                      {},
                     );
                   }
                 }
@@ -351,23 +331,23 @@ export function usePrinter() {
               item.categoryLabel && item.customization
                 ? `(${item.categoryLabel.charAt(0).toUpperCase()}) `
                 : "";
-            await BLEPrinter.printText(
+            kitchenLines.push(
               `${catPrefix}${item.product.name}${suffix} x${item.quantity}`,
-              {},
             );
             if (item.customization?.addonOptions?.length) {
               for (const aq of item.customization.addonOptions) {
-                await BLEPrinter.printText(
+                kitchenLines.push(
                   `  + ${aq.option.name}${aq.qty > 1 ? ` x${aq.qty}` : ""}`,
-                  {},
                 );
               }
             }
           }
         }
 
-        await BLEPrinter.printText("--------------------------------\n", {});
-        await BLEPrinter.printText("\n\n\n", {});
+        kitchenLines.push("--------------------------------");
+        kitchenLines.push("\n\n\n");
+
+        await BLEPrinter.printText(kitchenLines.join("\n"), {});
       } catch (e) {
         console.warn("Kitchen print failed:", e);
       }
