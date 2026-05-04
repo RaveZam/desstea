@@ -78,7 +78,7 @@ export default function OrdersTable({
               </td>
               <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
                 <div className="space-y-0.5">
-                  {order.items.map((item, idx) => (
+                  {order.items.slice(0, 2).map((item, idx) => (
                     <div key={idx} className="truncate">
                       {item.productName}
                       {item.size && item.size !== "-" && (
@@ -92,6 +92,11 @@ export default function OrdersTable({
                       )}
                     </div>
                   ))}
+                  {order.items.length > 2 && (
+                    <div className="text-gray-400 italic">
+                      +{order.items.length - 2} more
+                    </div>
+                  )}
                 </div>
               </td>
               <td className="px-4 py-3 text-right font-semibold text-gray-900">
