@@ -7,7 +7,8 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("orders")
-    .select(`
+    .select(
+      `
       *,
       branches ( branch_name ),
       order_items (
@@ -15,7 +16,8 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
         order_item_addons ( * ),
         order_item_combo_selections ( * )
       )
-    `)
+    `,
+    )
     .eq("id", id)
     .single();
 
@@ -25,16 +27,17 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
   const rawItems = (data.order_items ?? []) as Record<string, unknown>[];
 
   const items = rawItems.map((item) => {
-    const rawAddons = (item.order_item_addons ?? []) as Record<string, unknown>[];
+    const rawAddons = (item.order_item_addons ?? []) as Record<
+      string,
+      unknown
+    >[];
     const addons = rawAddons.map((a) => ({
       addonName: a.addon_name_snapshot as string,
       priceModifier: a.price_modifier_snapshot as number,
       quantity: a.quantity as number,
     }));
-    const rawComboSelections = (item.order_item_combo_selections ?? []) as Record<
-      string,
-      unknown
-    >[];
+    const rawComboSelections = (item.order_item_combo_selections ??
+      []) as Record<string, unknown>[];
     const comboSelections = rawComboSelections.map((selection) => ({
       slotName: selection.slot_name_snapshot as string,
       productName: selection.product_name_snapshot as string,
@@ -48,6 +51,8 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
       quantity: qty,
       size: (item.size_label_snapshot as string | null) ?? "-",
       sugarLevel: (item.sugar_level_snapshot as string | null) ?? null,
+      temp: (item.temp_snapshot as string | null) ?? null,
+      flavor: (item.flavor_snapshot as string | null) ?? null,
       unitPrice,
       lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
       addons,
