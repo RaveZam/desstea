@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { Branch, Order } from "@/app/_types";
+import React from "react";
 
 const POLL_INTERVAL = 2000;
 
@@ -30,14 +31,16 @@ export function useOrdersRealtime(
     async function poll() {
       const { data, error } = await supabase
         .from("orders")
-        .select(`
+        .select(
+          `
           *,
           order_items (
             *,
             order_item_addons ( * ),
             order_item_combo_selections ( * )
           )
-        `)
+        `,
+        )
         .order("ordered_at", { ascending: false })
         .limit(20);
 
@@ -52,16 +55,17 @@ export function useOrdersRealtime(
         const rawItems = (row.order_items ?? []) as Record<string, unknown>[];
 
         const items = rawItems.map((item) => {
-          const rawAddons = (item.order_item_addons ?? []) as Record<string, unknown>[];
+          const rawAddons = (item.order_item_addons ?? []) as Record<
+            string,
+            unknown
+          >[];
           const addons = rawAddons.map((a) => ({
             addonName: a.addon_name_snapshot as string,
             priceModifier: a.price_modifier_snapshot as number,
             quantity: a.quantity as number,
           }));
-          const rawComboSelections = (item.order_item_combo_selections ?? []) as Record<
-            string,
-            unknown
-          >[];
+          const rawComboSelections = (item.order_item_combo_selections ??
+            []) as Record<string, unknown>[];
           const comboSelections = rawComboSelections.map((selection) => ({
             slotName: selection.slot_name_snapshot as string,
             productName: selection.product_name_snapshot as string,
@@ -75,6 +79,8 @@ export function useOrdersRealtime(
             quantity: qty,
             size: (item.size_label_snapshot as string | null) ?? "-",
             sugarLevel: (item.sugar_level_snapshot as string | null) ?? null,
+            temp: (item.temp_snapshot as string | null) ?? null,
+            flavor: (item.flavor_snapshot as string | null) ?? null,
             unitPrice,
             lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
             addons,
@@ -96,10 +102,27 @@ export function useOrdersRealtime(
 
         onNewOrderRef.current(newOrder);
 
-        toast.success("New order received!", {
-          description: `${newOrder.customerName} · ₱${newOrder.total.toFixed(2)} · ${newOrder.branchName}`,
-          duration: 6000,
-        });
+        const description = `${newOrder.customerName} · ₱${newOrder.total.toFixed(2)} · ${newOrder.branchName}`;
+
+        const toastId = toast.success(
+          React.createElement(
+            "div",
+            {
+              onClick: () => toast.dismiss(toastId),
+              style: { cursor: "pointer" },
+              className: "w-full",
+            },
+            React.createElement(
+              "p",
+              { className: "font-semibold" },
+              "New order received!",
+            ),
+            React.createElement("p", { className: "text-sm" }, description),
+          ),
+          {
+            duration: 6000,
+          },
+        );
       }
     }
 
