@@ -293,13 +293,15 @@ export function usePrinter() {
       await BLEPrinter.printText("================================\n", {});
       await BLEPrinter.printText("      Thank you Come again!\n", {});
       await BLEPrinter.printText(
-        "      This Document is not\n      valid for claim of input tax\n",
+        "      This Document is not\n  valid for claim of input tax\n",
         {},
       );
       await BLEPrinter.printText("\n\n\n", {});
 
       // Wait for the customer receipt to finish printing, then print the kitchen copy
-      await new Promise((r) => setTimeout(r, 4000));
+      // Base 3s + 300ms per item to account for longer receipts
+      const receiptDelay = 3000 + order.items.length * 300;
+      await new Promise((r) => setTimeout(r, receiptDelay));
 
       try {
         await BLEPrinter.printText("---- KITCHEN ORDER ----\n", {});
