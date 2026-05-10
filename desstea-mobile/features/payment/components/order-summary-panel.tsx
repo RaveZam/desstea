@@ -43,8 +43,8 @@ export function OrderSummaryPanel({ orderItems, total }: Props) {
                 </Text>
                 {item.itemType === "combo" && item.comboSelections && item.comboSelections.length > 0 && (
                   <>
-                    {item.comboSelections.map((s) => (
-                      <Text key={s.slotId} style={styles.customizationLabel}>
+                    {item.comboSelections.map((s, i) => (
+                      <Text key={`${s.slotId}_${i}`} style={styles.customizationLabel}>
                         • {s.productName}
                         {s.addons.length > 0
                           ? ` (+${s.addons.map((aq) => aq.qty > 1 ? `${aq.option.name} ×${aq.qty}` : aq.option.name).join(", ")})`

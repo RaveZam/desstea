@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
+import { db } from "@/lib/database";
 import { LocalProduct, LocalCombo, ProductCustomization, ComboSlotSelection } from "../types";
 import { useCatalog } from "../hooks/use-catalog";
 import { useOrder } from "../hooks/use-order";
@@ -113,7 +114,61 @@ export default function POSScreen() {
   };
 
   const handleComboPress = (combo: LocalCombo) => {
-    setPreviewingCombo(combo);
+    type SlotRow = {
+      slot_id: string;
+      category_name: string | null;
+      product_id: string | null;
+      product_name: string | null;
+      product_category_name: string | null;
+      quantity: number;
+      addon_group_id: string | null;
+    };
+    const rows = db.getAllSync<SlotRow>(
+      `SELECT cs.id AS slot_id,
+              c.name AS category_name,
+              csp.product_id,
+              p.name AS product_name,
+              pc.name AS product_category_name,
+              COALESCE(csp.quantity, 1) AS quantity,
+              p.addon_group_id
+       FROM combo_slots cs
+       LEFT JOIN categories c ON c.id = cs.category_id
+       LEFT JOIN combo_slot_products csp ON csp.combo_slot_id = cs.id
+       LEFT JOIN products p ON p.id = csp.product_id
+       LEFT JOIN categories pc ON pc.id = p.category_id
+       WHERE cs.combo_id = ?
+       ORDER BY cs.sort_order, csp.rowid`,
+      [combo.id]
+    );
+
+    const hasMilktea = rows.some(
+      (r) => r.product_category_name?.toLowerCase().includes("milktea") ?? false
+    );
+    if (hasMilktea) {
+      setPreviewingCombo(combo);
+      return;
+    }
+
+    // No milktea — include ALL products across all slots
+    const slotNames = new Map<string, string>();
+    let slotIndex = 1;
+    for (const row of rows) {
+      if (!slotNames.has(row.slot_id)) {
+        slotNames.set(row.slot_id, row.category_name ?? `Slot ${slotIndex}`);
+        slotIndex++;
+      }
+    }
+    const autoSelections: ComboSlotSelection[] = rows
+      .filter((r) => r.product_id && r.product_name)
+      .map((r) => ({
+        slotId: r.slot_id,
+        slotName: slotNames.get(r.slot_id)!,
+        productId: r.product_id!,
+        productName: r.quantity > 1 ? `${r.product_name} x${r.quantity}` : r.product_name!,
+        addonGroupId: null,
+        addons: [],
+      }));
+    addComboToOrder(combo, autoSelections);
   };
 
   const handleCustomizationConfirm = (

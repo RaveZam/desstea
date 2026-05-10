@@ -33,6 +33,7 @@ type ComboSlot = {
   slotId: string;
   categoryName: string;
   options: SlotOption[];
+  isMilktea: boolean; // true = user picks one; false = all items auto-included
 };
 
 type SlotRow = {
@@ -40,6 +41,7 @@ type SlotRow = {
   category_name: string | null;
   product_id: string | null;
   product_name: string | null;
+  product_category_name: string | null;
   quantity: number;
   addon_group_id: string | null;
 };
@@ -64,12 +66,14 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
               c.name AS category_name,
               csp.product_id,
               p.name AS product_name,
+              pc.name AS product_category_name,
               COALESCE(csp.quantity, 1) AS quantity,
               p.addon_group_id
        FROM combo_slots cs
        LEFT JOIN categories c ON c.id = cs.category_id
        LEFT JOIN combo_slot_products csp ON csp.combo_slot_id = cs.id
        LEFT JOIN products p ON p.id = csp.product_id
+       LEFT JOIN categories pc ON pc.id = p.category_id
        WHERE cs.combo_id = ?
        ORDER BY cs.sort_order, csp.rowid`,
       [combo.id]
@@ -83,16 +87,21 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
           slotId: row.slot_id,
           categoryName: row.category_name ?? `Slot ${slotIndex}`,
           options: [],
+          isMilktea: false,
         });
         slotIndex++;
       }
       if (row.product_id && row.product_name) {
-        slotMap.get(row.slot_id)!.options.push({
+        const slot = slotMap.get(row.slot_id)!;
+        slot.options.push({
           productId: row.product_id,
           productName: row.product_name,
           quantity: row.quantity,
           addonGroupId: row.addon_group_id,
         });
+        if (row.product_category_name?.toLowerCase().includes("milktea")) {
+          slot.isMilktea = true;
+        }
       }
     }
     const builtSlots = Array.from(slotMap.values());
@@ -101,7 +110,8 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     const defaultSelections: Record<string, { productId: string; productName: string; addonGroupId: string | null }> = {};
     const groupsToFetch = new Set<string>();
     for (const slot of builtSlots) {
-      if (slot.options.length > 0) {
+      if (slot.isMilktea && slot.options.length > 0) {
+        // Milktea slots need a default selection (user will pick one)
         const first = slot.options[0];
         defaultSelections[slot.slotId] = {
           productId: first.productId,
@@ -110,6 +120,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
         };
         if (first.addonGroupId) groupsToFetch.add(first.addonGroupId);
       }
+      // Non-milktea slots: all products are included, no selection state needed
     }
     setSelections(defaultSelections);
     setSlotAddonQtys({});
@@ -168,26 +179,45 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
   }, 0);
   const totalPrice = combo.price + addonTotal;
 
-  const allSelected = slots.length === 0 || slots.every((s) => !!selections[s.slotId]);
+  const milkteasSelected = slots
+    .filter((s) => s.isMilktea)
+    .every((s) => !!selections[s.slotId]);
+  const allSelected = slots.length === 0 || milkteasSelected;
 
   const handleConfirm = () => {
-    const comboSelections: ComboSlotSelection[] = slots.map((slot) => {
-      const sel = selections[slot.slotId];
-      const addonGroupId = sel?.addonGroupId ?? null;
-      const options = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
-      const qtys = slotAddonQtys[slot.slotId] ?? {};
-      const addons: AddonWithQty[] = options
-        .filter((ao) => (qtys[ao.id] ?? 0) > 0)
-        .map((ao) => ({ option: ao, qty: qtys[ao.id] }));
-      return {
-        slotId: slot.slotId,
-        slotName: slot.categoryName,
-        productId: sel.productId,
-        productName: sel.productName,
-        addonGroupId,
-        addons,
-      };
-    });
+    const comboSelections: ComboSlotSelection[] = [];
+    for (const slot of slots) {
+      if (slot.isMilktea) {
+        // User picked one milktea
+        const sel = selections[slot.slotId];
+        const addonGroupId = sel?.addonGroupId ?? null;
+        const options = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
+        const qtys = slotAddonQtys[slot.slotId] ?? {};
+        const addons: AddonWithQty[] = options
+          .filter((ao) => (qtys[ao.id] ?? 0) > 0)
+          .map((ao) => ({ option: ao, qty: qtys[ao.id] }));
+        comboSelections.push({
+          slotId: slot.slotId,
+          slotName: slot.categoryName,
+          productId: sel.productId,
+          productName: sel.productName,
+          addonGroupId,
+          addons,
+        });
+      } else {
+        // All products in this slot are included
+        for (const option of slot.options) {
+          comboSelections.push({
+            slotId: slot.slotId,
+            slotName: slot.categoryName,
+            productId: option.productId,
+            productName: option.quantity > 1 ? `${option.productName} x${option.quantity}` : option.productName,
+            addonGroupId: null,
+            addons: [],
+          });
+        }
+      }
+    }
     onConfirm(combo, comboSelections);
   };
 
@@ -217,7 +247,9 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
                   <Text style={styles.headerSub} numberOfLines={1}>{combo.description}</Text>
                 ) : (
                   <Text style={styles.headerSub}>
-                    {slots.length} {slots.length === 1 ? "slot" : "slots"} to customize
+                    {slots.filter((s) => s.isMilktea).length === 1
+                      ? "Choose your milktea"
+                      : `Choose from ${slots.filter((s) => s.isMilktea).length} milktea slots`}
                   </Text>
                 )}
               </View>
@@ -275,77 +307,105 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
                             <Text style={styles.slotIndexText}>{idx + 1}</Text>
                           </View>
                           <Text style={styles.slotLabel}>{slot.categoryName}</Text>
+                          {!slot.isMilktea && (
+                            <View style={styles.includedBadge}>
+                              <Text style={styles.includedBadgeText}>INCLUDED</Text>
+                            </View>
+                          )}
                         </View>
 
-                        {/* Options */}
-                        <View style={styles.optionsContainer}>
-                          {slot.options.map((option, optIdx) => {
-                            const selected = sel?.productId === option.productId;
-                            return (
-                              <TouchableOpacity
-                                key={option.productId}
-                                style={[
-                                  styles.optionRow,
-                                  selected && styles.optionRowSelected,
-                                  optIdx === slot.options.length - 1 && styles.optionRowLast,
-                                ]}
-                                onPress={() => selectProduct(slot.slotId, option)}
-                                activeOpacity={0.7}
-                              >
-                                <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-                                  {selected && <View style={styles.radioInner} />}
-                                </View>
-                                <Text style={[styles.optionName, selected && styles.optionNameSelected]}>
-                                  {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}
-                                </Text>
-                                {selected && (
-                                  <Ionicons name="checkmark" size={15} color={BRAND} />
-                                )}
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-
-                        {/* Add-ons */}
-                        {addonOptions.length > 0 && (
-                          <View style={styles.addonSection}>
-                            <Text style={styles.addonSectionLabel}>ADD-ONS</Text>
-                            <View style={styles.addonPillRow}>
-                              {addonOptions.map((ao) => {
-                                const qty = qtys[ao.id] ?? 0;
-                                const active = qty > 0;
+                        {slot.isMilktea ? (
+                          <>
+                            {/* Milktea: radio picker */}
+                            <View style={styles.optionsContainer}>
+                              {slot.options.map((option, optIdx) => {
+                                const selected = sel?.productId === option.productId;
                                 return (
-                                  <View key={ao.id} style={styles.addonPillWrapper}>
-                                    <TouchableOpacity
-                                      style={[styles.addonPill, active && styles.addonPillActive]}
-                                      onPress={() => setAddonQty(slot.slotId, ao.id, qty + 1)}
-                                      activeOpacity={0.75}
-                                    >
-                                      <Text style={[styles.addonPillName, active && styles.addonPillNameActive]}>
-                                        {ao.name}
-                                      </Text>
-                                      {ao.price_modifier > 0 && (
-                                        <Text style={[styles.addonPillPrice, active && styles.addonPillPriceActive]}>
-                                          +₱{ao.price_modifier.toFixed(2)}
-                                        </Text>
-                                      )}
-                                      {active && (
-                                        <Text style={styles.addonPillQty}>×{qty}</Text>
-                                      )}
-                                    </TouchableOpacity>
-                                    {active && (
-                                      <TouchableOpacity
-                                        style={styles.addonMinusBadge}
-                                        onPress={() => setAddonQty(slot.slotId, ao.id, qty - 1)}
-                                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                                      >
-                                        <Text style={styles.addonMinusText}>−</Text>
-                                      </TouchableOpacity>
+                                  <TouchableOpacity
+                                    key={option.productId}
+                                    style={[
+                                      styles.optionRow,
+                                      selected && styles.optionRowSelected,
+                                      optIdx === slot.options.length - 1 && styles.optionRowLast,
+                                    ]}
+                                    onPress={() => selectProduct(slot.slotId, option)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
+                                      {selected && <View style={styles.radioInner} />}
+                                    </View>
+                                    <Text style={[styles.optionName, selected && styles.optionNameSelected]}>
+                                      {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}
+                                    </Text>
+                                    {selected && (
+                                      <Ionicons name="checkmark" size={15} color={BRAND} />
                                     )}
-                                  </View>
+                                  </TouchableOpacity>
                                 );
                               })}
                             </View>
+
+                            {/* Add-ons */}
+                            {addonOptions.length > 0 && (
+                              <View style={styles.addonSection}>
+                                <Text style={styles.addonSectionLabel}>ADD-ONS</Text>
+                                <View style={styles.addonPillRow}>
+                                  {addonOptions.map((ao) => {
+                                    const qty = qtys[ao.id] ?? 0;
+                                    const active = qty > 0;
+                                    return (
+                                      <View key={ao.id} style={styles.addonPillWrapper}>
+                                        <TouchableOpacity
+                                          style={[styles.addonPill, active && styles.addonPillActive]}
+                                          onPress={() => setAddonQty(slot.slotId, ao.id, qty + 1)}
+                                          activeOpacity={0.75}
+                                        >
+                                          <Text style={[styles.addonPillName, active && styles.addonPillNameActive]}>
+                                            {ao.name}
+                                          </Text>
+                                          {ao.price_modifier > 0 && (
+                                            <Text style={[styles.addonPillPrice, active && styles.addonPillPriceActive]}>
+                                              +₱{ao.price_modifier.toFixed(2)}
+                                            </Text>
+                                          )}
+                                          {active && (
+                                            <Text style={styles.addonPillQty}>×{qty}</Text>
+                                          )}
+                                        </TouchableOpacity>
+                                        {active && (
+                                          <TouchableOpacity
+                                            style={styles.addonMinusBadge}
+                                            onPress={() => setAddonQty(slot.slotId, ao.id, qty - 1)}
+                                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                          >
+                                            <Text style={styles.addonMinusText}>−</Text>
+                                          </TouchableOpacity>
+                                        )}
+                                      </View>
+                                    );
+                                  })}
+                                </View>
+                              </View>
+                            )}
+                          </>
+                        ) : (
+                          // Non-milktea: show all items as fixed/included
+                          <View style={styles.optionsContainer}>
+                            {slot.options.map((option, optIdx) => (
+                              <View
+                                key={option.productId}
+                                style={[
+                                  styles.optionRow,
+                                  styles.optionRowFixed,
+                                  optIdx === slot.options.length - 1 && styles.optionRowLast,
+                                ]}
+                              >
+                                <Ionicons name="checkmark-circle" size={18} color={BRAND} />
+                                <Text style={[styles.optionName, styles.optionNameSelected]}>
+                                  {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}
+                                </Text>
+                              </View>
+                            ))}
                           </View>
                         )}
                       </View>
@@ -549,6 +609,19 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: WHITE,
     letterSpacing: -0.2,
+    flex: 1,
+  },
+  includedBadge: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  includedBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: WHITE,
+    letterSpacing: 0.8,
   },
   optionsContainer: {
     borderTopWidth: 1,
@@ -565,6 +638,9 @@ const styles = StyleSheet.create({
     backgroundColor: WHITE,
   },
   optionRowSelected: {
+    backgroundColor: BRAND_LIGHT,
+  },
+  optionRowFixed: {
     backgroundColor: BRAND_LIGHT,
   },
   optionRowLast: {
