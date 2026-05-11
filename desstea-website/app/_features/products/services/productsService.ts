@@ -344,6 +344,8 @@ export interface ComboSlotRow {
   sort_order: number;
   category_id: string;
   category_name: string;
+  requires_selection: boolean;
+  selection_group: string | null;
   products: ComboSlotProductRow[];
 }
 
@@ -365,7 +367,7 @@ export async function listCombos(): Promise<ComboRow[]> {
       id, name, price, is_available, created_at,
       branch_combo_availability ( branch_id, is_available ),
       combo_slots (
-        id, sort_order, category_id,
+        id, sort_order, category_id, requires_selection, selection_group,
         categories ( name ),
         combo_slot_products (
           product_id, quantity, upgrade_price,
@@ -398,6 +400,8 @@ export async function listCombos(): Promise<ComboRow[]> {
             sort_order: slot.sort_order as number,
             category_id: slot.category_id as string,
             category_name: cat?.name ?? "",
+            requires_selection: slot.requires_selection as boolean,
+            selection_group: (slot.selection_group as string | null) ?? null,
             products: ((slot.combo_slot_products ?? []) as Record<string, unknown>[]).map((sp) => {
               const prod = sp.products as { name: string; base_price: number } | null;
               return {
@@ -419,7 +423,7 @@ export async function createComboInSupabase(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
+    slots: { category_id: string; requires_selection: boolean; selection_group: string | null; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   },
   allBranchIds: string[]
@@ -439,7 +443,7 @@ export async function createComboInSupabase(
     const slot = data.slots[i];
     const { data: slotInserted, error: slotErr } = await supabase
       .from("combo_slots")
-      .insert({ combo_id: comboId, category_id: slot.category_id, sort_order: i })
+      .insert({ combo_id: comboId, category_id: slot.category_id, sort_order: i, requires_selection: slot.requires_selection, selection_group: slot.selection_group ?? null })
       .select("id")
       .single();
     if (slotErr) return slotErr.message;
@@ -472,7 +476,7 @@ export async function updateComboInSupabase(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
+    slots: { category_id: string; requires_selection: boolean; selection_group: string | null; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   },
   allBranchIds: string[]
@@ -510,7 +514,7 @@ export async function updateComboInSupabase(
     const slot = data.slots[i];
     const { data: slotInserted, error: slotErr } = await supabase
       .from("combo_slots")
-      .insert({ combo_id: id, category_id: slot.category_id, sort_order: i })
+      .insert({ combo_id: id, category_id: slot.category_id, sort_order: i, requires_selection: slot.requires_selection, selection_group: slot.selection_group ?? null })
       .select("id")
       .single();
     if (slotErr) return slotErr.message;

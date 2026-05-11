@@ -203,6 +203,15 @@ export async function initDatabase() {
     }
   }
 
+  // Add requires_selection and selection_group to combo_slots if missing
+  const hasRequiresSelection = db.getFirstSync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM pragma_table_info('combo_slots') WHERE name = 'requires_selection'`
+  );
+  if (!hasRequiresSelection || hasRequiresSelection.count === 0) {
+    await db.execAsync(`ALTER TABLE combo_slots ADD COLUMN requires_selection INTEGER NOT NULL DEFAULT 0`);
+    await db.execAsync(`ALTER TABLE combo_slots ADD COLUMN selection_group TEXT NULL`);
+  }
+
   // Rebuild combo_slots if it still has the legacy 'name' column (schema drift fix)
   const hasNameCol = db.getFirstSync<{ count: number }>(
     `SELECT COUNT(*) as count FROM pragma_table_info('combo_slots') WHERE name = 'name'`

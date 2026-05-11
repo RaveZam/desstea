@@ -133,7 +133,7 @@ export async function createCombo(data: {
   name: string;
   price: number;
   is_available: boolean;
-  slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
+  slots: { category_id: string; requires_selection: boolean; selection_group: string | null; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
   available_branch_ids: string[];
 }): Promise<{ error: string | null }> {
   const branches = await listBranches();
@@ -150,7 +150,7 @@ export async function updateCombo(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
+    slots: { category_id: string; requires_selection: boolean; selection_group: string | null; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   }
 ): Promise<{ error: string | null }> {

@@ -44,9 +44,20 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
           <div className="space-y-3">
             {combo.slots.map((slot) => (
               <div key={slot.id}>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  {slot.category_name}
-                </p>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {slot.category_name}
+                  </p>
+                  {slot.requires_selection ? (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#FFF3EC] text-[#E8692A] border border-[#F5C5A3]">
+                      Pick 1{slot.selection_group ? ` · ${slot.selection_group}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 border border-gray-200">
+                      Included
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-1">
                   {slot.products.map((p) => (
                     <div key={p.product_id} className="flex items-center justify-between gap-3 py-1.5 px-3 bg-gray-50 rounded-lg">

@@ -67,6 +67,8 @@ export interface ComboSlot {
   combo_id: string;
   category_id: string | null;
   sort_order: number;
+  requires_selection: boolean;
+  selection_group: string | null;
 }
 
 export interface ComboSlotProduct {

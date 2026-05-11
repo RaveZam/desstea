@@ -135,9 +135,9 @@ export async function upsertCombos(rows: Combo[], now: string) {
 export async function upsertComboSlots(rows: ComboSlot[], now: string) {
   for (const cs of rows) {
     await db.runAsync(
-      `INSERT OR REPLACE INTO combo_slots (id, combo_id, category_id, sort_order, synced_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [cs.id, cs.combo_id, cs.category_id ?? null, cs.sort_order, now],
+      `INSERT OR REPLACE INTO combo_slots (id, combo_id, category_id, sort_order, requires_selection, selection_group, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [cs.id, cs.combo_id, cs.category_id ?? null, cs.sort_order, cs.requires_selection ? 1 : 0, cs.selection_group ?? null, now],
     );
   }
 }

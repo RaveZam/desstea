@@ -232,7 +232,7 @@ export function fetchComboSlotsByComboIds(
   comboIds: string[],
 ): Promise<ComboSlot[]> {
   if (comboIds.length === 0) return Promise.resolve([]);
-  return query("combo_slots", "id, combo_id, category_id, sort_order", (q) =>
+  return query("combo_slots", "id, combo_id, category_id, sort_order, requires_selection, selection_group", (q) =>
     q.in("combo_id", comboIds),
   );
 }

@@ -11,7 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { db } from "@/lib/database";
-import { LocalCombo, ComboSlotSelection, LocalAddonOption, AddonWithQty } from "../types";
+import {
+  LocalCombo,
+  ComboSlotSelection,
+  LocalAddonOption,
+  AddonWithQty,
+} from "../types";
 
 const BRAND = "#E8692A";
 const BRAND_LIGHT = "#FFF3ED";
@@ -21,6 +26,7 @@ const GRAY = "#8E8E93";
 const SOFT = "#F5F5F7";
 const DIVIDER = "#EFEFEF";
 const WHITE = "#FFFFFF";
+const { height: SCREEN_H } = Dimensions.get("window");
 
 type SlotOption = {
   productId: string;
@@ -35,8 +41,8 @@ type ComboSlot = {
   slotId: string;
   categoryName: string;
   options: SlotOption[];
-  isSingleSelect: boolean; // true = user picks one (milktea/frappe); false = all items auto-included
-  drinkGroup: string | null; // shared group key — selecting in one clears the others
+  isSingleSelect: boolean;
+  drinkGroup: string | null;
 };
 
 type SlotRow = {
@@ -44,10 +50,11 @@ type SlotRow = {
   category_name: string | null;
   product_id: string | null;
   product_name: string | null;
-  product_category_name: string | null;
   quantity: number;
   upgrade_price: number;
   addon_group_id: string | null;
+  requires_selection: number;
+  selection_group: string | null;
 };
 
 type Props = {
@@ -57,11 +64,28 @@ type Props = {
   onCancel: () => void;
 };
 
-export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props) {
+export function ComboDetailModal({
+  visible,
+  combo,
+  onConfirm,
+  onCancel,
+}: Props) {
   const [slots, setSlots] = useState<ComboSlot[]>([]);
-  const [selections, setSelections] = useState<Record<string, { productId: string; productName: string; addonGroupId: string | null }>>({});
-  const [addonOptionsMap, setAddonOptionsMap] = useState<Record<string, LocalAddonOption[]>>({});
-  const [slotAddonQtys, setSlotAddonQtys] = useState<Record<string, Record<string, number>>>({});
+  const [selections, setSelections] = useState<
+    Record<
+      string,
+      { productId: string; productName: string; addonGroupId: string | null }
+    >
+  >({});
+  const [addonOptionsMap, setAddonOptionsMap] = useState<
+    Record<string, LocalAddonOption[]>
+  >({});
+  const [slotAddonQtys, setSlotAddonQtys] = useState<
+    Record<string, Record<string, number>>
+  >({});
+  const [activeDrinkSlotId, setActiveDrinkSlotId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!combo) return;
@@ -70,44 +94,38 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
               c.name AS category_name,
               csp.product_id,
               p.name AS product_name,
-              pc.name AS product_category_name,
               COALESCE(csp.quantity, 1) AS quantity,
               COALESCE(csp.upgrade_price, 0) AS upgrade_price,
-              p.addon_group_id
+              p.addon_group_id,
+              cs.requires_selection,
+              cs.selection_group
        FROM combo_slots cs
        LEFT JOIN categories c ON c.id = cs.category_id
        LEFT JOIN combo_slot_products csp ON csp.combo_slot_id = cs.id
        LEFT JOIN products p ON p.id = csp.product_id
-       LEFT JOIN categories pc ON pc.id = p.category_id
        WHERE cs.combo_id = ?
        ORDER BY cs.sort_order, csp.rowid`,
-      [combo.id]
+      [combo.id],
     );
 
     const slotMap = new Map<string, ComboSlot>();
-    const DRINK_GROUP = "__drink__";
     let slotIndex = 1;
     for (const row of rows) {
-      const cat = row.product_category_name?.toLowerCase() ?? "";
-      const isMilktea = cat.includes("milktea");
-      const isFrappe = cat.includes("frappe");
-      const isDrink = isMilktea || isFrappe;
-      const key = isMilktea ? "__milktea_slot__" : isFrappe ? "__frappe_slot__" : row.slot_id;
-      const drinkLabel = isMilktea ? "Milktea" : "Frappe";
+      const isSingleSelect = row.requires_selection === 1;
+      const drinkGroup = row.selection_group ?? null;
 
-      if (!slotMap.has(key)) {
-        slotMap.set(key, {
-          slotId: key,
-          categoryName: isDrink ? drinkLabel : (row.category_name ?? `Slot ${slotIndex}`),
+      if (!slotMap.has(row.slot_id)) {
+        slotMap.set(row.slot_id, {
+          slotId: row.slot_id,
+          categoryName: row.category_name ?? `Slot ${slotIndex}`,
           options: [],
-          isSingleSelect: isDrink,
-          drinkGroup: isDrink ? DRINK_GROUP : null,
+          isSingleSelect,
+          drinkGroup,
         });
         slotIndex++;
       }
       if (row.product_id && row.product_name) {
-        const slot = slotMap.get(key)!;
-        // Avoid duplicates when multiple DB slots feed the drink slot
+        const slot = slotMap.get(row.slot_id)!;
         if (!slot.options.some((o) => o.productId === row.product_id)) {
           slot.options.push({
             productId: row.product_id,
@@ -120,7 +138,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
         }
       }
     }
-    // Keep insertion order but ensure drink slot appears first among single-select slots
+
     const allSlots = Array.from(slotMap.values());
     const builtSlots = [
       ...allSlots.filter((s) => s.isSingleSelect),
@@ -128,13 +146,19 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     ];
     setSlots(builtSlots);
 
-    const defaultSelections: Record<string, { productId: string; productName: string; addonGroupId: string | null }> = {};
+    const defaultSelections: Record<
+      string,
+      { productId: string; productName: string; addonGroupId: string | null }
+    > = {};
     const groupsToFetch = new Set<string>();
     const defaultedGroups = new Set<string>();
+    let firstDefaultedDrinkSlotId: string | null = null;
+
     for (const slot of builtSlots) {
       if (slot.isSingleSelect && slot.options.length > 0) {
-        // For drink-group slots, only default-select the first group member (1 drink total)
-        const alreadyDefaulted = slot.drinkGroup ? defaultedGroups.has(slot.drinkGroup) : false;
+        const alreadyDefaulted = slot.drinkGroup
+          ? defaultedGroups.has(slot.drinkGroup)
+          : false;
         if (!alreadyDefaulted) {
           const first = slot.options[0];
           defaultSelections[slot.slotId] = {
@@ -142,17 +166,20 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
             productName: first.productName,
             addonGroupId: first.addonGroupId,
           };
-          if (slot.drinkGroup) defaultedGroups.add(slot.drinkGroup);
+          if (slot.drinkGroup) {
+            defaultedGroups.add(slot.drinkGroup);
+            if (!firstDefaultedDrinkSlotId)
+              firstDefaultedDrinkSlotId = slot.slotId;
+          }
         }
-        // Fetch addon groups for ALL options so switching products shows addons immediately
         for (const opt of slot.options) {
           if (opt.addonGroupId) groupsToFetch.add(opt.addonGroupId);
         }
       }
-      // Non-single-select slots: all products are auto-included, no selection state needed
     }
     setSelections(defaultSelections);
     setSlotAddonQtys({});
+    setActiveDrinkSlotId(firstDefaultedDrinkSlotId);
 
     if (groupsToFetch.size > 0) {
       const newMap: Record<string, LocalAddonOption[]> = {};
@@ -162,7 +189,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
            FROM addon_options
            WHERE addon_group_id = ? AND is_available = 1
            ORDER BY sort_order`,
-          [groupId]
+          [groupId],
         );
       }
       setAddonOptionsMap(newMap);
@@ -177,7 +204,6 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     const currentSlot = slots.find((s) => s.slotId === slotId);
     setSelections((prev) => {
       const next = { ...prev };
-      // Clear other slots in the same drink group (mutually exclusive)
       if (currentSlot?.drinkGroup) {
         for (const s of slots) {
           if (s.drinkGroup === currentSlot.drinkGroup && s.slotId !== slotId) {
@@ -185,12 +211,15 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
           }
         }
       }
-      next[slotId] = { productId: option.productId, productName: option.productName, addonGroupId: option.addonGroupId };
+      next[slotId] = {
+        productId: option.productId,
+        productName: option.productName,
+        addonGroupId: option.addonGroupId,
+      };
       return next;
     });
     setSlotAddonQtys((prev) => {
       const next = { ...prev, [slotId]: {} };
-      // Clear addon qtys for deselected drink slots
       if (currentSlot?.drinkGroup) {
         for (const s of slots) {
           if (s.drinkGroup === currentSlot.drinkGroup && s.slotId !== slotId) {
@@ -200,6 +229,9 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
       }
       return next;
     });
+    if (currentSlot?.drinkGroup) {
+      setActiveDrinkSlotId(slotId);
+    }
 
     if (option.addonGroupId && !addonOptionsMap[option.addonGroupId]) {
       const options = db.getAllSync<LocalAddonOption>(
@@ -207,9 +239,12 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
          FROM addon_options
          WHERE addon_group_id = ? AND is_available = 1
          ORDER BY sort_order`,
-        [option.addonGroupId]
+        [option.addonGroupId],
       );
-      setAddonOptionsMap((prev) => ({ ...prev, [option.addonGroupId!]: options }));
+      setAddonOptionsMap((prev) => ({
+        ...prev,
+        [option.addonGroupId!]: options,
+      }));
     }
   };
 
@@ -223,19 +258,25 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
   const upgradeTotal = slots.reduce((sum, slot) => {
     const sel = selections[slot.slotId];
     if (!sel) return sum;
-    const selectedOption = slot.options.find((o) => o.productId === sel.productId);
+    const selectedOption = slot.options.find(
+      (o) => o.productId === sel.productId,
+    );
     return sum + (selectedOption?.upgradePrice ?? 0);
   }, 0);
+
   const addonTotal = slots.reduce((sum, slot) => {
     const sel = selections[slot.slotId];
     if (!sel?.addonGroupId) return sum;
     const options = addonOptionsMap[sel.addonGroupId] ?? [];
     const qtys = slotAddonQtys[slot.slotId] ?? {};
-    return sum + options.reduce((s, ao) => s + ao.price_modifier * (qtys[ao.id] ?? 0), 0);
+    return (
+      sum +
+      options.reduce((s, ao) => s + ao.price_modifier * (qtys[ao.id] ?? 0), 0)
+    );
   }, 0);
+
   const totalPrice = combo.price + upgradeTotal + addonTotal;
 
-  // For drink-group slots, only 1 selection across the group is needed
   const drinkGroups = new Map<string, boolean>();
   const standaloneSelected: boolean[] = [];
   for (const slot of slots) {
@@ -248,19 +289,24 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
       }
     }
   }
-  const allSelected = slots.length === 0
-    || ([...drinkGroups.values()].every(Boolean) && standaloneSelected.every(Boolean));
+  const allSelected =
+    slots.length === 0 ||
+    ([...drinkGroups.values()].every(Boolean) &&
+      standaloneSelected.every(Boolean));
 
   const handleConfirm = () => {
     const comboSelections: ComboSlotSelection[] = [];
     for (const slot of slots) {
       if (slot.isSingleSelect) {
-        // Skip drink-group slots that weren't selected (only 1 across the group)
         const sel = selections[slot.slotId];
         if (!sel) continue;
-        const selectedOption = slot.options.find((o) => o.productId === sel.productId);
+        const selectedOption = slot.options.find(
+          (o) => o.productId === sel.productId,
+        );
         const addonGroupId = sel?.addonGroupId ?? null;
-        const options = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
+        const options = addonGroupId
+          ? (addonOptionsMap[addonGroupId] ?? [])
+          : [];
         const qtys = slotAddonQtys[slot.slotId] ?? {};
         const addons: AddonWithQty[] = options
           .filter((ao) => (qtys[ao.id] ?? 0) > 0)
@@ -275,13 +321,15 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
           addons,
         });
       } else {
-        // All products in this slot are included
         for (const option of slot.options) {
           comboSelections.push({
             slotId: slot.slotId,
             slotName: slot.categoryName,
             productId: option.productId,
-            productName: option.quantity > 1 ? `${option.productName} x${option.quantity}` : option.productName,
+            productName:
+              option.quantity > 1
+                ? `${option.productName} x${option.quantity}`
+                : option.productName,
             upgradePrice: option.upgradePrice ?? 0,
             addonGroupId: null,
             addons: [],
@@ -292,224 +340,334 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     onConfirm(combo, comboSelections);
   };
 
-  const initials = combo.name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+  // Derived UI state
+  const drinkSlots = slots.filter((s) => s.drinkGroup);
+  const nonDrinkSlots = slots.filter((s) => !s.drinkGroup);
+  const activeDrinkSlot =
+    drinkSlots.find((s) => s.slotId === activeDrinkSlotId) ?? drinkSlots[0];
+
+  const currentAddonSlotId = activeDrinkSlot?.slotId ?? null;
+  const currentAddonGroupId = currentAddonSlotId
+    ? (selections[currentAddonSlotId]?.addonGroupId ?? null)
+    : null;
+  const currentAddonOptions = currentAddonGroupId
+    ? (addonOptionsMap[currentAddonGroupId] ?? [])
+    : [];
+  const currentAddonQtys = currentAddonSlotId
+    ? (slotAddonQtys[currentAddonSlotId] ?? {})
+    : {};
+
+  const drinkSelected = drinkSlots.some((s) => !!selections[s.slotId]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onCancel}
+      statusBarTranslucent
+    >
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          {/* ── HANDLE ── */}
+          {/* Handle */}
           <View style={styles.handle} />
 
-          {/* ── HEADER ── */}
+          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.comboBadge}>
-                <Text style={styles.comboBadgeText}>{initials}</Text>
+                <Ionicons name="fast-food-outline" size={20} color={BRAND} />
               </View>
               <View style={styles.headerMeta}>
-                <Text style={styles.headerTitle}>{combo.name}</Text>
-                {combo.description ? (
-                  <Text style={styles.headerSub} numberOfLines={1}>{combo.description}</Text>
-                ) : (
-                  <Text style={styles.headerSub}>
-                    {(() => {
-                      const drinkSlots = slots.filter((s) => s.drinkGroup);
-                      if (drinkSlots.length === 0) return "Customize your combo";
-                      return `Choose 1 drink: ${drinkSlots.map((s) => s.categoryName).join(" or ")}`;
-                    })()}
+                <Text style={styles.comboName}>{combo.name}</Text>
+                <Text style={styles.comboSub}>
+                  {drinkSlots.length > 0
+                    ? `Choose 1 drink · Base ₱${combo.price.toFixed(0)}`
+                    : `₱${combo.price.toFixed(0)}`}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={onCancel}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close" size={16} color={MID} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Scrollable body */}
+          <ScrollView
+            style={styles.body}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.bodyContent}
+          >
+            {/* ── DRINK SELECTION ── */}
+            {drinkSlots.length > 0 && (
+              <View style={styles.section}>
+                {/* Section label + status badge */}
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionLabel}>CHOOSE YOUR DRINK</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      drinkSelected && styles.statusBadgeDone,
+                    ]}
+                  >
+                    <Ionicons
+                      name={drinkSelected ? "checkmark" : "ellipse-outline"}
+                      size={10}
+                      color={drinkSelected ? WHITE : BRAND}
+                    />
+                    <Text
+                      style={[
+                        styles.statusBadgeText,
+                        drinkSelected && styles.statusBadgeTextDone,
+                      ]}
+                    >
+                      {drinkSelected ? "Selected" : "Required"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Type tabs — only shown when both milktea + frappe exist */}
+                {drinkSlots.length > 1 && (
+                  <View style={styles.drinkTabs}>
+                    {drinkSlots.map((slot) => {
+                      const isActive = slot.slotId === activeDrinkSlot?.slotId;
+                      const hasSelection = !!selections[slot.slotId];
+                      return (
+                        <TouchableOpacity
+                          key={slot.slotId}
+                          style={[
+                            styles.drinkTab,
+                            isActive && styles.drinkTabActive,
+                          ]}
+                          onPress={() => setActiveDrinkSlotId(slot.slotId)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.drinkTabText,
+                              isActive && styles.drinkTabTextActive,
+                            ]}
+                          >
+                            {slot.categoryName}
+                          </Text>
+                          {hasSelection && <View style={styles.drinkTabDot} />}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+
+                {/* Product list for the active drink tab */}
+                {activeDrinkSlot && (
+                  <View style={styles.productCard}>
+                    {activeDrinkSlot.options.map((option, idx) => {
+                      const isSelected =
+                        selections[activeDrinkSlot.slotId]?.productId ===
+                        option.productId;
+                      const isLast = idx === activeDrinkSlot.options.length - 1;
+                      return (
+                        <TouchableOpacity
+                          key={option.productId}
+                          style={[
+                            styles.productRow,
+                            isSelected && styles.productRowSelected,
+                            !isLast && styles.productRowDivider,
+                          ]}
+                          onPress={() =>
+                            selectProduct(activeDrinkSlot.slotId, option)
+                          }
+                          activeOpacity={0.7}
+                        >
+                          <View
+                            style={[
+                              styles.radio,
+                              isSelected && styles.radioSelected,
+                            ]}
+                          >
+                            {isSelected && <View style={styles.radioDot} />}
+                          </View>
+                          <Text
+                            style={[
+                              styles.productName,
+                              isSelected && styles.productNameSelected,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {option.quantity > 1 ? `${option.quantity}× ` : ""}
+                            {option.productName}
+                          </Text>
+                          {option.upgradePrice > 0 ? (
+                            <View
+                              style={[
+                                styles.upgradePill,
+                                isSelected && styles.upgradePillSelected,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.upgradePrice,
+                                  isSelected && styles.upgradePriceSelected,
+                                ]}
+                              >
+                                +₱{option.upgradePrice}
+                              </Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.includedTag}>Included</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ── ADD-ONS ── */}
+            {currentAddonOptions.length > 0 && currentAddonSlotId && (
+              <Pressable style={styles.section}>
+                <Text style={styles.sectionLabel}>ADD-ONS</Text>
+                <View style={styles.addonCard}>
+                  {currentAddonOptions.map((ao, idx) => {
+                    const qty = currentAddonQtys[ao.id] ?? 0;
+                    const isLast = idx === currentAddonOptions.length - 1;
+                    return (
+                      <View
+                        key={ao.id}
+                        style={[
+                          styles.addonRow,
+                          !isLast && styles.addonRowDivider,
+                        ]}
+                      >
+                        <View style={styles.addonInfo}>
+                          <Text style={styles.addonName}>{ao.name}</Text>
+                          {ao.price_modifier > 0 && (
+                            <Text style={styles.addonPrice}>
+                              +₱{ao.price_modifier.toFixed(2)} each
+                            </Text>
+                          )}
+                        </View>
+                        <View style={styles.addonStepper}>
+                          <TouchableOpacity
+                            style={[
+                              styles.stepperBtn,
+                              qty === 0 && styles.stepperBtnOff,
+                            ]}
+                            onPress={() =>
+                              setAddonQty(currentAddonSlotId, ao.id, qty - 1)
+                            }
+                            disabled={qty === 0}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text
+                              style={[
+                                styles.stepperBtnText,
+                                qty === 0 && styles.stepperBtnTextOff,
+                              ]}
+                            >
+                              −
+                            </Text>
+                          </TouchableOpacity>
+                          <Text
+                            style={[
+                              styles.stepperQty,
+                              qty > 0 && styles.stepperQtyActive,
+                            ]}
+                          >
+                            {qty}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.stepperBtn}
+                            onPress={() =>
+                              setAddonQty(currentAddonSlotId, ao.id, qty + 1)
+                            }
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text style={styles.stepperBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </Pressable>
+            )}
+
+            {/* ── INCLUDED ITEMS ── */}
+            {nonDrinkSlots.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>WHAT'S INCLUDED</Text>
+                <View style={styles.includedCard}>
+                  {nonDrinkSlots.map((slot) =>
+                    slot.options.map((option, idx) => {
+                      const isLast =
+                        idx === slot.options.length - 1 &&
+                        nonDrinkSlots.indexOf(slot) ===
+                          nonDrinkSlots.length - 1;
+                      return (
+                        <View
+                          key={option.productId}
+                          style={[
+                            styles.includedRow,
+                            !isLast && styles.includedRowDivider,
+                          ]}
+                        >
+                          <View style={styles.includedCheck}>
+                            <Ionicons
+                              name="checkmark"
+                              size={12}
+                              color={BRAND}
+                            />
+                          </View>
+                          <Text style={styles.includedName}>
+                            {option.quantity > 1 ? `${option.quantity}× ` : ""}
+                            {option.productName}
+                          </Text>
+                        </View>
+                      );
+                    }),
+                  )}
+                </View>
+              </View>
+            )}
+
+            <View style={{ height: 4 }} />
+          </ScrollView>
+
+          {/* ── STICKY FOOTER ── */}
+          <View style={styles.footer}>
+            {/* Price summary */}
+            <View style={styles.footerPriceRow}>
+              <Text style={styles.footerLabel}>Total</Text>
+              <View style={styles.footerPriceRight}>
+                <Text style={styles.footerTotal}>₱{totalPrice.toFixed(2)}</Text>
+                {(upgradeTotal > 0 || addonTotal > 0) && (
+                  <Text style={styles.footerBreakdown}>
+                    ₱{combo.price.toFixed(0)} base
+                    {upgradeTotal > 0 ? ` + ₱${upgradeTotal} upgrade` : ""}
+                    {addonTotal > 0
+                      ? ` + ₱${addonTotal.toFixed(2)} add-ons`
+                      : ""}
                   </Text>
                 )}
               </View>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onCancel}>
-              <Ionicons name="close" size={18} color={MID} />
+
+            {/* CTA */}
+            <TouchableOpacity
+              style={[styles.addBtn, !allSelected && styles.addBtnDisabled]}
+              onPress={handleConfirm}
+              disabled={!allSelected}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="bag-add-outline" size={18} color={WHITE} />
+              <Text style={styles.addBtnText}>Add to Order</Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.divider} />
-
-          {/* ── SCROLLABLE BODY ── */}
-          <ScrollView
-            style={styles.scrollArea}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            <Pressable>
-              {/* ── PRICE CARD ── */}
-              <View style={styles.priceCard}>
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>Total</Text>
-                  <Text style={styles.priceValue}>₱{totalPrice.toFixed(2)}</Text>
-                </View>
-                {(upgradeTotal > 0 || addonTotal > 0) && (
-                  <View style={styles.priceBreakdownRow}>
-                    <Text style={styles.priceBreakdownLabel}>Base</Text>
-                    <Text style={styles.priceBreakdownValue}>₱{combo.price.toFixed(2)}</Text>
-                  </View>
-                )}
-                {upgradeTotal > 0 && (
-                  <View style={styles.priceBreakdownRow}>
-                    <Text style={styles.priceBreakdownLabel}>Upgrades</Text>
-                    <Text style={styles.priceBreakdownValue}>+₱{upgradeTotal.toFixed(2)}</Text>
-                  </View>
-                )}
-                {addonTotal > 0 && (
-                  <View style={styles.priceBreakdownRow}>
-                    <Text style={styles.priceBreakdownLabel}>Add-ons</Text>
-                    <Text style={styles.priceBreakdownValue}>+₱{addonTotal.toFixed(2)}</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* ── SLOTS ── */}
-              {slots.length > 0 && (
-                <>
-                  <Text style={[styles.sectionLabel, { marginTop: 20 }]}>CUSTOMIZE</Text>
-
-                  {slots.map((slot, idx) => {
-                    const sel = selections[slot.slotId];
-                    const isInactiveDrink = !!slot.drinkGroup && !sel;
-                    const addonGroupId = sel?.addonGroupId ?? null;
-                    const addonOptions = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
-                    const qtys = slotAddonQtys[slot.slotId] ?? {};
-
-                    return (
-                      <View key={slot.slotId} style={[styles.slotCard, idx > 0 && { marginTop: 10 }, isInactiveDrink && { opacity: 0.5 }]}>
-                        {/* Slot header */}
-                        <View style={[styles.slotHeader, isInactiveDrink && { backgroundColor: GRAY }]}>
-                          <View style={styles.slotIndexBubble}>
-                            <Text style={styles.slotIndexText}>{idx + 1}</Text>
-                          </View>
-                          <Text style={styles.slotLabel}>{slot.categoryName}</Text>
-                          {!slot.isSingleSelect && (
-                            <View style={styles.includedBadge}>
-                              <Text style={styles.includedBadgeText}>INCLUDED</Text>
-                            </View>
-                          )}
-                        </View>
-
-                        {slot.isSingleSelect ? (
-                          <>
-                            {/* Single-select (milktea/frappe): radio picker */}
-                            <View style={styles.optionsContainer}>
-                              {slot.options.map((option, optIdx) => {
-                                const selected = sel?.productId === option.productId;
-                                return (
-                                  <TouchableOpacity
-                                    key={option.productId}
-                                    style={[
-                                      styles.optionRow,
-                                      selected && styles.optionRowSelected,
-                                      optIdx === slot.options.length - 1 && styles.optionRowLast,
-                                    ]}
-                                    onPress={() => selectProduct(slot.slotId, option)}
-                                    activeOpacity={0.7}
-                                  >
-                                    <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-                                      {selected && <View style={styles.radioInner} />}
-                                    </View>
-                                    <Text style={[styles.optionName, selected && styles.optionNameSelected]}>
-                                      {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}{option.upgradePrice > 0 ? ` +₱${option.upgradePrice}` : ""}
-                                    </Text>
-                                    {selected && (
-                                      <Ionicons name="checkmark" size={15} color={BRAND} />
-                                    )}
-                                  </TouchableOpacity>
-                                );
-                              })}
-                            </View>
-
-                            {/* Add-ons */}
-                            {addonOptions.length > 0 && (
-                              <View style={styles.addonSection}>
-                                <Text style={styles.addonSectionLabel}>ADD-ONS</Text>
-                                <View style={styles.addonPillRow}>
-                                  {addonOptions.map((ao) => {
-                                    const qty = qtys[ao.id] ?? 0;
-                                    const active = qty > 0;
-                                    return (
-                                      <View key={ao.id} style={styles.addonPillWrapper}>
-                                        <TouchableOpacity
-                                          style={[styles.addonPill, active && styles.addonPillActive]}
-                                          onPress={() => setAddonQty(slot.slotId, ao.id, qty + 1)}
-                                          activeOpacity={0.75}
-                                        >
-                                          <Text style={[styles.addonPillName, active && styles.addonPillNameActive]}>
-                                            {ao.name}
-                                          </Text>
-                                          {ao.price_modifier > 0 && (
-                                            <Text style={[styles.addonPillPrice, active && styles.addonPillPriceActive]}>
-                                              +₱{ao.price_modifier.toFixed(2)}
-                                            </Text>
-                                          )}
-                                          {active && (
-                                            <Text style={styles.addonPillQty}>×{qty}</Text>
-                                          )}
-                                        </TouchableOpacity>
-                                        {active && (
-                                          <TouchableOpacity
-                                            style={styles.addonMinusBadge}
-                                            onPress={() => setAddonQty(slot.slotId, ao.id, qty - 1)}
-                                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                                          >
-                                            <Text style={styles.addonMinusText}>−</Text>
-                                          </TouchableOpacity>
-                                        )}
-                                      </View>
-                                    );
-                                  })}
-                                </View>
-                              </View>
-                            )}
-                          </>
-                        ) : (
-                          // Non-milktea: show all items as fixed/included
-                          <View style={styles.optionsContainer}>
-                            {slot.options.map((option, optIdx) => (
-                              <View
-                                key={option.productId}
-                                style={[
-                                  styles.optionRow,
-                                  styles.optionRowFixed,
-                                  optIdx === slot.options.length - 1 && styles.optionRowLast,
-                                ]}
-                              >
-                                <Ionicons name="checkmark-circle" size={18} color={BRAND} />
-                                <Text style={[styles.optionName, styles.optionNameSelected]}>
-                                  {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                </>
-              )}
-
-              {/* ── ACTIONS ── */}
-              <TouchableOpacity
-                style={[styles.addBtn, !allSelected && styles.addBtnDisabled]}
-                onPress={handleConfirm}
-                disabled={!allSelected}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="bag-add-outline" size={18} color={WHITE} style={{ marginRight: 8 }} />
-                <Text style={styles.addBtnText}>Add to Order</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            </Pressable>
-          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -519,331 +677,398 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   sheet: {
-    width: "100%",
-    maxWidth: 520,
-    height: Dimensions.get("window").height * 0.75,
     backgroundColor: WHITE,
-    borderRadius: 24,
-    overflow: "hidden",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    height: SCREEN_H * 0.88,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.25,
-    shadowRadius: 40,
-    elevation: 20,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 24,
   },
   handle: {
-    width: 36,
+    width: 40,
     height: 4,
     backgroundColor: DIVIDER,
     borderRadius: 2,
     alignSelf: "center",
     marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 8,
   },
+
+  // ── Header ──
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 14,
+    paddingTop: 4,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: DIVIDER,
   },
   headerLeft: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    flex: 1,
   },
   comboBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: BRAND_LIGHT,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#FFF3ED",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  comboBadgeText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: BRAND,
-    letterSpacing: 0.5,
-  },
   headerMeta: {
-    gap: 3,
     flex: 1,
+    gap: 2,
   },
-  headerTitle: {
-    fontSize: 18,
+  comboName: {
+    fontSize: 17,
     fontWeight: "700",
     color: DARK,
     letterSpacing: -0.3,
   },
-  headerSub: {
-    fontSize: 13,
+  comboSub: {
+    fontSize: 12,
     color: GRAY,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: SOFT,
     alignItems: "center",
     justifyContent: "center",
   },
-  divider: {
-    height: 1,
-    backgroundColor: DIVIDER,
-    marginHorizontal: 20,
-  },
-  scrollArea: {
+
+  // ── Body ──
+  body: {
     flex: 1,
   },
-  scrollContent: {
+  bodyContent: {
+    paddingTop: 20,
+    paddingBottom: 12,
+    gap: 24,
+  },
+  section: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+    gap: 10,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   sectionLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
     color: GRAY,
     letterSpacing: 1.2,
-    marginBottom: 10,
   },
-  // Price card
-  priceCard: {
-    backgroundColor: SOFT,
-    borderRadius: 14,
-    padding: 16,
-    gap: 6,
-  },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  priceLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: DARK,
-  },
-  priceValue: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: BRAND,
-    letterSpacing: -0.5,
-  },
-  priceBreakdownRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  priceBreakdownLabel: {
-    fontSize: 12,
-    color: GRAY,
-  },
-  priceBreakdownValue: {
-    fontSize: 12,
-    color: MID,
-    fontWeight: "500",
-  },
-  // Slot cards
-  slotCard: {
-    backgroundColor: SOFT,
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  slotHeader: {
+
+  // Status badge
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 10,
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: "#FFF3ED",
+    borderWidth: 1,
+    borderColor: BRAND,
+  },
+  statusBadgeDone: {
     backgroundColor: BRAND,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.08)",
+    borderColor: BRAND,
   },
-  slotIndexBubble: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "rgba(255,255,255,0.25)",
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: BRAND,
+    letterSpacing: 0.3,
+  },
+  statusBadgeTextDone: {
+    color: WHITE,
+  },
+
+  // Drink type tabs (Milktea / Frappe switcher)
+  drinkTabs: {
+    flexDirection: "row",
+    backgroundColor: SOFT,
+    borderRadius: 14,
+    padding: 4,
+    gap: 4,
+  },
+  drinkTab: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 11,
+    borderRadius: 10,
+    position: "relative",
   },
-  slotIndexText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: WHITE,
+  drinkTabActive: {
+    backgroundColor: WHITE,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  slotLabel: {
+  drinkTabText: {
     fontSize: 14,
-    fontWeight: "800",
-    color: WHITE,
-    letterSpacing: -0.2,
-    flex: 1,
+    fontWeight: "600",
+    color: GRAY,
   },
-  includedBadge: {
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  drinkTabTextActive: {
+    color: DARK,
+    fontWeight: "700",
   },
-  includedBadgeText: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: WHITE,
-    letterSpacing: 0.8,
+  // Dot indicator when a selection exists in that tab
+  drinkTabDot: {
+    position: "absolute",
+    top: 7,
+    right: 12,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: BRAND,
   },
-  optionsContainer: {
-    borderTopWidth: 1,
-    borderTopColor: DIVIDER,
+
+  // Product list card
+  productCard: {
+    backgroundColor: WHITE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: DIVIDER,
+    overflow: "hidden",
   },
-  optionRow: {
+  productRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: DIVIDER,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
     backgroundColor: WHITE,
   },
-  optionRowSelected: {
-    backgroundColor: BRAND_LIGHT,
+  productRowSelected: {
+    backgroundColor: "#FFF3ED",
   },
-  optionRowFixed: {
-    backgroundColor: BRAND_LIGHT,
+  productRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: DIVIDER,
   },
-  optionRowLast: {
-    borderBottomWidth: 0,
-  },
-  radioOuter: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: DIVIDER,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  radioOuterSelected: {
+  radioSelected: {
     borderColor: BRAND,
   },
-  radioInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  radioDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
     backgroundColor: BRAND,
   },
-  optionName: {
-    fontSize: 14,
+  productName: {
+    flex: 1,
+    fontSize: 15,
     fontWeight: "500",
     color: DARK,
-    flex: 1,
   },
-  optionNameSelected: {
+  productNameSelected: {
     fontWeight: "700",
     color: BRAND,
   },
-  // Add-ons
-  addonSection: {
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 14,
-    borderTopWidth: 1,
-    borderTopColor: DIVIDER,
-  },
-  addonSectionLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: GRAY,
-    letterSpacing: 1.2,
-    marginBottom: 10,
-  },
-  addonPillRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  addonPillWrapper: {
-    position: "relative",
-  },
-  addonPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 22,
-    backgroundColor: WHITE,
+  upgradePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#FFF3ED",
     borderWidth: 1,
-    borderColor: DIVIDER,
+    borderColor: "#FDDFC4",
   },
-  addonPillActive: {
+  upgradePillSelected: {
     backgroundColor: BRAND,
     borderColor: BRAND,
   },
-  addonPillName: {
-    fontSize: 13,
+  upgradePrice: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: BRAND,
+  },
+  upgradePriceSelected: {
+    color: WHITE,
+  },
+  includedTag: {
+    fontSize: 12,
+    color: GRAY,
+  },
+
+  // Add-on card
+  addonCard: {
+    backgroundColor: WHITE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: DIVIDER,
+    overflow: "hidden",
+  },
+  addonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  addonRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: DIVIDER,
+  },
+  addonInfo: {
+    flex: 1,
+    gap: 2,
+    marginRight: 12,
+  },
+  addonName: {
+    fontSize: 14,
     fontWeight: "600",
     color: DARK,
   },
-  addonPillNameActive: {
-    color: WHITE,
+  addonPrice: {
+    fontSize: 12,
+    color: GRAY,
   },
-  addonPillPrice: {
+  addonStepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  stepperBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: SOFT,
+    borderWidth: 1,
+    borderColor: DIVIDER,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepperBtnOff: {
+    opacity: 0.35,
+  },
+  stepperBtnText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: DARK,
+    lineHeight: 22,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+  stepperBtnTextOff: {
+    color: GRAY,
+  },
+  stepperQty: {
+    width: 30,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "600",
+    color: GRAY,
+  },
+  stepperQtyActive: {
+    color: BRAND,
+    fontWeight: "800",
+  },
+
+  // Included items card
+  includedCard: {
+    backgroundColor: SOFT,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  includedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  includedRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: DIVIDER,
+  },
+  includedCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#FFF3ED",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  includedName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: MID,
+  },
+
+  // ── Footer ──
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 28,
+    borderTopWidth: 1,
+    borderTopColor: DIVIDER,
+    gap: 14,
+    backgroundColor: WHITE,
+  },
+  footerPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  footerLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: GRAY,
+  },
+  footerPriceRight: {
+    alignItems: "flex-end",
+    gap: 2,
+  },
+  footerTotal: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: DARK,
+    letterSpacing: -0.5,
+  },
+  footerBreakdown: {
     fontSize: 11,
     color: GRAY,
   },
-  addonPillPriceActive: {
-    color: "rgba(255,255,255,0.7)",
-  },
-  addonPillQty: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: WHITE,
-    marginLeft: 2,
-  },
-  addonMinusBadge: {
-    position: "absolute",
-    top: -10,
-    left: -6,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: DARK,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1,
-  },
-  addonMinusText: {
-    color: WHITE,
-    fontSize: 16,
-    fontWeight: "700",
-    includeFontPadding: false,
-    textAlignVertical: "center",
-    textAlign: "center",
-  },
-  // Actions
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     backgroundColor: BRAND,
-    borderRadius: 14,
-    paddingVertical: 15,
-    marginTop: 20,
-    marginBottom: 10,
+    borderRadius: 16,
+    paddingVertical: 16,
   },
   addBtnDisabled: {
     opacity: 0.4,
@@ -852,14 +1077,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: WHITE,
-  },
-  cancelBtn: {
-    paddingVertical: 10,
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  cancelBtnText: {
-    fontSize: 14,
-    color: GRAY,
+    letterSpacing: 0.2,
   },
 });

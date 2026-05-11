@@ -16,6 +16,8 @@ interface ProductDraft {
 
 interface SlotDraft {
   category_id: string;
+  requires_selection: boolean;
+  selection_group: string | null;
   products: ProductDraft[];
 }
 
@@ -29,7 +31,7 @@ interface Props {
 }
 
 const emptyProduct = (): ProductDraft => ({ product_id: "", quantity: 1, upgrade_price: 0 });
-const emptySlot = (): SlotDraft => ({ category_id: "", products: [emptyProduct()] });
+const emptySlot = (): SlotDraft => ({ category_id: "", requires_selection: false, selection_group: null, products: [emptyProduct()] });
 
 export default function ComboFormModal({ open, onClose, combo, categories, products, branches }: Props) {
   const router = useRouter();
@@ -51,6 +53,8 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       setAvailableBranchIds(combo?.available_branch_ids ?? []);
       const initialSlots = combo?.slots.map((s) => ({
         category_id: s.category_id,
+        requires_selection: s.requires_selection,
+        selection_group: s.selection_group,
         products: s.products.length > 0
           ? s.products.map((p) => ({ product_id: p.product_id, quantity: p.quantity, upgrade_price: p.upgrade_price ?? 0 }))
           : [emptyProduct()],
@@ -82,7 +86,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
   function setSlotCategory(slotIdx: number, category_id: string) {
     setSlots((prev) =>
-      prev.map((s, i) => (i === slotIdx ? { category_id, products: [emptyProduct()] } : s))
+      prev.map((s, i) => (i === slotIdx ? { ...s, category_id, products: [emptyProduct()] } : s))
     );
     setAllProductsFlags((prev) => prev.map((f, i) => (i === slotIdx ? false : f)));
     setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? "" : v)));
@@ -152,6 +156,8 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       .filter((s) => s.category_id)
       .map((s) => ({
         category_id: s.category_id,
+        requires_selection: s.requires_selection,
+        selection_group: s.requires_selection ? (s.selection_group || null) : null,
         products: s.products
           .filter((p) => p.product_id)
           .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity), upgrade_price: p.upgrade_price ?? 0 })),
@@ -309,6 +315,41 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
+                    </div>
+
+                    {/* Selection flags */}
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={slot.requires_selection}
+                          onChange={(e) =>
+                            setSlots((prev) =>
+                              prev.map((s, i) =>
+                                i === slotIdx ? { ...s, requires_selection: e.target.checked, selection_group: e.target.checked ? s.selection_group : null } : s
+                              )
+                            )
+                          }
+                          className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
+                        />
+                        <span className="text-[11px] font-medium text-gray-600 whitespace-nowrap">Customer picks one</span>
+                      </label>
+                      {slot.requires_selection && (
+                        <input
+                          type="text"
+                          value={slot.selection_group ?? ""}
+                          onChange={(e) =>
+                            setSlots((prev) =>
+                              prev.map((s, i) =>
+                                i === slotIdx ? { ...s, selection_group: e.target.value || null } : s
+                              )
+                            )
+                          }
+                          placeholder="Group (e.g. drink)"
+                          className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-[#6B4F3A]/30 focus:border-[#6B4F3A] bg-white"
+                          title="Slots sharing the same group name are mutually exclusive — customer picks only 1 across all of them"
+                        />
+                      )}
                     </div>
 
                     {/* Product rows */}
