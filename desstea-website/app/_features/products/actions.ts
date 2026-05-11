@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ProductFormData } from "../../_types";
+import type { Product, ProductFormData } from "../../_types";
 import {
   createProductInSupabase,
   updateProductInSupabase,
@@ -17,6 +17,30 @@ import {
   deleteComboInSupabase,
 } from "./services/productsService";
 import { listBranches } from "../branches/services/branchesService";
+
+export async function duplicateProduct(product: Product): Promise<{ error: string | null }> {
+  const branches = await listBranches();
+  const allBranchIds = branches.map((b) => b.id);
+  const data: ProductFormData = {
+    name: `${product.name} (copy)`,
+    description: product.description ?? "",
+    base_price: product.base_price,
+    category_id: product.category_id,
+    has_sizes: product.has_sizes,
+    has_sugar_level: product.has_sugar_level,
+    is_hot_cold: product.is_hot_cold,
+    has_flavors: product.has_flavors,
+    is_available: product.is_available,
+    addon_group_id: product.addon_group_id,
+    sizes: product.sizes.map(({ label, size_price, sort_order }) => ({ label, size_price, sort_order })),
+    flavors: product.flavors.map(({ label, temperature, sort_order }) => ({ label, temperature, sort_order })),
+    available_branch_ids: product.available_branch_ids,
+  };
+  const error = await createProductInSupabase(data, allBranchIds);
+  if (error) return { error };
+  revalidatePath("/products");
+  return { error: null };
+}
 
 export async function createProduct(data: ProductFormData): Promise<{ error: string | null }> {
   const branches = await listBranches();
@@ -109,7 +133,7 @@ export async function createCombo(data: {
   name: string;
   price: number;
   is_available: boolean;
-  slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+  slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
   available_branch_ids: string[];
 }): Promise<{ error: string | null }> {
   const branches = await listBranches();
@@ -126,7 +150,7 @@ export async function updateCombo(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   }
 ): Promise<{ error: string | null }> {

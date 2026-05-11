@@ -11,6 +11,7 @@ export type DbComboSelection = {
   slot_name_snapshot: string;
   product_id: string;
   product_name_snapshot: string;
+  upgrade_price: number;
 };
 
 export type DbOrderItem = {

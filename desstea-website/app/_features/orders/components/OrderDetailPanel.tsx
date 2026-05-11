@@ -114,6 +114,9 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                       {(item.comboSelections ?? []).map((selection, sidx) => (
                         <div key={sidx} className="text-xs text-gray-500">
                           {selection.slotName}: {selection.productName}
+                          {selection.upgradePrice > 0 && (
+                            <span className="ml-1 font-semibold text-[#E8692A]">+₱{selection.upgradePrice}</span>
+                          )}
                         </div>
                       ))}
                     </div>

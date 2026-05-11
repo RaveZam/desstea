@@ -26,6 +26,7 @@ export interface OrderAddon {
 export interface OrderComboSelection {
   slotName: string;
   productName: string;
+  upgradePrice: number;
 }
 
 export interface OrderLineItem {

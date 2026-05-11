@@ -104,7 +104,7 @@ export function useReports() {
             [ri.id]
           );
           const comboSelections = await db.getAllAsync<DbComboSelection>(
-            `SELECT id, combo_slot_id, slot_name_snapshot, product_id, product_name_snapshot
+            `SELECT id, combo_slot_id, slot_name_snapshot, product_id, product_name_snapshot, COALESCE(upgrade_price, 0) AS upgrade_price
              FROM order_item_combo_selections WHERE order_item_id = ?`,
             [ri.id]
           );

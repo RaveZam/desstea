@@ -148,9 +148,9 @@ export async function upsertComboSlotProducts(
 ) {
   for (const csp of rows) {
     await db.runAsync(
-      `INSERT OR REPLACE INTO combo_slot_products (id, combo_slot_id, product_id, quantity, synced_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [csp.id, csp.combo_slot_id, csp.product_id, csp.quantity ?? 1, now],
+      `INSERT OR REPLACE INTO combo_slot_products (id, combo_slot_id, product_id, quantity, upgrade_price, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [csp.id, csp.combo_slot_id, csp.product_id, csp.quantity ?? 1, csp.upgrade_price ?? 0, now],
     );
   }
 }

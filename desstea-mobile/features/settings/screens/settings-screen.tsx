@@ -15,6 +15,8 @@ import { useBranchName } from "@/features/auth/hooks/use-branch-name";
 import { resetSync, syncCatalog } from "@/lib/sync";
 import { useBumpSync } from "@/lib/sync-context";
 import { usePrinter } from "@/features/printer/hooks/use-printer";
+import { isPinSet } from "@/features/settings/services/admin-pin";
+import { SetupPinModal } from "@/features/settings/components/setup-pin-modal";
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -67,6 +69,8 @@ function formatRole(role: string | undefined): string {
 
 export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
+  const [pinModalVisible, setPinModalVisible] = useState(false);
+  const [pinConfigured, setPinConfigured] = useState(() => isPinSet());
   const bumpSync = useBumpSync();
   const { printTestMessage } = usePrinter();
   const meta = user?.user_metadata ?? {};
@@ -131,6 +135,33 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
         </TouchableOpacity>
       </Section>
 
+      <Section icon="shield-checkmark-sharp" title="Security">
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => setPinModalVisible(true)}
+        >
+          <Ionicons name="lock-closed-outline" size={18} color={BRAND} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.refreshText}>
+            {pinConfigured ? "Change Admin PIN" : "Setup Admin PIN"}
+          </Text>
+          </View>
+          {pinConfigured ? (
+            <View style={styles.pinBadge}>
+              <Ionicons name="checkmark-circle" size={14} color="#2D7D46" />
+              <Text style={styles.pinBadgeText}>Set</Text>
+            </View>
+          ) : (
+            <View style={[styles.pinBadge, styles.pinBadgeUnset]}>
+              <Text style={[styles.pinBadgeText, styles.pinBadgeTextUnset]}>Not set</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <Text style={styles.refreshHint}>
+          Used to authorise reprinting past orders.
+        </Text>
+      </Section>
+
       <Section icon="cube-sharp" title="Data">
         <TouchableOpacity
           style={styles.refreshButton}
@@ -158,6 +189,22 @@ export function SettingsScreen({ sessionId, user }: SettingsScreenProps) {
       </TouchableOpacity>
 
       <Text style={styles.versionText}>Version {APP_VERSION}</Text>
+
+      <SetupPinModal
+        visible={pinModalVisible}
+        mode={pinConfigured ? "change" : "setup"}
+        onClose={() => setPinModalVisible(false)}
+        onSaved={() => {
+          setPinModalVisible(false);
+          setPinConfigured(true);
+          Alert.alert(
+            "PIN Saved",
+            pinConfigured
+              ? "Admin PIN has been changed successfully."
+              : "Admin PIN has been set successfully.",
+          );
+        }}
+      />
     </ScrollView>
   );
 }
@@ -263,5 +310,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: GRAY_TEXT,
     textAlign: "center",
+  },
+  pinBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    backgroundColor: "#2D7D4618",
+  },
+  pinBadgeUnset: {
+    backgroundColor: "#8E8E9318",
+  },
+  pinBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#2D7D46",
+  },
+  pinBadgeTextUnset: {
+    color: GRAY_TEXT,
   },
 });

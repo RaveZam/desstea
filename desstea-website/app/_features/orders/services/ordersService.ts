@@ -40,6 +40,7 @@ export async function listOrders(): Promise<Order[]> {
       const comboSelections = rawComboSelections.map((selection) => ({
         slotName: selection.slot_name_snapshot as string,
         productName: selection.product_name_snapshot as string,
+        upgradePrice: (selection.upgrade_price as number) ?? 0,
       }));
 
       const unitPrice = item.unit_price_snapshot as number;

@@ -56,7 +56,12 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
                             {p.quantity}×
                           </span>
                         )}
-                        <span className="text-sm text-gray-800 font-medium truncate">{p.product_name}</span>
+                        <span className="text-sm text-gray-800 font-medium truncate">
+                          {p.product_name}
+                          {p.upgrade_price > 0 && (
+                            <span className="ml-1.5 text-xs font-semibold text-[#E8692A]">+₱{p.upgrade_price}</span>
+                          )}
+                        </span>
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-semibold text-gray-700">

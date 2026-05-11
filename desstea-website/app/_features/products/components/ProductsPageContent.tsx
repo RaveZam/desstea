@@ -12,7 +12,7 @@ import ComboDetailModal from "./ComboDetailModal";
 import ComboCard from "./ComboCard";
 import type { Product, Category, Branch } from "../../../_types";
 import type { AddonGroupRow, ComboRow } from "../services/productsService";
-import { deleteCombo } from "../actions";
+import { deleteCombo, duplicateProduct } from "../actions";
 
 interface Props {
   initialProducts: Product[];
@@ -52,6 +52,11 @@ export default function ProductsPageContent({ initialProducts, initialCategories
       return matchSearch && matchCat;
     });
   }, [search, selectedTab, initialProducts]);
+
+  async function handleDuplicateProduct(product: Product) {
+    await duplicateProduct(product);
+    router.refresh();
+  }
 
   function openAddProduct() {
     setEditingProduct(null);
@@ -206,7 +211,7 @@ export default function ProductsPageContent({ initialProducts, initialCategories
                 <p className="col-span-full text-center text-gray-400 py-10">No products found.</p>
               )}
               {filtered.map((product) => (
-                <ProductCard key={product.id} product={product} onClick={openEditProduct} addonGroupTemplates={initialAddonGroupTemplates} />
+                <ProductCard key={product.id} product={product} onClick={openEditProduct} addonGroupTemplates={initialAddonGroupTemplates} onDuplicate={handleDuplicateProduct} />
               ))}
             </div>
           </>

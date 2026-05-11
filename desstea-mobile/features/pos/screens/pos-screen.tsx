@@ -67,15 +67,17 @@ export default function POSScreen() {
   } = useOrder();
 
   const COMBOS_TAB_ID = "__combos__";
+  const ALL_TAB_ID = "__all__";
 
-  // Default to first category once loaded
-  const activeCategory = selectedCategory ?? categories[0]?.id ?? null;
+  // Default to "All" tab
+  const activeCategory = selectedCategory ?? ALL_TAB_ID;
   const isComboTab = activeCategory === COMBOS_TAB_ID;
+  const isAllTab = activeCategory === ALL_TAB_ID;
 
   const filteredProducts = isComboTab
     ? []
     : products.filter((p) => {
-        const matchesCategory = p.category_id === activeCategory;
+        const matchesCategory = isAllTab || p.category_id === activeCategory;
         const matchesSearch =
           searchQuery === "" ||
           p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -313,6 +315,7 @@ export default function POSScreen() {
               {/* Category Tabs */}
               <CategoryTabs
                 categories={[
+                  { id: ALL_TAB_ID, name: "All" },
                   ...categories,
                   { id: COMBOS_TAB_ID, name: "Combos" },
                 ]}

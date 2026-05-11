@@ -98,6 +98,7 @@ export async function initDatabase() {
       combo_slot_id TEXT NOT NULL REFERENCES combo_slots(id),
       product_id    TEXT NOT NULL,
       quantity      INTEGER NOT NULL DEFAULT 1,
+      upgrade_price REAL NOT NULL DEFAULT 0,
       synced_at     TEXT
     );
 
@@ -145,6 +146,7 @@ export async function initDatabase() {
       slot_name_snapshot    TEXT NOT NULL,
       product_id            TEXT NOT NULL,
       product_name_snapshot TEXT NOT NULL,
+      upgrade_price         REAL NOT NULL DEFAULT 0,
       created_at            TEXT NOT NULL
     );
 
@@ -167,6 +169,11 @@ export async function initDatabase() {
       status     TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS admin_pin (
+      id  INTEGER PRIMARY KEY CHECK(id = 1),
+      pin TEXT NOT NULL
+    );
   `);
 
   // Migrations for existing databases — safe to re-run (errors ignored)
@@ -185,6 +192,8 @@ export async function initDatabase() {
     // is_hot_cold / has_flavors on products and populate product_flavors.
     // Condition: only reset while product_flavors is still empty (one-shot).
     `DELETE FROM sync_meta WHERE key = 'last_synced_at' AND NOT EXISTS (SELECT 1 FROM product_flavors)`,
+    `ALTER TABLE combo_slot_products ADD COLUMN upgrade_price REAL NOT NULL DEFAULT 0`,
+    `ALTER TABLE order_item_combo_selections ADD COLUMN upgrade_price REAL NOT NULL DEFAULT 0`,
   ];
   for (const sql of migrations) {
     try {

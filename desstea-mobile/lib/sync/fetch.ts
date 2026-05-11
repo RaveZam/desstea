@@ -246,7 +246,8 @@ export async function fetchComboSlotProductsBySlotIds(
     slot_id: string;
     product_id: string;
     quantity: number;
-  }>("combo_slot_products", "id, slot_id, product_id, quantity", (q) =>
+    upgrade_price: number;
+  }>("combo_slot_products", "id, slot_id, product_id, quantity, upgrade_price", (q) =>
     q.in("slot_id", slotIds),
   );
   return rows.map((r) => ({
@@ -254,5 +255,6 @@ export async function fetchComboSlotProductsBySlotIds(
     combo_slot_id: r.slot_id,
     product_id: r.product_id,
     quantity: r.quantity,
+    upgrade_price: r.upgrade_price ?? 0,
   }));
 }

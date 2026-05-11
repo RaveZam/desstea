@@ -55,15 +55,21 @@ export default function ComboCard({ combo, onClick, onEdit, onDelete, deleting, 
               </div>
               {slot.products.length > 0 && (
                 <div className="ml-3 mt-0.5 space-y-0.5">
-                  {slot.products.map((p) => (
+                  {slot.products.slice(0, 3).map((p) => (
                     <div key={p.product_id} className="flex items-center justify-between gap-2 text-gray-500">
                       <span className="truncate">
                         {p.quantity > 1 && <span className="font-semibold text-gray-700 mr-1">{p.quantity}×</span>}
                         {p.product_name}
+                        {p.upgrade_price > 0 && (
+                          <span className="ml-1 text-[10px] font-semibold text-[#E8692A]">+₱{p.upgrade_price}</span>
+                        )}
                       </span>
                       <span className="text-gray-400 shrink-0">₱{p.base_price.toFixed(2)}</span>
                     </div>
                   ))}
+                  {slot.products.length > 3 && (
+                    <p className="text-[11px] text-[#E8692A] font-medium">+{slot.products.length - 3} more product{slot.products.length - 3 !== 1 ? "s" : ""}…</p>
+                  )}
                 </div>
               )}
             </div>

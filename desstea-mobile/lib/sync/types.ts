@@ -74,6 +74,7 @@ export interface ComboSlotProduct {
   combo_slot_id: string;
   product_id: string;
   quantity: number;
+  upgrade_price: number;
 }
 
 export interface SugarLevel {

@@ -147,8 +147,8 @@ export async function saveOrderLocally(
           await db.runAsync(
             `INSERT INTO order_item_combo_selections
                (id, order_item_id, combo_slot_id, slot_name_snapshot,
-                product_id, product_name_snapshot, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                product_id, product_name_snapshot, upgrade_price, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               selId,
               itemId,
@@ -156,6 +156,7 @@ export async function saveOrderLocally(
               sel.slotName,
               sel.productId,
               sel.productName,
+              sel.upgradePrice ?? 0,
               now,
             ],
           );
@@ -174,6 +175,7 @@ export async function saveOrderLocally(
                 slot_name_snapshot: sel.slotName,
                 product_id: sel.productId,
                 product_name_snapshot: sel.productName,
+                upgrade_price: sel.upgradePrice ?? 0,
                 created_at: now,
               }),
               3,

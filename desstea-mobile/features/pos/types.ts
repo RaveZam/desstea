@@ -72,6 +72,7 @@ export type ComboSlotSelection = {
   slotName: string;
   productId: string;
   productName: string;
+  upgradePrice: number;
   addonGroupId: string | null;
   addons: AddonWithQty[];
 };
@@ -88,10 +89,11 @@ export type OrderItem = {
 
 export function getItemPrice(item: OrderItem): number {
   if (item.itemType === "combo") {
+    const upgradeTotal = (item.comboSelections ?? []).reduce((sum, sel) => sum + sel.upgradePrice, 0);
     const addonTotal = (item.comboSelections ?? []).reduce((sum, sel) => {
       return sum + sel.addons.reduce((s, aq) => s + aq.option.price_modifier * aq.qty, 0);
     }, 0);
-    return item.product.base_price + addonTotal;
+    return item.product.base_price + upgradeTotal + addonTotal;
   }
   const base = item.customization?.size?.size_price ?? item.product.base_price;
   const addons = (item.customization?.addonOptions ?? []).reduce(

@@ -11,6 +11,7 @@ import { createCombo, updateCombo } from "../actions";
 interface ProductDraft {
   product_id: string;
   quantity: number;
+  upgrade_price: number;
 }
 
 interface SlotDraft {
@@ -27,7 +28,7 @@ interface Props {
   branches: Branch[];
 }
 
-const emptyProduct = (): ProductDraft => ({ product_id: "", quantity: 1 });
+const emptyProduct = (): ProductDraft => ({ product_id: "", quantity: 1, upgrade_price: 0 });
 const emptySlot = (): SlotDraft => ({ category_id: "", products: [emptyProduct()] });
 
 export default function ComboFormModal({ open, onClose, combo, categories, products, branches }: Props) {
@@ -36,9 +37,11 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
   const [price, setPrice] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
   const [slots, setSlots] = useState<SlotDraft[]>([]);
+  const [allProductsFlags, setAllProductsFlags] = useState<boolean[]>([]);
   const [availableBranchIds, setAvailableBranchIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slotApplyPrices, setSlotApplyPrices] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -46,14 +49,15 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       setPrice(combo ? combo.price.toFixed(2) : "");
       setIsAvailable(combo?.is_available ?? true);
       setAvailableBranchIds(combo?.available_branch_ids ?? []);
-      setSlots(
-        combo?.slots.map((s) => ({
-          category_id: s.category_id,
-          products: s.products.length > 0
-            ? s.products.map((p) => ({ product_id: p.product_id, quantity: p.quantity }))
-            : [emptyProduct()],
-        })) ?? []
-      );
+      const initialSlots = combo?.slots.map((s) => ({
+        category_id: s.category_id,
+        products: s.products.length > 0
+          ? s.products.map((p) => ({ product_id: p.product_id, quantity: p.quantity, upgrade_price: p.upgrade_price ?? 0 }))
+          : [emptyProduct()],
+      })) ?? [];
+      setSlots(initialSlots);
+      setAllProductsFlags(initialSlots.map(() => false));
+      setSlotApplyPrices(initialSlots.map(() => ""));
       setError(null);
     }
   }, [open, combo]);
@@ -66,16 +70,49 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
   function addSlot() {
     setSlots((prev) => [...prev, emptySlot()]);
+    setAllProductsFlags((prev) => [...prev, false]);
+    setSlotApplyPrices((prev) => [...prev, ""]);
   }
 
   function removeSlot(slotIdx: number) {
     setSlots((prev) => prev.filter((_, i) => i !== slotIdx));
+    setAllProductsFlags((prev) => prev.filter((_, i) => i !== slotIdx));
+    setSlotApplyPrices((prev) => prev.filter((_, i) => i !== slotIdx));
   }
 
   function setSlotCategory(slotIdx: number, category_id: string) {
     setSlots((prev) =>
       prev.map((s, i) => (i === slotIdx ? { category_id, products: [emptyProduct()] } : s))
     );
+    setAllProductsFlags((prev) => prev.map((f, i) => (i === slotIdx ? false : f)));
+    setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? "" : v)));
+  }
+
+  function applyUpgradePriceToAll(slotIdx: number) {
+    const raw = slotApplyPrices[slotIdx] ?? "";
+    const val = Math.max(0, parseFloat(raw) || 0);
+    setSlots((prev) =>
+      prev.map((s, i) =>
+        i === slotIdx ? { ...s, products: s.products.map((p) => ({ ...p, upgrade_price: val })) } : s
+      )
+    );
+  }
+
+  function toggleAllProducts(slotIdx: number, checked: boolean) {
+    const slot = slots[slotIdx];
+    if (!slot.category_id) return;
+    if (checked) {
+      const catProducts = getProductsForCategory(slot.category_id);
+      const allDrafts = catProducts.map((p) => ({ product_id: p.id, quantity: 1, upgrade_price: 0 }));
+      setSlots((prev) =>
+        prev.map((s, i) => (i === slotIdx ? { ...s, products: allDrafts.length > 0 ? allDrafts : [emptyProduct()] } : s))
+      );
+    } else {
+      setSlots((prev) =>
+        prev.map((s, i) => (i === slotIdx ? { ...s, products: [emptyProduct()] } : s))
+      );
+    }
+    setAllProductsFlags((prev) => prev.map((f, i) => (i === slotIdx ? checked : f)));
   }
 
   function addProductRow(slotIdx: number) {
@@ -117,7 +154,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         category_id: s.category_id,
         products: s.products
           .filter((p) => p.product_id)
-          .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity) })),
+          .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity), upgrade_price: p.upgrade_price ?? 0 })),
       }));
 
     const { error: err } = combo
@@ -164,14 +201,14 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
     return slot.products.some((p, j) => j !== pidIdx && p.product_id === pid);
   }
 
-  const inputCls = "border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
+  const inputCls = "border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
 
   return (
     <Modal open={open} onClose={onClose} title={combo ? "Edit Combo" : "New Combo"} size="md">
       <div className="space-y-4">
         {/* Name */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
             Combo Name
           </label>
           <input
@@ -186,7 +223,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         {/* Price + Availability */}
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
               Combo Price
             </label>
             <div className="relative">
@@ -210,33 +247,34 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         {/* Slots */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Combo Slots
             </label>
             <button
               type="button"
               onClick={addSlot}
-              className="flex items-center gap-1 text-xs font-semibold text-[#E8692A] hover:text-[#d45c20] transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8692A] text-white text-xs font-semibold hover:bg-[#d45c20] transition-colors"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add Slot
+              Add Category
             </button>
           </div>
 
           {slots.length === 0 ? (
-            <div className="border border-dashed border-gray-200 rounded-xl p-5 text-center">
-              <p className="text-sm text-gray-400">No slots yet.</p>
-              <p className="text-xs text-gray-300 mt-0.5">Add a slot to pick products for this combo.</p>
+            <div className="border border-dashed border-gray-300 rounded-xl p-5 text-center">
+              <p className="text-sm text-gray-500">No slots yet.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Add a slot to pick products for this combo.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {slots.map((slot, slotIdx) => {
                 const catProducts = getProductsForCategory(slot.category_id);
+                const isAllProducts = allProductsFlags[slotIdx] ?? false;
                 return (
-                  <div key={slotIdx} className="p-3 border border-gray-100 rounded-xl bg-gray-50/50 space-y-2">
+                  <div key={slotIdx} className="p-3 border border-gray-300 rounded-xl bg-gray-100 space-y-2">
                     {/* Category row */}
                     <div className="flex items-center gap-2">
                       <select
@@ -249,10 +287,21 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
+                      {slot.category_id && (
+                        <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none" title="Add all products in this category">
+                          <input
+                            type="checkbox"
+                            checked={isAllProducts}
+                            onChange={(e) => toggleAllProducts(slotIdx, e.target.checked)}
+                            className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
+                          />
+                          <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">Add all</span>
+                        </label>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeSlot(slotIdx)}
-                        className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
+                        className="text-gray-400 hover:text-red-400 transition-colors shrink-0"
                         title="Remove slot"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -264,14 +313,42 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
                     {/* Product rows */}
                     {slot.category_id && (
-                      <div className="ml-3 space-y-1.5">
+                      <div className="ml-1 space-y-1.5">
+                        {/* Apply all upgrade price */}
+                        {slot.products.some((p) => p.product_id) && (
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Apply +₱ to all</span>
+                            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                              <span className="pl-2 text-xs text-gray-400 pointer-events-none select-none">₱</span>
+                              <input
+                                type="number"
+                                value={slotApplyPrices[slotIdx] ?? ""}
+                                onChange={(e) =>
+                                  setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? e.target.value : v)))
+                                }
+                                onKeyDown={(e) => e.key === "Enter" && applyUpgradePriceToAll(slotIdx)}
+                                placeholder="0"
+                                className="w-14 px-1.5 py-1 text-xs focus:outline-none bg-white"
+                                min={0}
+                                step={1}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => applyUpgradePriceToAll(slotIdx)}
+                              className="px-2 py-1 rounded-lg bg-[#E8692A] text-white text-[10px] font-bold hover:bg-[#d45c20] transition-colors"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        )}
                         {slot.products.map((pd, pidIdx) => {
                           const selectedProduct = products.find((p) => p.id === pd.product_id);
                           const isDuplicate = isProductDuplicate(slotIdx, pidIdx);
                           return (
-                            <div key={pidIdx} className="flex items-center gap-2">
+                            <div key={pidIdx} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
                               {/* Quantity stepper */}
-                              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0 bg-white">
+                              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden shrink-0 bg-gray-50">
                                 <button
                                   type="button"
                                   onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: Math.max(1, pd.quantity - 1) })}
@@ -309,17 +386,26 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                 )}
                               </div>
 
-                              {selectedProduct && (
-                                <span className="text-xs font-medium text-[#6B4F3A] shrink-0 whitespace-nowrap">
-                                  ₱{(Math.round(selectedProduct.base_price * pd.quantity * 100) / 100).toFixed(2)}
-                                </span>
-                              )}
+                              {/* Upgrade price input */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-xs text-gray-400">+₱</span>
+                                <input
+                                  type="number"
+                                  value={pd.upgrade_price}
+                                  onChange={(e) => updateProductRow(slotIdx, pidIdx, { upgrade_price: Math.max(0, parseFloat(e.target.value) || 0) })}
+                                  placeholder="0"
+                                  className="w-14 border border-gray-300 rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white"
+                                  min={0}
+                                  step={1}
+                                  title="Upgrade price (extra cost for this product)"
+                                />
+                              </div>
 
                               {slot.products.length > 1 && (
                                 <button
                                   type="button"
                                   onClick={() => removeProductRow(slotIdx, pidIdx)}
-                                  className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
+                                  className="text-gray-400 hover:text-red-400 transition-colors shrink-0"
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -349,7 +435,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         {/* Branch Availability */}
         {branches.length > 0 && (
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
               Branch Availability
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -404,7 +490,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
           >
             Cancel
           </button>

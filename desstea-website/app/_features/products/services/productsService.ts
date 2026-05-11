@@ -336,6 +336,7 @@ export interface ComboSlotProductRow {
   product_name: string;
   base_price: number;
   quantity: number;
+  upgrade_price: number;
 }
 
 export interface ComboSlotRow {
@@ -367,7 +368,7 @@ export async function listCombos(): Promise<ComboRow[]> {
         id, sort_order, category_id,
         categories ( name ),
         combo_slot_products (
-          product_id, quantity,
+          product_id, quantity, upgrade_price,
           products ( name, base_price )
         )
       )
@@ -404,6 +405,7 @@ export async function listCombos(): Promise<ComboRow[]> {
                 product_name: prod?.name ?? "",
                 base_price: (prod?.base_price as number) ?? 0,
                 quantity: sp.quantity as number,
+                upgrade_price: (sp.upgrade_price as number) ?? 0,
               };
             }),
           };
@@ -417,7 +419,7 @@ export async function createComboInSupabase(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   },
   allBranchIds: string[]
@@ -446,7 +448,7 @@ export async function createComboInSupabase(
     if (validProducts.length > 0) {
       const { error: spErr } = await supabase
         .from("combo_slot_products")
-        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity })));
+        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity, upgrade_price: p.upgrade_price ?? 0 })));
       if (spErr) return spErr.message;
     }
   }
@@ -470,7 +472,7 @@ export async function updateComboInSupabase(
     name: string;
     price: number;
     is_available: boolean;
-    slots: { category_id: string; products: { product_id: string; quantity: number }[] }[];
+    slots: { category_id: string; products: { product_id: string; quantity: number; upgrade_price: number }[] }[];
     available_branch_ids: string[];
   },
   allBranchIds: string[]
@@ -517,7 +519,7 @@ export async function updateComboInSupabase(
     if (validProducts.length > 0) {
       const { error: spErr } = await supabase
         .from("combo_slot_products")
-        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity })));
+        .insert(validProducts.map((p) => ({ slot_id: slotInserted.id, product_id: p.product_id, quantity: p.quantity, upgrade_price: p.upgrade_price ?? 0 })));
       if (spErr) return spErr.message;
     }
   }

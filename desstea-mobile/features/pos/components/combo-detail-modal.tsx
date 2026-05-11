@@ -26,14 +26,17 @@ type SlotOption = {
   productId: string;
   productName: string;
   quantity: number;
+  upgradePrice: number;
   addonGroupId: string | null;
+  originalSlotId: string;
 };
 
 type ComboSlot = {
   slotId: string;
   categoryName: string;
   options: SlotOption[];
-  isMilktea: boolean; // true = user picks one; false = all items auto-included
+  isSingleSelect: boolean; // true = user picks one (milktea/frappe); false = all items auto-included
+  drinkGroup: string | null; // shared group key — selecting in one clears the others
 };
 
 type SlotRow = {
@@ -43,6 +46,7 @@ type SlotRow = {
   product_name: string | null;
   product_category_name: string | null;
   quantity: number;
+  upgrade_price: number;
   addon_group_id: string | null;
 };
 
@@ -68,6 +72,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
               p.name AS product_name,
               pc.name AS product_category_name,
               COALESCE(csp.quantity, 1) AS quantity,
+              COALESCE(csp.upgrade_price, 0) AS upgrade_price,
               p.addon_group_id
        FROM combo_slots cs
        LEFT JOIN categories c ON c.id = cs.category_id
@@ -80,47 +85,71 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     );
 
     const slotMap = new Map<string, ComboSlot>();
+    const DRINK_GROUP = "__drink__";
     let slotIndex = 1;
     for (const row of rows) {
-      if (!slotMap.has(row.slot_id)) {
-        slotMap.set(row.slot_id, {
-          slotId: row.slot_id,
-          categoryName: row.category_name ?? `Slot ${slotIndex}`,
+      const cat = row.product_category_name?.toLowerCase() ?? "";
+      const isMilktea = cat.includes("milktea");
+      const isFrappe = cat.includes("frappe");
+      const isDrink = isMilktea || isFrappe;
+      const key = isMilktea ? "__milktea_slot__" : isFrappe ? "__frappe_slot__" : row.slot_id;
+      const drinkLabel = isMilktea ? "Milktea" : "Frappe";
+
+      if (!slotMap.has(key)) {
+        slotMap.set(key, {
+          slotId: key,
+          categoryName: isDrink ? drinkLabel : (row.category_name ?? `Slot ${slotIndex}`),
           options: [],
-          isMilktea: false,
+          isSingleSelect: isDrink,
+          drinkGroup: isDrink ? DRINK_GROUP : null,
         });
         slotIndex++;
       }
       if (row.product_id && row.product_name) {
-        const slot = slotMap.get(row.slot_id)!;
-        slot.options.push({
-          productId: row.product_id,
-          productName: row.product_name,
-          quantity: row.quantity,
-          addonGroupId: row.addon_group_id,
-        });
-        if (row.product_category_name?.toLowerCase().includes("milktea")) {
-          slot.isMilktea = true;
+        const slot = slotMap.get(key)!;
+        // Avoid duplicates when multiple DB slots feed the drink slot
+        if (!slot.options.some((o) => o.productId === row.product_id)) {
+          slot.options.push({
+            productId: row.product_id,
+            productName: row.product_name,
+            quantity: row.quantity,
+            upgradePrice: row.upgrade_price ?? 0,
+            addonGroupId: row.addon_group_id,
+            originalSlotId: row.slot_id,
+          });
         }
       }
     }
-    const builtSlots = Array.from(slotMap.values());
+    // Keep insertion order but ensure drink slot appears first among single-select slots
+    const allSlots = Array.from(slotMap.values());
+    const builtSlots = [
+      ...allSlots.filter((s) => s.isSingleSelect),
+      ...allSlots.filter((s) => !s.isSingleSelect),
+    ];
     setSlots(builtSlots);
 
     const defaultSelections: Record<string, { productId: string; productName: string; addonGroupId: string | null }> = {};
     const groupsToFetch = new Set<string>();
+    const defaultedGroups = new Set<string>();
     for (const slot of builtSlots) {
-      if (slot.isMilktea && slot.options.length > 0) {
-        // Milktea slots need a default selection (user will pick one)
-        const first = slot.options[0];
-        defaultSelections[slot.slotId] = {
-          productId: first.productId,
-          productName: first.productName,
-          addonGroupId: first.addonGroupId,
-        };
-        if (first.addonGroupId) groupsToFetch.add(first.addonGroupId);
+      if (slot.isSingleSelect && slot.options.length > 0) {
+        // For drink-group slots, only default-select the first group member (1 drink total)
+        const alreadyDefaulted = slot.drinkGroup ? defaultedGroups.has(slot.drinkGroup) : false;
+        if (!alreadyDefaulted) {
+          const first = slot.options[0];
+          defaultSelections[slot.slotId] = {
+            productId: first.productId,
+            productName: first.productName,
+            addonGroupId: first.addonGroupId,
+          };
+          if (slot.drinkGroup) defaultedGroups.add(slot.drinkGroup);
+        }
+        // Fetch addon groups for ALL options so switching products shows addons immediately
+        for (const opt of slot.options) {
+          if (opt.addonGroupId) groupsToFetch.add(opt.addonGroupId);
+        }
       }
-      // Non-milktea slots: all products are included, no selection state needed
+      // Non-single-select slots: all products are auto-included, no selection state needed
     }
     setSelections(defaultSelections);
     setSlotAddonQtys({});
@@ -145,11 +174,32 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
   if (!combo) return null;
 
   const selectProduct = (slotId: string, option: SlotOption) => {
-    setSelections((prev) => ({
-      ...prev,
-      [slotId]: { productId: option.productId, productName: option.productName, addonGroupId: option.addonGroupId },
-    }));
-    setSlotAddonQtys((prev) => ({ ...prev, [slotId]: {} }));
+    const currentSlot = slots.find((s) => s.slotId === slotId);
+    setSelections((prev) => {
+      const next = { ...prev };
+      // Clear other slots in the same drink group (mutually exclusive)
+      if (currentSlot?.drinkGroup) {
+        for (const s of slots) {
+          if (s.drinkGroup === currentSlot.drinkGroup && s.slotId !== slotId) {
+            delete next[s.slotId];
+          }
+        }
+      }
+      next[slotId] = { productId: option.productId, productName: option.productName, addonGroupId: option.addonGroupId };
+      return next;
+    });
+    setSlotAddonQtys((prev) => {
+      const next = { ...prev, [slotId]: {} };
+      // Clear addon qtys for deselected drink slots
+      if (currentSlot?.drinkGroup) {
+        for (const s of slots) {
+          if (s.drinkGroup === currentSlot.drinkGroup && s.slotId !== slotId) {
+            delete next[s.slotId];
+          }
+        }
+      }
+      return next;
+    });
 
     if (option.addonGroupId && !addonOptionsMap[option.addonGroupId]) {
       const options = db.getAllSync<LocalAddonOption>(
@@ -170,6 +220,12 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     }));
   };
 
+  const upgradeTotal = slots.reduce((sum, slot) => {
+    const sel = selections[slot.slotId];
+    if (!sel) return sum;
+    const selectedOption = slot.options.find((o) => o.productId === sel.productId);
+    return sum + (selectedOption?.upgradePrice ?? 0);
+  }, 0);
   const addonTotal = slots.reduce((sum, slot) => {
     const sel = selections[slot.slotId];
     if (!sel?.addonGroupId) return sum;
@@ -177,19 +233,32 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
     const qtys = slotAddonQtys[slot.slotId] ?? {};
     return sum + options.reduce((s, ao) => s + ao.price_modifier * (qtys[ao.id] ?? 0), 0);
   }, 0);
-  const totalPrice = combo.price + addonTotal;
+  const totalPrice = combo.price + upgradeTotal + addonTotal;
 
-  const milkteasSelected = slots
-    .filter((s) => s.isMilktea)
-    .every((s) => !!selections[s.slotId]);
-  const allSelected = slots.length === 0 || milkteasSelected;
+  // For drink-group slots, only 1 selection across the group is needed
+  const drinkGroups = new Map<string, boolean>();
+  const standaloneSelected: boolean[] = [];
+  for (const slot of slots) {
+    if (slot.isSingleSelect) {
+      if (slot.drinkGroup) {
+        const current = drinkGroups.get(slot.drinkGroup) ?? false;
+        drinkGroups.set(slot.drinkGroup, current || !!selections[slot.slotId]);
+      } else {
+        standaloneSelected.push(!!selections[slot.slotId]);
+      }
+    }
+  }
+  const allSelected = slots.length === 0
+    || ([...drinkGroups.values()].every(Boolean) && standaloneSelected.every(Boolean));
 
   const handleConfirm = () => {
     const comboSelections: ComboSlotSelection[] = [];
     for (const slot of slots) {
-      if (slot.isMilktea) {
-        // User picked one milktea
+      if (slot.isSingleSelect) {
+        // Skip drink-group slots that weren't selected (only 1 across the group)
         const sel = selections[slot.slotId];
+        if (!sel) continue;
+        const selectedOption = slot.options.find((o) => o.productId === sel.productId);
         const addonGroupId = sel?.addonGroupId ?? null;
         const options = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
         const qtys = slotAddonQtys[slot.slotId] ?? {};
@@ -197,10 +266,11 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
           .filter((ao) => (qtys[ao.id] ?? 0) > 0)
           .map((ao) => ({ option: ao, qty: qtys[ao.id] }));
         comboSelections.push({
-          slotId: slot.slotId,
+          slotId: selectedOption?.originalSlotId ?? slot.slotId,
           slotName: slot.categoryName,
           productId: sel.productId,
           productName: sel.productName,
+          upgradePrice: selectedOption?.upgradePrice ?? 0,
           addonGroupId,
           addons,
         });
@@ -212,6 +282,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
             slotName: slot.categoryName,
             productId: option.productId,
             productName: option.quantity > 1 ? `${option.productName} x${option.quantity}` : option.productName,
+            upgradePrice: option.upgradePrice ?? 0,
             addonGroupId: null,
             addons: [],
           });
@@ -247,9 +318,11 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
                   <Text style={styles.headerSub} numberOfLines={1}>{combo.description}</Text>
                 ) : (
                   <Text style={styles.headerSub}>
-                    {slots.filter((s) => s.isMilktea).length === 1
-                      ? "Choose your milktea"
-                      : `Choose from ${slots.filter((s) => s.isMilktea).length} milktea slots`}
+                    {(() => {
+                      const drinkSlots = slots.filter((s) => s.drinkGroup);
+                      if (drinkSlots.length === 0) return "Customize your combo";
+                      return `Choose 1 drink: ${drinkSlots.map((s) => s.categoryName).join(" or ")}`;
+                    })()}
                   </Text>
                 )}
               </View>
@@ -274,10 +347,16 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
                   <Text style={styles.priceLabel}>Total</Text>
                   <Text style={styles.priceValue}>₱{totalPrice.toFixed(2)}</Text>
                 </View>
-                {addonTotal > 0 && (
+                {(upgradeTotal > 0 || addonTotal > 0) && (
                   <View style={styles.priceBreakdownRow}>
                     <Text style={styles.priceBreakdownLabel}>Base</Text>
                     <Text style={styles.priceBreakdownValue}>₱{combo.price.toFixed(2)}</Text>
+                  </View>
+                )}
+                {upgradeTotal > 0 && (
+                  <View style={styles.priceBreakdownRow}>
+                    <Text style={styles.priceBreakdownLabel}>Upgrades</Text>
+                    <Text style={styles.priceBreakdownValue}>+₱{upgradeTotal.toFixed(2)}</Text>
                   </View>
                 )}
                 {addonTotal > 0 && (
@@ -295,28 +374,29 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
 
                   {slots.map((slot, idx) => {
                     const sel = selections[slot.slotId];
+                    const isInactiveDrink = !!slot.drinkGroup && !sel;
                     const addonGroupId = sel?.addonGroupId ?? null;
                     const addonOptions = addonGroupId ? (addonOptionsMap[addonGroupId] ?? []) : [];
                     const qtys = slotAddonQtys[slot.slotId] ?? {};
 
                     return (
-                      <View key={slot.slotId} style={[styles.slotCard, idx > 0 && { marginTop: 10 }]}>
+                      <View key={slot.slotId} style={[styles.slotCard, idx > 0 && { marginTop: 10 }, isInactiveDrink && { opacity: 0.5 }]}>
                         {/* Slot header */}
-                        <View style={styles.slotHeader}>
+                        <View style={[styles.slotHeader, isInactiveDrink && { backgroundColor: GRAY }]}>
                           <View style={styles.slotIndexBubble}>
                             <Text style={styles.slotIndexText}>{idx + 1}</Text>
                           </View>
                           <Text style={styles.slotLabel}>{slot.categoryName}</Text>
-                          {!slot.isMilktea && (
+                          {!slot.isSingleSelect && (
                             <View style={styles.includedBadge}>
                               <Text style={styles.includedBadgeText}>INCLUDED</Text>
                             </View>
                           )}
                         </View>
 
-                        {slot.isMilktea ? (
+                        {slot.isSingleSelect ? (
                           <>
-                            {/* Milktea: radio picker */}
+                            {/* Single-select (milktea/frappe): radio picker */}
                             <View style={styles.optionsContainer}>
                               {slot.options.map((option, optIdx) => {
                                 const selected = sel?.productId === option.productId;
@@ -335,7 +415,7 @@ export function ComboDetailModal({ visible, combo, onConfirm, onCancel }: Props)
                                       {selected && <View style={styles.radioInner} />}
                                     </View>
                                     <Text style={[styles.optionName, selected && styles.optionNameSelected]}>
-                                      {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}
+                                      {option.quantity > 1 ? `${option.quantity}× ` : ""}{option.productName}{option.upgradePrice > 0 ? ` +₱${option.upgradePrice}` : ""}
                                     </Text>
                                     {selected && (
                                       <Ionicons name="checkmark" size={15} color={BRAND} />

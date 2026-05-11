@@ -41,7 +41,7 @@ export default function PaymentScreen() {
 
   const { printReceipt } = usePrinter();
 
-  const handlePrintReceipt = (paymentMethod: "Cash" | "GCash") => {
+  const handleCompleteWithPrint = (paymentMethod: "Cash" | "GCash") => {
     printReceipt({
       customerName: getCustomerName(),
       paymentMethod,
@@ -51,6 +51,7 @@ export default function PaymentScreen() {
       change: paymentMethod === "Cash" ? change : undefined,
       orderRef: orderId,
     });
+    handleComplete();
   };
 
   const renderPhase = () => {
@@ -90,17 +91,15 @@ export default function PaymentScreen() {
             cashAmount={cashAmount}
             total={total}
             change={change}
-            onComplete={handleComplete}
-            onPrintReceipt={() => handlePrintReceipt("Cash")}
+            onComplete={() => handleCompleteWithPrint("Cash")}
           />
         );
       case "gcash-wait":
         return (
           <GcashWait
             total={total}
-            onComplete={handleComplete}
+            onComplete={() => handleCompleteWithPrint("GCash")}
             onChangeMethod={changePaymentMethod}
-            onPrintReceipt={() => handlePrintReceipt("GCash")}
           />
         );
     }

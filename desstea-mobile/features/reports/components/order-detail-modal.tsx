@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   View,
@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CompletedOrder } from "../types";
+import { usePrinter } from "@/features/printer/hooks/use-printer";
+import { PinVerifyModal } from "./pin-verify-modal";
 
 const BRAND = "#E8692A";
 const BRAND_LIGHT = "#FFF3ED";
@@ -47,6 +49,9 @@ type Props = {
 };
 
 export function OrderDetailModal({ order, visible, onClose }: Props) {
+  const [pinVisible, setPinVisible] = useState(false);
+  const { printReprintFromDb } = usePrinter();
+
   if (!order) return null;
 
   const { datePart, timePart } = formatDateTime(order.completedAt);
@@ -104,10 +109,25 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
                   {isSynced ? "Synced" : "Pending"}
                 </Text>
               </View>
+              <TouchableOpacity
+                style={styles.reprintBtn}
+                onPress={() => setPinVisible(true)}
+              >
+                <Ionicons name="print-outline" size={16} color={BRAND} />
+              </TouchableOpacity>
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
                 <Ionicons name="close" size={18} color={MID} />
               </TouchableOpacity>
             </View>
+
+            <PinVerifyModal
+              visible={pinVisible}
+              onClose={() => setPinVisible(false)}
+              onVerified={() => {
+                setPinVisible(false);
+                printReprintFromDb(order);
+              }}
+            />
           </View>
 
           {/* ── DATE ROW ── */}
@@ -160,6 +180,7 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
                       <Text key={selection.id} style={styles.itemCustom}>
                         {selection.slot_name_snapshot}:{" "}
                         {selection.product_name_snapshot}
+                        {selection.upgrade_price > 0 ? ` +₱${selection.upgrade_price}` : ""}
                       </Text>
                     ))}
                     {item.addons.map((a) => (
@@ -339,6 +360,14 @@ const styles = StyleSheet.create({
   syncBadgeText: {
     fontSize: 11,
     fontWeight: "700",
+  },
+  reprintBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: BRAND_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
   },
   closeBtn: {
     width: 32,

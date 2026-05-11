@@ -8,6 +8,7 @@ import {
 import { OrderItem } from "../../../store";
 import { getItemPrice } from "../../pos/types";
 import { useBranchName } from "../../auth/hooks/use-branch-name";
+import { CompletedOrder } from "../../reports/types";
 
 export type ReceiptDetails = {
   customerName: string;
@@ -222,7 +223,8 @@ export function usePrinter() {
           );
           if (item.comboSelections?.length) {
             for (const sel of item.comboSelections) {
-              lines.push(`  - ${sel.productName}`);
+              const upgradeSuffix = sel.upgradePrice > 0 ? ` +₱${sel.upgradePrice.toFixed(2)}` : "";
+              lines.push(`  - ${sel.productName}${upgradeSuffix}`);
               if (sel.addons?.length) {
                 for (const aq of sel.addons) {
                   lines.push(
@@ -302,7 +304,8 @@ export function usePrinter() {
             kitchenLines.push(`${item.combo.name} x${item.quantity}`);
             if (item.comboSelections?.length) {
               for (const sel of item.comboSelections) {
-                kitchenLines.push(`  - ${sel.productName}`);
+                const upgradeSuffix = sel.upgradePrice > 0 ? ` +₱${sel.upgradePrice.toFixed(2)}` : "";
+                kitchenLines.push(`  - ${sel.productName}${upgradeSuffix}`);
                 if (sel.addons?.length) {
                   for (const aq of sel.addons) {
                     kitchenLines.push(
@@ -356,5 +359,126 @@ export function usePrinter() {
     }
   };
 
-  return { printTestMessage, printReceipt };
+  const printReprintFromDb = async (order: CompletedOrder) => {
+    try {
+      const hasPermission = await requestBluetoothPermissions();
+      if (!hasPermission) {
+        Alert.alert(
+          "Permission Denied",
+          "Bluetooth permission is required to print.",
+        );
+        return;
+      }
+      await BLEPrinter.init();
+
+      const devices: { device_name: string; inner_mac_address: string }[] =
+        await BLEPrinter.getDeviceList();
+
+      if (!devices || devices.length === 0) {
+        Alert.alert("No Printers", "No paired Bluetooth printers found.");
+        return;
+      }
+
+      const printer = devices.find(
+        (d) => d.device_name?.toLowerCase() === "kprinter_8caa",
+      );
+
+      if (!printer) {
+        Alert.alert(
+          "Printer not found",
+          `Paired devices: ${devices.map((d) => d.device_name).join(", ") || "none"}`,
+        );
+        return;
+      }
+
+      try {
+        await BLEPrinter.closeConn();
+      } catch {
+        // ignore
+      }
+
+      await withTimeout(
+        BLEPrinter.connectPrinter(printer.inner_mac_address),
+        5000,
+        "Printer connection",
+      );
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      const logoBase64 = await getLogoBase64();
+      if (logoBase64) {
+        BLEPrinter.printImageBase64(logoBase64, {
+          imageWidth: 350,
+          imageHeight: 180,
+          printerWidthType: PrinterWidth["58mm"],
+        });
+        await new Promise((r) => setTimeout(r, 400));
+      }
+
+      const d = order.completedAt;
+      const dateStr = d.toLocaleDateString("en-PH", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+      const timeStr = d
+        .toLocaleTimeString("en-PH", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .replace(/\u202f/g, " ");
+
+      const displayRef = `#${order.id.slice(0, 6).toUpperCase()}`;
+
+      const lines: string[] = [];
+      lines.push(`Desstea ${branchName}`);
+      lines.push("Order Invoice [REPRINT]");
+      lines.push("================================");
+      lines.push(`Order ${displayRef}`);
+      lines.push(`Date: ${dateStr} ${timeStr}`);
+      lines.push(`Customer: ${order.customerName}`);
+      lines.push("--------------------------------");
+
+      for (const item of order.items) {
+        const parts: string[] = [];
+        if (item.size_label_snapshot) parts.push(item.size_label_snapshot);
+        if (item.sugar_level_snapshot) parts.push(item.sugar_level_snapshot);
+        if (item.temp_snapshot) parts.push(item.temp_snapshot);
+        if (item.flavor_snapshot) parts.push(item.flavor_snapshot);
+        const suffix = parts.length ? ` (${parts.join(", ")})` : "";
+        lines.push(
+          `${item.product_name_snapshot}${suffix}\nx${item.quantity} ${item.total_price.toFixed(2)} `,
+        );
+        for (const a of item.addons) {
+          lines.push(`  + ${a.addon_name_snapshot}${a.quantity > 1 ? ` x${a.quantity}` : ""}`);
+        }
+        for (const sel of item.comboSelections) {
+          const upgradeSuffix = sel.upgrade_price > 0 ? ` +₱${sel.upgrade_price.toFixed(2)}` : "";
+          lines.push(`  - ${sel.product_name_snapshot}${upgradeSuffix}`);
+        }
+      }
+
+      lines.push("--------------------------------");
+      lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
+      lines.push("--------------------------------");
+      lines.push(`Payment: ${order.paymentMethod}`);
+
+      if (order.paymentMethod === "Cash" && order.cashTendered != null) {
+        lines.push(`Cash:    ${order.cashTendered.toFixed(2)}`);
+        lines.push(`Change:  ${(order.cashChange ?? 0).toFixed(2)}`);
+      }
+
+      lines.push("================================\n");
+      lines.push("      Thank you Come again!\n");
+      lines.push("      This Document is not\n  valid for claim of input tax");
+      lines.push("\n\n\n");
+
+      await BLEPrinter.printText(lines.join("\n"), {});
+    } catch (err: unknown) {
+      Alert.alert("Print Error", `Could not reprint receipt.\n\n${String(err)}`);
+    }
+  };
+
+  return { printTestMessage, printReceipt, printReprintFromDb };
 }
