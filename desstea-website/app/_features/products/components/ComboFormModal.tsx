@@ -210,83 +210,89 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
   const inputCls = "border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
 
   return (
-    <Modal open={open} onClose={onClose} title={combo ? "Edit Combo" : "New Combo"} size="md">
-      <div className="space-y-4">
-        {/* Name */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-            Combo Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Milktea + Snack Combo"
-            className={`w-full ${inputCls}`}
-          />
-        </div>
+    <Modal open={open} onClose={onClose} title={combo ? "Edit Combo" : "New Combo"} size="xl">
+      <div className="space-y-5">
 
-        {/* Price + Availability */}
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
+        {/* Name + Price + Availability */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2 sm:col-span-1">
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-              Combo Price
+              Combo Name
             </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">₱</span>
-              <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                className={`w-full ${inputCls} pl-7`}
-                min={0}
-                step={0.01}
-              />
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Milktea + Snack Combo"
+              className={`w-full ${inputCls}`}
+            />
           </div>
-          <div className="pb-2">
-            <Toggle checked={isAvailable} onChange={setIsAvailable} label="Available" />
+          <div className="col-span-2 sm:col-span-1 flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                Combo Price
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">₱</span>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0.00"
+                  className={`w-full ${inputCls} pl-7`}
+                  min={0}
+                  step={0.01}
+                />
+              </div>
+            </div>
+            <div className="pb-2">
+              <Toggle checked={isAvailable} onChange={setIsAvailable} label="Available" />
+            </div>
           </div>
         </div>
 
         {/* Slots */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Combo Slots
-            </label>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                Combo Slots
+              </label>
+              <p className="text-[11px] text-gray-400 mt-0.5">Each slot is a category of products included in this combo.</p>
+            </div>
             <button
               type="button"
               onClick={addSlot}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8692A] text-white text-xs font-semibold hover:bg-[#d45c20] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E8692A] text-white text-xs font-semibold hover:bg-[#d45c20] transition-colors"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add Category
+              Add Slot
             </button>
           </div>
 
           {slots.length === 0 ? (
-            <div className="border border-dashed border-gray-300 rounded-xl p-5 text-center">
-              <p className="text-sm text-gray-500">No slots yet.</p>
-              <p className="text-xs text-gray-400 mt-0.5">Add a slot to pick products for this combo.</p>
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
+              <p className="text-sm font-medium text-gray-500">No slots yet</p>
+              <p className="text-xs text-gray-400 mt-1">Add a slot to pick product categories for this combo.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {slots.map((slot, slotIdx) => {
                 const catProducts = getProductsForCategory(slot.category_id);
                 const isAllProducts = allProductsFlags[slotIdx] ?? false;
                 return (
-                  <div key={slotIdx} className="p-3 border border-gray-300 rounded-xl bg-gray-100 space-y-2">
-                    {/* Category row */}
-                    <div className="flex items-center gap-2">
+                  <div key={slotIdx} className="border border-gray-200 rounded-xl overflow-hidden">
+
+                    {/* Slot header row */}
+                    <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border-b border-gray-200">
+                      <span className="text-xs font-bold text-gray-400 shrink-0 w-5 text-center">{slotIdx + 1}</span>
                       <select
                         value={slot.category_id}
                         onChange={(e) => setSlotCategory(slotIdx, e.target.value)}
-                        className={`flex-1 ${inputCls} text-xs font-medium`}
+                        className={`flex-1 ${inputCls} text-xs font-medium py-1.5`}
                       >
                         <option value="">Select category…</option>
                         {categories.map((c) => (
@@ -307,7 +313,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                       <button
                         type="button"
                         onClick={() => removeSlot(slotIdx)}
-                        className="text-gray-400 hover:text-red-400 transition-colors shrink-0"
+                        className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
                         title="Remove slot"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -317,155 +323,172 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                       </button>
                     </div>
 
-                    {/* Selection flags */}
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={slot.requires_selection}
-                          onChange={(e) =>
-                            setSlots((prev) =>
-                              prev.map((s, i) =>
-                                i === slotIdx ? { ...s, requires_selection: e.target.checked, selection_group: e.target.checked ? s.selection_group : null } : s
+                    <div className="px-3 py-3 space-y-3">
+                      {/* Customer picks one toggle + Selection Group */}
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                          <input
+                            type="checkbox"
+                            checked={slot.requires_selection}
+                            onChange={(e) =>
+                              setSlots((prev) =>
+                                prev.map((s, i) =>
+                                  i === slotIdx ? { ...s, requires_selection: e.target.checked, selection_group: e.target.checked ? s.selection_group : null } : s
+                                )
                               )
-                            )
-                          }
-                          className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
-                        />
-                        <span className="text-[11px] font-medium text-gray-600 whitespace-nowrap">Customer picks one</span>
-                      </label>
-                      {slot.requires_selection && (
-                        <input
-                          type="text"
-                          value={slot.selection_group ?? ""}
-                          onChange={(e) =>
-                            setSlots((prev) =>
-                              prev.map((s, i) =>
-                                i === slotIdx ? { ...s, selection_group: e.target.value || null } : s
-                              )
-                            )
-                          }
-                          placeholder="Group (e.g. drink)"
-                          className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-[#6B4F3A]/30 focus:border-[#6B4F3A] bg-white"
-                          title="Slots sharing the same group name are mutually exclusive — customer picks only 1 across all of them"
-                        />
+                            }
+                            className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
+                          />
+                          <span className="text-xs font-semibold text-gray-700">Customer picks one from this slot</span>
+                        </label>
+
+                        {slot.requires_selection && (
+                          <div className="ml-5 p-3 bg-sky-50 border border-sky-200 rounded-lg space-y-1.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-sky-700 uppercase tracking-widest mb-1">
+                                Selection Group
+                              </label>
+                              <input
+                                type="text"
+                                value={slot.selection_group ?? ""}
+                                onChange={(e) =>
+                                  setSlots((prev) =>
+                                    prev.map((s, i) =>
+                                      i === slotIdx ? { ...s, selection_group: e.target.value || null } : s
+                                    )
+                                  )
+                                }
+                                placeholder="e.g. Drinks"
+                                className="w-full border border-sky-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 bg-white"
+                              />
+                            </div>
+                            <p className="text-[10px] text-sky-500 leading-relaxed">
+                              Slots sharing the same group name are linked — the customer picks <strong>one product total</strong> across all slots in that group.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product rows */}
+                      {slot.category_id && (
+                        <div className="space-y-2">
+                          {/* Apply upgrade price to all */}
+                          {slot.products.some((p) => p.product_id) && (
+                            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+                              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                                Apply +₱ to all
+                              </span>
+                              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                <span className="pl-2 text-xs text-gray-400 pointer-events-none select-none">₱</span>
+                                <input
+                                  type="number"
+                                  value={slotApplyPrices[slotIdx] ?? ""}
+                                  onChange={(e) =>
+                                    setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? e.target.value : v)))
+                                  }
+                                  onKeyDown={(e) => e.key === "Enter" && applyUpgradePriceToAll(slotIdx)}
+                                  placeholder="0"
+                                  className="w-16 px-1.5 py-1 text-xs focus:outline-none bg-white"
+                                  min={0}
+                                  step={1}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => applyUpgradePriceToAll(slotIdx)}
+                                className="px-2.5 py-1 rounded-lg bg-[#E8692A] text-white text-[10px] font-bold hover:bg-[#d45c20] transition-colors"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Individual product rows */}
+                          {slot.products.map((pd, pidIdx) => {
+                            const isDuplicate = isProductDuplicate(slotIdx, pidIdx);
+                            return (
+                              <div key={pidIdx} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-2">
+                                {/* Quantity stepper */}
+                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0 bg-gray-50">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: Math.max(1, pd.quantity - 1) })}
+                                    className="w-7 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm font-bold"
+                                  >
+                                    −
+                                  </button>
+                                  <span className="w-7 text-center text-xs font-bold text-gray-700 select-none">
+                                    {pd.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: pd.quantity + 1 })}
+                                    className="w-7 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm font-bold"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                {/* Product dropdown */}
+                                <div className="relative flex-1">
+                                  <select
+                                    value={pd.product_id}
+                                    onChange={(e) => updateProductRow(slotIdx, pidIdx, { product_id: e.target.value })}
+                                    className={`w-full ${inputCls} text-xs py-1.5 ${isDuplicate ? "!border-red-400 !ring-red-200 !bg-red-50" : ""}`}
+                                    title={isDuplicate ? "Duplicate Product" : undefined}
+                                  >
+                                    <option value="">Select product…</option>
+                                    {catProducts.map((p) => (
+                                      <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                  </select>
+                                  {isDuplicate && (
+                                    <span className="text-[10px] text-red-500 font-medium mt-0.5 block">Duplicate product</span>
+                                  )}
+                                </div>
+
+                                {/* Upgrade price */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="text-xs text-gray-400 font-medium">+₱</span>
+                                  <input
+                                    type="number"
+                                    value={pd.upgrade_price}
+                                    onChange={(e) => updateProductRow(slotIdx, pidIdx, { upgrade_price: Math.max(0, parseFloat(e.target.value) || 0) })}
+                                    placeholder="0"
+                                    className="w-16 border border-gray-300 rounded-lg px-1.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white"
+                                    min={0}
+                                    step={1}
+                                    title="Extra cost for choosing this product"
+                                  />
+                                </div>
+
+                                {slot.products.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProductRow(slotIdx, pidIdx)}
+                                    className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
+                                  >
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          <button
+                            type="button"
+                            onClick={() => addProductRow(slotIdx)}
+                            className="text-xs text-[#6B4F3A] font-semibold hover:underline"
+                          >
+                            + Add another product
+                          </button>
+                        </div>
                       )}
                     </div>
 
-                    {/* Product rows */}
-                    {slot.category_id && (
-                      <div className="ml-1 space-y-1.5">
-                        {/* Apply all upgrade price */}
-                        {slot.products.some((p) => p.product_id) && (
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Apply +₱ to all</span>
-                            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
-                              <span className="pl-2 text-xs text-gray-400 pointer-events-none select-none">₱</span>
-                              <input
-                                type="number"
-                                value={slotApplyPrices[slotIdx] ?? ""}
-                                onChange={(e) =>
-                                  setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? e.target.value : v)))
-                                }
-                                onKeyDown={(e) => e.key === "Enter" && applyUpgradePriceToAll(slotIdx)}
-                                placeholder="0"
-                                className="w-14 px-1.5 py-1 text-xs focus:outline-none bg-white"
-                                min={0}
-                                step={1}
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => applyUpgradePriceToAll(slotIdx)}
-                              className="px-2 py-1 rounded-lg bg-[#E8692A] text-white text-[10px] font-bold hover:bg-[#d45c20] transition-colors"
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        )}
-                        {slot.products.map((pd, pidIdx) => {
-                          const selectedProduct = products.find((p) => p.id === pd.product_id);
-                          const isDuplicate = isProductDuplicate(slotIdx, pidIdx);
-                          return (
-                            <div key={pidIdx} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
-                              {/* Quantity stepper */}
-                              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden shrink-0 bg-gray-50">
-                                <button
-                                  type="button"
-                                  onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: Math.max(1, pd.quantity - 1) })}
-                                  className="w-6 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
-                                >
-                                  −
-                                </button>
-                                <span className="w-6 text-center text-xs font-semibold text-gray-700 select-none">
-                                  {pd.quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: pd.quantity + 1 })}
-                                  className="w-6 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
-                                >
-                                  +
-                                </button>
-                              </div>
-
-                              {/* Product dropdown */}
-                              <div className="relative flex-1">
-                                <select
-                                  value={pd.product_id}
-                                  onChange={(e) => updateProductRow(slotIdx, pidIdx, { product_id: e.target.value })}
-                                  className={`w-full ${inputCls} text-xs ${isDuplicate ? "!border-red-400 !ring-red-200 !bg-red-50" : ""}`}
-                                  title={isDuplicate ? "Duplicate Product" : undefined}
-                                >
-                                  <option value="">Select product…</option>
-                                  {catProducts.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                  ))}
-                                </select>
-                                {isDuplicate && (
-                                  <span className="text-[10px] text-red-500 font-medium mt-0.5 block">Duplicate Product</span>
-                                )}
-                              </div>
-
-                              {/* Upgrade price input */}
-                              <div className="flex items-center gap-1 shrink-0">
-                                <span className="text-xs text-gray-400">+₱</span>
-                                <input
-                                  type="number"
-                                  value={pd.upgrade_price}
-                                  onChange={(e) => updateProductRow(slotIdx, pidIdx, { upgrade_price: Math.max(0, parseFloat(e.target.value) || 0) })}
-                                  placeholder="0"
-                                  className="w-14 border border-gray-300 rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white"
-                                  min={0}
-                                  step={1}
-                                  title="Upgrade price (extra cost for this product)"
-                                />
-                              </div>
-
-                              {slot.products.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeProductRow(slotIdx, pidIdx)}
-                                  className="text-gray-400 hover:text-red-400 transition-colors shrink-0"
-                                >
-                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                        <button
-                          type="button"
-                          onClick={() => addProductRow(slotIdx)}
-                          className="text-xs text-[#6B4F3A] font-medium hover:underline"
-                        >
-                          + Add another product
-                        </button>
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -494,15 +517,15 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
         {/* Price breakdown */}
         {slotBreakdowns.length > 0 && (
-          <div className="bg-[#FFF8F4] border border-[#F5C5A3] rounded-xl p-3.5 space-y-1.5">
-            <p className="text-xs font-semibold text-[#6B4F3A] uppercase tracking-wide mb-2">Price Breakdown</p>
+          <div className="bg-[#FFF8F4] border border-[#F5C5A3] rounded-xl p-4 space-y-2">
+            <p className="text-[10px] font-bold text-[#6B4F3A] uppercase tracking-widest mb-2.5">Price Breakdown</p>
             {slotBreakdowns.map(({ cat, avgPrice }, idx) => (
               <div key={idx} className="flex justify-between text-xs text-gray-600">
                 <span className="font-medium text-gray-700">{cat?.name ?? "Unknown"}</span>
                 <span className="font-medium">₱{avgPrice.toFixed(2)}</span>
               </div>
             ))}
-            <div className="flex justify-between text-xs text-gray-400 border-t border-[#F5C5A3] pt-1.5 mt-1.5">
+            <div className="flex justify-between text-xs text-gray-400 border-t border-[#F5C5A3] pt-2 mt-2">
               <span>Items total</span>
               <span>₱{slotPricesSum.toFixed(2)}</span>
             </div>
@@ -536,6 +559,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
             Cancel
           </button>
         </div>
+
       </div>
     </Modal>
   );

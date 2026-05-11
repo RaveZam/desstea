@@ -13,19 +13,17 @@ interface Props {
 export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props) {
   if (!combo) return null;
 
-  const itemsTotal = combo.slots
-    .flatMap((s) => s.products)
-    .reduce((sum, p) => sum + p.base_price * p.quantity, 0);
-
-  const savings = itemsTotal - Number(combo.price);
-
   return (
-    <Modal open={open} onClose={onClose} title={combo.name} size="sm">
-      <div className="space-y-4">
-        {/* Price + status row */}
-        <div className="flex items-center justify-between">
-          <p className="text-2xl font-bold text-[#6B4F3A]">₱{Number(combo.price).toFixed(2)}</p>
-          <div className="flex items-center gap-2">
+    <Modal open={open} onClose={onClose} title={combo.name} size="lg">
+      <div className="space-y-5">
+
+        {/* Price + Status banner */}
+        <div className="flex items-center justify-between bg-[#FFF8F4] border border-[#F5C5A3] rounded-xl px-4 py-3.5">
+          <div>
+            <p className="text-[10px] font-semibold text-[#9B7B5F] uppercase tracking-widest mb-0.5">Combo Price</p>
+            <p className="text-3xl font-bold text-[#6B4F3A]">₱{Number(combo.price).toFixed(2)}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
               combo.is_available
                 ? "bg-green-50 text-green-700 border-green-200"
@@ -42,42 +40,50 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
         {/* Slots */}
         {combo.slots.length > 0 ? (
           <div className="space-y-3">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Included Items</p>
             {combo.slots.map((slot) => (
-              <div key={slot.id}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {slot.category_name}
-                  </p>
-                  {slot.requires_selection ? (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#FFF3EC] text-[#E8692A] border border-[#F5C5A3]">
-                      Pick 1{slot.selection_group ? ` · ${slot.selection_group}` : ""}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 border border-gray-200">
-                      Included
-                    </span>
-                  )}
+              <div key={slot.id} className="border border-gray-200 rounded-xl overflow-hidden">
+
+                {/* Slot header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                  <p className="text-sm font-semibold text-gray-800">{slot.category_name}</p>
+                  <div className="flex items-center gap-2">
+                    {slot.requires_selection ? (
+                      <>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3EC] text-[#E8692A] border border-[#F5C5A3]">
+                          Pick 1
+                        </span>
+                        {slot.selection_group && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-sky-600 border border-sky-200">
+                            Group: {slot.selection_group}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                        Included
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-1">
+
+                {/* Product rows */}
+                <div className="divide-y divide-gray-100">
                   {slot.products.map((p) => (
-                    <div key={p.product_id} className="flex items-center justify-between gap-3 py-1.5 px-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2 min-w-0">
+                    <div key={p.product_id} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         {p.quantity > 1 && (
                           <span className="shrink-0 text-[11px] font-bold bg-[#FFF3EC] text-[#E8692A] border border-[#F5C5A3] px-1.5 py-0.5 rounded-full">
                             {p.quantity}×
                           </span>
                         )}
-                        <span className="text-sm text-gray-800 font-medium truncate">
-                          {p.product_name}
-                          {p.upgrade_price > 0 && (
-                            <span className="ml-1.5 text-xs font-semibold text-[#E8692A]">+₱{p.upgrade_price}</span>
-                          )}
-                        </span>
+                        <span className="text-sm text-gray-800 font-medium truncate">{p.product_name}</span>
+                        {p.upgrade_price > 0 && (
+                          <span className="shrink-0 text-xs font-semibold text-[#E8692A]">+₱{p.upgrade_price.toFixed(2)}</span>
+                        )}
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-gray-700">
-                          ₱{(p.base_price * p.quantity).toFixed(2)}
-                        </p>
+                      <div className="shrink-0 text-right ml-4">
+                        <p className="text-sm font-semibold text-gray-700">₱{(p.base_price * p.quantity).toFixed(2)}</p>
                         {p.quantity > 1 && (
                           <p className="text-[10px] text-gray-400">₱{p.base_price.toFixed(2)} each</p>
                         )}
@@ -85,30 +91,19 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
                     </div>
                   ))}
                 </div>
+
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 text-center py-4">No slots configured.</p>
+          <p className="text-sm text-gray-400 text-center py-8">No slots configured.</p>
         )}
 
         {/* Price summary */}
         {combo.slots.some((s) => s.products.length > 0) && (
-          <div className="border-t border-gray-100 pt-3 space-y-1.5">
-            {/* <div className="flex justify-between text-xs text-gray-400">
-              <span>Items total</span>
-              <span>₱{itemsTotal.toFixed(2)}</span>
-            </div> */}
-            <div className="flex justify-between text-sm font-bold text-gray-900">
-              <span>Combo price</span>
-              <span className="text-[#E8692A]">₱{Number(combo.price).toFixed(2)}</span>
-            </div>
-            {/* {savings > 0 && (
-              <div className="flex justify-between text-xs font-medium text-green-600">
-                <span>Customer saves</span>
-                <span>₱{savings.toFixed(2)}</span>
-              </div>
-            )} */}
+          <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+            <span className="text-sm font-bold text-gray-900">Combo price</span>
+            <span className="text-xl font-bold text-[#E8692A]">₱{Number(combo.price).toFixed(2)}</span>
           </div>
         )}
 
@@ -131,6 +126,7 @@ export default function ComboDetailModal({ open, onClose, combo, onEdit }: Props
             Close
           </button>
         </div>
+
       </div>
     </Modal>
   );

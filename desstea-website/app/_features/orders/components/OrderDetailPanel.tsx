@@ -91,6 +91,20 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                     <p className="font-semibold text-gray-900 ml-3">₱{item.lineTotal.toLocaleString()}</p>
                   </div>
 
+                  {/* Combo selections */}
+                  {(item.comboSelections ?? []).length > 0 && (
+                    <div className="mt-1 ml-3 space-y-0.5">
+                      {(item.comboSelections ?? []).map((selection, sidx) => (
+                        <div key={sidx} className="text-xs text-gray-500">
+                          {selection.slotName}: {selection.productName}
+                          {selection.upgradePrice > 0 && (
+                            <span className="ml-1 font-semibold text-[#E8692A]">+₱{selection.upgradePrice}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Addons */}
                   {(item.addons ?? []).length > 0 && (
                     <div className="mt-1 ml-3 space-y-0.5">
@@ -102,20 +116,6 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                           </span>
                           {addon.priceModifier > 0 && (
                             <span>₱{(addon.priceModifier * addon.quantity).toLocaleString()}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Combo selections */}
-                  {(item.comboSelections ?? []).length > 0 && (
-                    <div className="mt-1 ml-3 space-y-0.5">
-                      {(item.comboSelections ?? []).map((selection, sidx) => (
-                        <div key={sidx} className="text-xs text-gray-500">
-                          {selection.slotName}: {selection.productName}
-                          {selection.upgradePrice > 0 && (
-                            <span className="ml-1 font-semibold text-[#E8692A]">+₱{selection.upgradePrice}</span>
                           )}
                         </div>
                       ))}
