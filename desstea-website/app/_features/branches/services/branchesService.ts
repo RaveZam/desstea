@@ -24,6 +24,7 @@ export type BranchRecentOrder = {
   itemCount: number;
   total: number;
   createdAt: string;
+  status: string;
 };
 
 export type BranchDetailData = {
@@ -166,17 +167,22 @@ export async function getTodayOrdersSummary(): Promise<Record<string, BranchDail
   cacheLife("minutes");
   cacheTag("orders");
   const supabase = createAdminClient();
-  const { data, error } = await supabase.rpc("get_today_orders_summary");
+  const { start, end } = getDateBounds("today");
+  const { data, error } = await supabase
+    .from("orders")
+    .select("branch_id, total")
+    .neq("status", "cancelled")
+    .gte("ordered_at", start.toISOString())
+    .lt("ordered_at", end.toISOString());
   if (error) {
     console.error("[getTodayOrdersSummary] error:", error.message);
     return {};
   }
   const map: Record<string, BranchDailySummary> = {};
-  for (const row of data ?? []) {
-    map[row.branch_id] = {
-      order_count: Number(row.order_count),
-      total_revenue: Number(row.total_revenue),
-    };
+  for (const row of (data ?? []) as { branch_id: string; total: number }[]) {
+    if (!map[row.branch_id]) map[row.branch_id] = { order_count: 0, total_revenue: 0 };
+    map[row.branch_id].order_count += 1;
+    map[row.branch_id].total_revenue += Number(row.total);
   }
   return map;
 }
@@ -190,30 +196,126 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
   const startIso = start.toISOString();
   const endIso = end.toISOString();
 
-  const [kpisRes, salesRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
-    supabase.rpc("get_branch_kpis", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
-    range === "today"
-      ? supabase.from("orders").select("ordered_at, total").eq("branch_id", branchId).gte("ordered_at", startIso).lt("ordered_at", endIso)
-      : supabase.rpc("get_branch_sales_by_day", { branch_id_filter: branchId, start_date: startIso, end_date: endIso }),
-    supabase.rpc("get_branch_top_products", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
-    supabase.rpc("get_branch_top_categories", { branch_id_filter: branchId, start_date: startIso, end_date: endIso, lim: 5 }),
-    supabase
-      .from("orders")
-      .select("id, customer_name, total, ordered_at, order_items(count)")
+  const rangeMs = end.getTime() - start.getTime();
+  const prevStartIso = new Date(start.getTime() - rangeMs).toISOString();
+  const prevEndIso = startIso;
+
+  const [curOrdersRes, prevOrdersRes, recentOrdersRes, productsRes] = await Promise.all([
+    supabase.from("orders")
+      .select("id, total, ordered_at")
+      .eq("branch_id", branchId)
+      .neq("status", "cancelled")
+      .gte("ordered_at", startIso)
+      .lt("ordered_at", endIso),
+    supabase.from("orders")
+      .select("id, total")
+      .eq("branch_id", branchId)
+      .neq("status", "cancelled")
+      .gte("ordered_at", prevStartIso)
+      .lt("ordered_at", prevEndIso),
+    supabase.from("orders")
+      .select("id, customer_name, total, ordered_at, status, order_items(count)")
       .eq("branch_id", branchId)
       .gte("ordered_at", startIso)
       .lt("ordered_at", endIso)
       .order("ordered_at", { ascending: false })
       .limit(10),
+    supabase.from("products").select("id, categories(name)"),
   ]);
 
-  const rawKpis = (kpisRes.data as BranchKpis[] | null)?.[0];
-  const emptyKpis: BranchKpis = {
-    total_revenue: 0, total_orders: 0, avg_order_value: 0, items_sold: 0,
-    prev_total_revenue: 0, prev_total_orders: 0, prev_avg_order_value: 0,
-  };
+  if (curOrdersRes.error) throw new Error(curOrdersRes.error.message);
+  if (prevOrdersRes.error) throw new Error(prevOrdersRes.error.message);
 
-  const recentOrders: BranchRecentOrder[] = (ordersRes.data ?? []).map((row) => {
+  type CurOrderRow = { id: string; total: number; ordered_at: string };
+  type PrevOrderRow = { id: string; total: number };
+  type ProductRow = { id: string; categories: { name: string } | null };
+
+  const curOrders = (curOrdersRes.data ?? []) as CurOrderRow[];
+  const prevOrders = (prevOrdersRes.data ?? []) as PrevOrderRow[];
+  const products = (productsRes.data ?? []) as ProductRow[];
+
+  // Fetch order_items for current period orders
+  const curOrderIds = curOrders.map((o) => o.id);
+  type ItemRow = { product_name_snapshot: string; product_id: string | null; total_price: number; quantity: number };
+  let items: ItemRow[] = [];
+  if (curOrderIds.length > 0) {
+    const itemsRes = await supabase.from("order_items")
+      .select("product_name_snapshot, product_id, total_price, quantity")
+      .in("order_id", curOrderIds);
+    if (itemsRes.error) throw new Error(itemsRes.error.message);
+    items = (itemsRes.data ?? []) as ItemRow[];
+  }
+
+  // ── KPIs ──────────────────────────────────────────────────────
+  const totalRevenue = curOrders.reduce((s, o) => s + Number(o.total), 0);
+  const totalOrders = curOrders.length;
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const itemsSold = items.reduce((s, i) => s + Number(i.quantity), 0);
+
+  const prevRevenue = prevOrders.reduce((s, o) => s + Number(o.total), 0);
+  const prevCount = prevOrders.length;
+  const prevAvgOrderValue = prevCount > 0 ? prevRevenue / prevCount : 0;
+
+  // ── Sales by day/hour ─────────────────────────────────────────
+  let salesByDay: BranchSalesDay[];
+  if (range === "today") {
+    const hourlyMap: Record<number, number> = {};
+    for (const o of curOrders) {
+      const phHour = new Date(new Date(o.ordered_at).getTime() + 8 * 60 * 60 * 1000).getUTCHours();
+      hourlyMap[phHour] = (hourlyMap[phHour] ?? 0) + Number(o.total);
+    }
+    salesByDay = Array.from({ length: 24 }, (_, hr) => ({
+      day: hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`,
+      revenue: hourlyMap[hr] ?? 0,
+    }));
+  } else {
+    const dayRevMap: Record<string, number> = {};
+    for (const o of curOrders) {
+      const phDate = new Date(new Date(o.ordered_at).getTime() + 8 * 60 * 60 * 1000);
+      const key = `${phDate.getUTCFullYear()}-${String(phDate.getUTCMonth() + 1).padStart(2, "0")}-${String(phDate.getUTCDate()).padStart(2, "0")}`;
+      dayRevMap[key] = (dayRevMap[key] ?? 0) + Number(o.total);
+    }
+    salesByDay = [];
+    const cur = new Date(start);
+    while (cur < end) {
+      const phCur = new Date(cur.getTime() + 8 * 60 * 60 * 1000);
+      const key = `${phCur.getUTCFullYear()}-${String(phCur.getUTCMonth() + 1).padStart(2, "0")}-${String(phCur.getUTCDate()).padStart(2, "0")}`;
+      const label = phCur.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      salesByDay.push({ day: label, revenue: dayRevMap[key] ?? 0 });
+      cur.setUTCDate(cur.getUTCDate() + 1);
+    }
+  }
+
+  // ── Top products ──────────────────────────────────────────────
+  const productRevMap: Record<string, number> = {};
+  for (const item of items) {
+    const name = item.product_name_snapshot;
+    productRevMap[name] = (productRevMap[name] ?? 0) + Number(item.total_price);
+  }
+  const topProducts: TopProduct[] = Object.entries(productRevMap)
+    .map(([name, revenue]) => ({ name, revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  // ── Top categories ────────────────────────────────────────────
+  const productCatMap: Record<string, string> = {};
+  for (const p of products) {
+    if (p.categories) productCatMap[p.id] = p.categories.name;
+  }
+  const catRevMap: Record<string, number> = {};
+  for (const item of items) {
+    if (!item.product_id) continue;
+    const catName = productCatMap[item.product_id];
+    if (!catName) continue;
+    catRevMap[catName] = (catRevMap[catName] ?? 0) + Number(item.total_price);
+  }
+  const topCategories: TopCategory[] = Object.entries(catRevMap)
+    .map(([name, revenue]) => ({ name, revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  // ── Recent orders ─────────────────────────────────────────────
+  const recentOrders: BranchRecentOrder[] = (recentOrdersRes.data ?? []).map((row) => {
     const countArr = row.order_items as { count: number }[] | null;
     return {
       id: row.id as string,
@@ -221,37 +323,23 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
       itemCount: Number(countArr?.[0]?.count ?? 0),
       total: Number(row.total),
       createdAt: row.ordered_at as string,
+      status: (row.status as string | null) ?? "completed",
     };
   });
 
-  let salesByDay: BranchSalesDay[];
-  if (range === "today") {
-    const hourlyMap: Record<number, number> = {};
-    for (const row of (salesRes.data as { ordered_at: string; total: number }[] ?? [])) {
-      const phHour = new Date(new Date(row.ordered_at).getTime() + 8 * 60 * 60 * 1000).getUTCHours();
-      hourlyMap[phHour] = (hourlyMap[phHour] ?? 0) + Number(row.total);
-    }
-    salesByDay = Array.from({ length: 24 }, (_, hr) => ({
-      day: hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`,
-      revenue: hourlyMap[hr] ?? 0,
-    }));
-  } else {
-    salesByDay = (salesRes.data as BranchSalesDay[]) ?? [];
-  }
-
   return {
-    kpis: rawKpis ? {
-      total_revenue: Number(rawKpis.total_revenue),
-      total_orders: Number(rawKpis.total_orders),
-      avg_order_value: Number(rawKpis.avg_order_value),
-      items_sold: Number(rawKpis.items_sold),
-      prev_total_revenue: Number(rawKpis.prev_total_revenue),
-      prev_total_orders: Number(rawKpis.prev_total_orders),
-      prev_avg_order_value: Number(rawKpis.prev_avg_order_value),
-    } : emptyKpis,
+    kpis: {
+      total_revenue: totalRevenue,
+      total_orders: totalOrders,
+      avg_order_value: avgOrderValue,
+      items_sold: itemsSold,
+      prev_total_revenue: prevRevenue,
+      prev_total_orders: prevCount,
+      prev_avg_order_value: prevAvgOrderValue,
+    },
     salesByDay,
-    topProducts: (productsRes.data as TopProduct[]) ?? [],
-    topCategories: (categoriesRes.data as TopCategory[]) ?? [],
+    topProducts,
+    topCategories,
     recentOrders,
   };
 }

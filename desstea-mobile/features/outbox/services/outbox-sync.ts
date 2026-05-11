@@ -9,6 +9,7 @@ type OutboxRow = {
   payload: string;
   priority: number;
   status: string;
+  action: string;
   created_at: string;
 };
 
@@ -56,15 +57,20 @@ export async function processOutbox(): Promise<void> {
       delete payload["total_price"];
     }
 
-    const { error } = await supabase.from(entry.table_name).insert(payload);
+    let error: { code?: string; message: string } | null;
+    if (entry.action === "update") {
+      ({ error } = await supabase.from(entry.table_name).update(payload).eq("id", entry.record_id));
+    } else {
+      ({ error } = await supabase.from(entry.table_name).insert(payload));
+    }
 
     if (!error) {
       db.runSync(`DELETE FROM outbox WHERE id = ?`, [entry.id]);
       continue;
     }
 
-    // Unique violation — already synced, treat as success
-    if (error.code === "23505") {
+    // Unique violation — already synced, treat as success (insert only)
+    if (entry.action !== "update" && error.code === "23505") {
       db.runSync(`DELETE FROM outbox WHERE id = ?`, [entry.id]);
       continue;
     }

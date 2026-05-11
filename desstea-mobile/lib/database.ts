@@ -194,6 +194,9 @@ export async function initDatabase() {
     `DELETE FROM sync_meta WHERE key = 'last_synced_at' AND NOT EXISTS (SELECT 1 FROM product_flavors)`,
     `ALTER TABLE combo_slot_products ADD COLUMN upgrade_price REAL NOT NULL DEFAULT 0`,
     `ALTER TABLE order_item_combo_selections ADD COLUMN upgrade_price REAL NOT NULL DEFAULT 0`,
+    `ALTER TABLE orders ADD COLUMN status TEXT NOT NULL DEFAULT 'completed'`,
+    `ALTER TABLE orders ADD COLUMN cancellation_reason TEXT`,
+    `ALTER TABLE outbox ADD COLUMN action TEXT NOT NULL DEFAULT 'insert'`,
   ];
   for (const sql of migrations) {
     try {

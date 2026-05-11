@@ -21,6 +21,7 @@ export function ReportsScreen() {
     totalRevenue,
     orderCount,
     averageOrderValue,
+    cancelOrder,
   } = useReports();
 
   return (
@@ -60,7 +61,7 @@ export function ReportsScreen() {
             <ActivityIndicator size="small" color={BRAND} />
           </View>
         ) : (
-          <OrderHistoryList orders={orders} />
+          <OrderHistoryList orders={orders} onCancel={cancelOrder} />
         )}
       </View>
     </View>

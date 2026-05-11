@@ -39,4 +39,6 @@ export type CompletedOrder = {
   completedAt: Date;
   items: DbOrderItem[];
   syncStatus: "synced" | "pending";
+  status: "completed" | "cancelled";
+  cancellationReason: string | null;
 };

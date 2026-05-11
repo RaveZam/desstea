@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/lib/database";
 import { CompletedOrder, DbOrderItem, DbAddon, DbComboSelection } from "../types";
+import { cancelOrderLocally } from "../services/cancel-order";
 
 function isSameDay(a: Date, b: Date): boolean {
   return (
@@ -57,8 +58,10 @@ export function useReports() {
         ordered_at: string;
         cash_tendered: number | null;
         cash_change: number | null;
+        status: string;
+        cancellation_reason: string | null;
       }>(
-        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change
+        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason
          FROM orders WHERE date(ordered_at, 'localtime') = ? ORDER BY ordered_at DESC`,
         [dateStr]
       );
@@ -121,6 +124,8 @@ export function useReports() {
           completedAt: new Date(raw.ordered_at),
           items,
           syncStatus: pendingSet.has(raw.id) ? "pending" : "synced",
+          status: (raw.status as "completed" | "cancelled") ?? "completed",
+          cancellationReason: raw.cancellation_reason,
         });
       }
 
@@ -136,9 +141,18 @@ export function useReports() {
     loadOrders(selectedDate);
   }, [selectedDate, loadOrders]);
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const orderCount = orders.length;
+  const activeOrders = orders.filter((o) => o.status !== "cancelled");
+  const totalRevenue = activeOrders.reduce((sum, o) => sum + o.total, 0);
+  const orderCount = activeOrders.length;
   const averageOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
+
+  const cancelOrder = useCallback(
+    async (orderId: string, reason: string) => {
+      await cancelOrderLocally(orderId, reason);
+      await loadOrders(selectedDate);
+    },
+    [selectedDate, loadOrders],
+  );
 
   return {
     selectedDate,
@@ -150,6 +164,7 @@ export function useReports() {
     totalRevenue,
     orderCount,
     averageOrderValue,
+    cancelOrder,
     refresh: () => loadOrders(selectedDate),
   };
 }

@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CompletedOrder } from "../types";
 import { usePrinter } from "@/features/printer/hooks/use-printer";
 import { PinVerifyModal } from "./pin-verify-modal";
+import { CancelOrderModal } from "./cancel-order-modal";
 
 const BRAND = "#E8692A";
 const BRAND_LIGHT = "#FFF3ED";
@@ -25,6 +26,8 @@ const DIVIDER = "#EFEFEF";
 const SYNCED_COLOR = "#2D7D46";
 const PENDING_COLOR = "#D4700A";
 const WHITE = "#FFFFFF";
+const RED = "#D9362B";
+const RED_LIGHT = "#FFF0EF";
 
 function formatDateTime(date: Date) {
   const datePart = date.toLocaleDateString("en-PH", {
@@ -46,10 +49,12 @@ type Props = {
   order: CompletedOrder | null;
   visible: boolean;
   onClose: () => void;
+  onCancel: (orderId: string, reason: string) => void;
 };
 
-export function OrderDetailModal({ order, visible, onClose }: Props) {
+export function OrderDetailModal({ order, visible, onClose, onCancel }: Props) {
   const [pinVisible, setPinVisible] = useState(false);
+  const [cancelVisible, setCancelVisible] = useState(false);
   const { printReprintFromDb } = usePrinter();
 
   if (!order) return null;
@@ -60,6 +65,7 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
   const isSynced = order.syncStatus === "synced";
   const syncColor = isSynced ? SYNCED_COLOR : PENDING_COLOR;
+  const isCancelled = order.status === "cancelled";
 
   return (
     <Modal
@@ -91,30 +97,42 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
               </View>
             </View>
             <View style={styles.headerRight}>
-              {/* Sync status badge */}
-              <View
-                style={[
-                  styles.syncBadge,
-                  { backgroundColor: syncColor + "18" },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    isSynced ? "cloud-done-outline" : "cloud-upload-outline"
-                  }
-                  size={12}
-                  color={syncColor}
-                />
-                <Text style={[styles.syncBadgeText, { color: syncColor }]}>
-                  {isSynced ? "Synced" : "Pending"}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.reprintBtn}
-                onPress={() => setPinVisible(true)}
-              >
-                <Ionicons name="print-outline" size={16} color={BRAND} />
-              </TouchableOpacity>
+              {/* Cancelled badge */}
+              {isCancelled ? (
+                <View style={[styles.syncBadge, { backgroundColor: RED_LIGHT }]}>
+                  <Ionicons name="close-circle-outline" size={12} color={RED} />
+                  <Text style={[styles.syncBadgeText, { color: RED }]}>Cancelled</Text>
+                </View>
+              ) : (
+                <View style={[styles.syncBadge, { backgroundColor: syncColor + "18" }]}>
+                  <Ionicons
+                    name={isSynced ? "cloud-done-outline" : "cloud-upload-outline"}
+                    size={12}
+                    color={syncColor}
+                  />
+                  <Text style={[styles.syncBadgeText, { color: syncColor }]}>
+                    {isSynced ? "Synced" : "Pending"}
+                  </Text>
+                </View>
+              )}
+              {!isCancelled && (
+                <TouchableOpacity
+                  style={styles.reprintBtn}
+                  onPress={() => setPinVisible(true)}
+                >
+                  <Ionicons name="print-outline" size={16} color={BRAND} />
+                  <Text style={styles.reprintBtnLabel}>Print</Text>
+                </TouchableOpacity>
+              )}
+              {!isCancelled && (
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setCancelVisible(true)}
+                >
+                  <Ionicons name="close-circle-outline" size={16} color={WHITE} />
+                  <Text style={styles.cancelBtnLabel}>Cancel Order</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
                 <Ionicons name="close" size={18} color={MID} />
               </TouchableOpacity>
@@ -126,6 +144,16 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
               onVerified={() => {
                 setPinVisible(false);
                 printReprintFromDb(order);
+              }}
+            />
+
+            <CancelOrderModal
+              visible={cancelVisible}
+              onClose={() => setCancelVisible(false)}
+              onConfirm={(reason) => {
+                setCancelVisible(false);
+                onCancel(order.id, reason);
+                onClose();
               }}
             />
           </View>
@@ -145,6 +173,18 @@ export function OrderDetailModal({ order, visible, onClose }: Props) {
             contentContainerStyle={styles.scrollContent}
           >
             <Pressable>
+              {isCancelled && (
+                <View style={styles.cancelledBanner}>
+                  <Ionicons name="close-circle" size={16} color={RED} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cancelledBannerTitle}>Order Cancelled</Text>
+                    {order.cancellationReason && (
+                      <Text style={styles.cancelledBannerReason}>{order.cancellationReason}</Text>
+                    )}
+                  </View>
+                </View>
+              )}
+
               <Text style={styles.sectionLabel}>ORDER ITEMS</Text>
 
               {order.items.map((item) => (
@@ -353,21 +393,68 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: 20,
   },
   syncBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "500",
+    opacity: 0.85,
   },
   reprintBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: BRAND_LIGHT,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: WHITE,
+    borderWidth: 1.5,
+    borderColor: BRAND,
+  },
+  reprintBtnLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: BRAND,
+    letterSpacing: 0.1,
+  },
+  cancelBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: RED,
+  },
+  cancelBtnLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: WHITE,
+    letterSpacing: 0.1,
+  },
+  cancelledBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: RED_LIGHT,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: RED + "30",
+  },
+  cancelledBannerTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: RED,
+  },
+  cancelledBannerReason: {
+    fontSize: 12,
+    color: RED,
+    marginTop: 2,
+    opacity: 0.8,
   },
   closeBtn: {
     width: 32,

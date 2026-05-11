@@ -42,25 +42,37 @@ export default function BranchRecentOrders({ orders, onOrderClick }: BranchRecen
                 </td>
               </tr>
             )}
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                onClick={() => onOrderClick?.(order.id)}
-                className={`border-b border-gray-50 hover:bg-[#FDFAF7] transition-colors ${onOrderClick ? "cursor-pointer" : ""}`}
-              >
-                <td className="px-4 py-3 font-mono text-xs text-gray-700">{order.id.slice(0, 8)}…</td>
-                <td className="px-4 py-3 font-medium text-gray-800">{order.customerName}</td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
-                  {order.itemCount} item{order.itemCount !== 1 ? "s" : ""}
-                </td>
-                <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                  ₱{order.total.toLocaleString()}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                  {formatDate(order.createdAt)}
-                </td>
-              </tr>
-            ))}
+            {orders.map((order) => {
+              const isCancelled = order.status === "cancelled";
+              return (
+                <tr
+                  key={order.id}
+                  onClick={() => onOrderClick?.(order.id)}
+                  className={`border-b border-gray-50 transition-colors ${onOrderClick ? "cursor-pointer" : ""} ${isCancelled ? "bg-red-50/40 hover:bg-red-50/60" : "hover:bg-[#FDFAF7]"}`}
+                >
+                  <td className="px-4 py-3 font-mono text-xs text-gray-700">{order.id.slice(0, 8)}…</td>
+                  <td className="px-4 py-3 font-medium text-gray-800">
+                    <div className="flex items-center gap-2">
+                      {order.customerName}
+                      {isCancelled && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-600 leading-none">
+                          Cancelled
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">
+                    {order.itemCount} item{order.itemCount !== 1 ? "s" : ""}
+                  </td>
+                  <td className={`px-4 py-3 text-right font-semibold ${isCancelled ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                    ₱{order.total.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                    {formatDate(order.createdAt)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

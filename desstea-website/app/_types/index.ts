@@ -50,6 +50,7 @@ export interface Order {
   items: OrderLineItem[];
   total: number;
   status?: OrderStatus;
+  cancellationReason?: string;
   paymentMethod?: string;
   cashTendered?: number;
   createdAt: string;

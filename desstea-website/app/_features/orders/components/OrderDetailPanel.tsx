@@ -71,6 +71,14 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
             )}
           </div>
 
+          {/* Cancellation reason */}
+          {order.status === "cancelled" && order.cancellationReason && (
+            <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5">
+              <p className="text-xs font-semibold text-red-600 mb-0.5">Cancellation Reason</p>
+              <p className="text-xs text-red-500">{order.cancellationReason}</p>
+            </div>
+          )}
+
           {/* Line items */}
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items</p>

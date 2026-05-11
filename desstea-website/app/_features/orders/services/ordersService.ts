@@ -1,6 +1,6 @@
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { cacheLife, cacheTag } from "next/cache";
-import type { Order } from "../../../_types";
+import type { Order, OrderStatus } from "../../../_types";
 
 export async function listOrders(): Promise<Order[]> {
   "use cache";
@@ -67,6 +67,8 @@ export async function listOrders(): Promise<Order[]> {
       branchName: branch?.branch_name ?? "",
       items,
       total: row.total as number,
+      status: (row.status as OrderStatus) ?? "completed",
+      cancellationReason: (row.cancellation_reason as string | null) ?? undefined,
       paymentMethod: row.payment_method as string | undefined,
       cashTendered: row.cash_tendered as number | undefined,
       createdAt: row.ordered_at as string,

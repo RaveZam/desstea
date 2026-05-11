@@ -59,54 +59,66 @@ export default function OrdersTable({
               </td>
             </tr>
           )}
-          {orders.map((order) => (
-            <tr
-              key={order.id}
-              onClick={() => onRowClick(order)}
-              className={`border-b border-gray-50 cursor-pointer transition-colors ${
-                selectedId === order.id ? "bg-[#F2EBE5]" : "hover:bg-[#FDFAF7]"
-              }`}
-            >
-              <td className="px-4 py-3 font-mono text-xs text-gray-700">
-                {order.id.slice(0, 8)}
-              </td>
-              <td className="px-4 py-3 font-medium text-gray-800">
-                {order.customerName}
-              </td>
-              <td className="px-4 py-3 text-gray-500 text-xs">
-                {order.branchName}
-              </td>
-              <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
-                <div className="space-y-0.5">
-                  {order.items.slice(0, 2).map((item, idx) => (
-                    <div key={idx} className="truncate">
-                      {item.productName}
-                      {item.size && item.size !== "-" && (
-                        <span className="text-gray-400"> ({item.size})</span>
-                      )}
-                      {item.sugarLevel && (
-                        <span className="text-gray-400"> · Sugar: {item.sugarLevel}</span>
-                      )}
-                      {item.quantity > 1 && (
-                        <span className="text-gray-400"> ×{item.quantity}</span>
-                      )}
-                    </div>
-                  ))}
-                  {order.items.length > 2 && (
-                    <div className="text-gray-400 italic">
-                      +{order.items.length - 2} more
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                ₱{order.total.toLocaleString()}
-              </td>
-              <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                {formatDate(order.createdAt)}
-              </td>
-            </tr>
-          ))}
+          {orders.map((order) => {
+            const isCancelled = order.status === "cancelled";
+            return (
+              <tr
+                key={order.id}
+                onClick={() => onRowClick(order)}
+                className={`border-b border-gray-50 cursor-pointer transition-colors ${
+                  selectedId === order.id
+                    ? isCancelled ? "bg-red-50" : "bg-[#F2EBE5]"
+                    : isCancelled ? "bg-red-50/30 hover:bg-red-50/50" : "hover:bg-[#FDFAF7]"
+                }`}
+              >
+                <td className="px-4 py-3 font-mono text-xs text-gray-700">
+                  {order.id.slice(0, 8)}
+                </td>
+                <td className="px-4 py-3 font-medium text-gray-800">
+                  <div className="flex items-center gap-2">
+                    {order.customerName}
+                    {isCancelled && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-600 leading-none">
+                        Cancelled
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-gray-500 text-xs">
+                  {order.branchName}
+                </td>
+                <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
+                  <div className="space-y-0.5">
+                    {order.items.slice(0, 2).map((item, idx) => (
+                      <div key={idx} className="truncate">
+                        {item.productName}
+                        {item.size && item.size !== "-" && (
+                          <span className="text-gray-400"> ({item.size})</span>
+                        )}
+                        {item.sugarLevel && (
+                          <span className="text-gray-400"> · Sugar: {item.sugarLevel}</span>
+                        )}
+                        {item.quantity > 1 && (
+                          <span className="text-gray-400"> ×{item.quantity}</span>
+                        )}
+                      </div>
+                    ))}
+                    {order.items.length > 2 && (
+                      <div className="text-gray-400 italic">
+                        +{order.items.length - 2} more
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className={`px-4 py-3 text-right font-semibold ${isCancelled ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                  ₱{order.total.toLocaleString()}
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                  {formatDate(order.createdAt)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

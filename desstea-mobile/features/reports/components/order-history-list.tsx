@@ -20,9 +20,11 @@ const GCASH_COLOR = "#0070E0";
 const CASH_COLOR = "#2D7D46";
 const SYNCED_COLOR = "#2D7D46";
 const PENDING_COLOR = "#D4700A";
+const CANCELLED_COLOR = "#D9362B";
 
 type Props = {
   orders: CompletedOrder[];
+  onCancel: (orderId: string, reason: string) => void;
 };
 
 function formatTime(date: Date): string {
@@ -82,8 +84,10 @@ function OrderRow({
   order: CompletedOrder;
   onPress: () => void;
 }) {
+  const isCancelled = order.status === "cancelled";
   const isGcash = order.paymentMethod === "GCash";
   const paymentColor = isGcash ? GCASH_COLOR : CASH_COLOR;
+  const stripeColor = isCancelled ? CANCELLED_COLOR : paymentColor;
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
   const itemSummary = buildItemSummary(order);
 
@@ -93,8 +97,8 @@ function OrderRow({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Left accent stripe by payment method */}
-      <View style={[styles.stripe, { backgroundColor: paymentColor }]} />
+      {/* Left accent stripe */}
+      <View style={[styles.stripe, { backgroundColor: stripeColor }]} />
 
       <View style={styles.cardInner}>
         {/* ── TOP ROW ── */}
@@ -120,8 +124,15 @@ function OrderRow({
           </Text>
 
           <View style={styles.metaRight}>
-            {/* Sync badge */}
-            <SyncBadge status={order.syncStatus} />
+            {/* Cancelled badge or sync badge */}
+            {isCancelled ? (
+              <View style={[styles.syncBadge, { backgroundColor: CANCELLED_COLOR + "18" }]}>
+                <Ionicons name="close-circle-outline" size={11} color={CANCELLED_COLOR} />
+                <Text style={[styles.syncBadgeText, { color: CANCELLED_COLOR }]}>Cancelled</Text>
+              </View>
+            ) : (
+              <SyncBadge status={order.syncStatus} />
+            )}
 
             {/* Payment chip */}
             <View style={[styles.payChip, { backgroundColor: paymentColor + "18" }]}>
@@ -152,7 +163,7 @@ function OrderRow({
   );
 }
 
-export function OrderHistoryList({ orders }: Props) {
+export function OrderHistoryList({ orders, onCancel }: Props) {
   const [selectedOrder, setSelectedOrder] = useState<CompletedOrder | null>(null);
 
   if (orders.length === 0) {
@@ -189,6 +200,7 @@ export function OrderHistoryList({ orders }: Props) {
         order={selectedOrder}
         visible={selectedOrder !== null}
         onClose={() => setSelectedOrder(null)}
+        onCancel={onCancel}
       />
     </>
   );
