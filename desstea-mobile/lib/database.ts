@@ -117,7 +117,8 @@ export async function initDatabase() {
       ordered_at      TEXT NOT NULL,
       created_at      TEXT NOT NULL,
       cash_tendered   REAL,
-      cash_change     REAL
+      cash_change     REAL,
+      receipt_error   INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS order_items (
@@ -197,6 +198,7 @@ export async function initDatabase() {
     `ALTER TABLE orders ADD COLUMN status TEXT NOT NULL DEFAULT 'completed'`,
     `ALTER TABLE orders ADD COLUMN cancellation_reason TEXT`,
     `ALTER TABLE outbox ADD COLUMN action TEXT NOT NULL DEFAULT 'insert'`,
+    `ALTER TABLE orders ADD COLUMN receipt_error INTEGER NOT NULL DEFAULT 0`,
   ];
   for (const sql of migrations) {
     try {

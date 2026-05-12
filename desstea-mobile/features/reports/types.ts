@@ -41,4 +41,5 @@ export type CompletedOrder = {
   syncStatus: "synced" | "pending";
   status: "completed" | "cancelled";
   cancellationReason: string | null;
+  receiptError: boolean;
 };

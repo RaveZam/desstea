@@ -599,7 +599,7 @@ export function ComboDetailModal({
 
             {/* ── INCLUDED ITEMS ── */}
             {nonDrinkSlots.length > 0 && (
-              <View style={styles.section}>
+              <Pressable style={styles.section}>
                 <Text style={styles.sectionLabel}>WHAT'S INCLUDED</Text>
                 <View style={styles.includedCard}>
                   {nonDrinkSlots.map((slot) =>
@@ -632,7 +632,7 @@ export function ComboDetailModal({
                     }),
                   )}
                 </View>
-              </View>
+              </Pressable>
             )}
 
             <View style={{ height: 4 }} />

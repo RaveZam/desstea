@@ -18,6 +18,7 @@ const GRAY = "#8E8E93";
 const WHITE = "#FFFFFF";
 const GCASH_COLOR = "#0070E0";
 const CASH_COLOR = "#2D7D46";
+const FLAG_COLOR = "#D63B2F";
 const SYNCED_COLOR = "#2D7D46";
 const PENDING_COLOR = "#D4700A";
 const CANCELLED_COLOR = "#D9362B";
@@ -25,6 +26,7 @@ const CANCELLED_COLOR = "#D9362B";
 type Props = {
   orders: CompletedOrder[];
   onCancel: (orderId: string, reason: string) => void;
+  onToggleFlag: (orderId: string) => void;
 };
 
 function formatTime(date: Date): string {
@@ -108,6 +110,9 @@ function OrderRow({
               #{order.id.slice(0, 6).toUpperCase()}
             </Text>
           </View>
+          {order.receiptError && (
+            <Ionicons name="flag" size={14} color={FLAG_COLOR} />
+          )}
 
           <Text style={styles.customerName} numberOfLines={1}>
             {order.customerName}
@@ -163,7 +168,7 @@ function OrderRow({
   );
 }
 
-export function OrderHistoryList({ orders, onCancel }: Props) {
+export function OrderHistoryList({ orders, onCancel, onToggleFlag }: Props) {
   const [selectedOrder, setSelectedOrder] = useState<CompletedOrder | null>(null);
 
   if (orders.length === 0) {
@@ -201,6 +206,7 @@ export function OrderHistoryList({ orders, onCancel }: Props) {
         visible={selectedOrder !== null}
         onClose={() => setSelectedOrder(null)}
         onCancel={onCancel}
+        onToggleFlag={onToggleFlag}
       />
     </>
   );

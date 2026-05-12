@@ -1,8 +1,9 @@
-import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
 import { useReports } from "../hooks/use-reports";
 import { DateFilterBar } from "../components/date-filter-bar";
 import { OrderHistoryList } from "../components/order-history-list";
+import { usePrintDailySummary } from "../../printer/hooks/use-print-daily-summary";
 
 const GRAY_BG = "#F5F5F7";
 const DARK_TEXT = "#1C1C1E";
@@ -22,7 +23,16 @@ export function ReportsScreen() {
     orderCount,
     averageOrderValue,
     cancelOrder,
+    toggleReceiptError,
   } = useReports();
+  const { printDailySummary } = usePrintDailySummary();
+  const [printing, setPrinting] = useState(false);
+
+  const handlePrintSummary = async () => {
+    setPrinting(true);
+    await printDailySummary(orders, selectedDate);
+    setPrinting(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -55,13 +65,24 @@ export function ReportsScreen() {
 
       {/* Order History */}
       <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>Order History</Text>
+        <View style={styles.listHeader}>
+          <Text style={styles.sectionTitle}>Order History</Text>
+          <TouchableOpacity
+            style={[styles.printButton, printing && styles.printButtonDisabled]}
+            onPress={handlePrintSummary}
+            disabled={printing || loading}
+          >
+            <Text style={styles.printButtonText}>
+              {printing ? "Printing..." : "Print Summary"}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={BRAND} />
           </View>
         ) : (
-          <OrderHistoryList orders={orders} onCancel={cancelOrder} />
+          <OrderHistoryList orders={orders} onCancel={cancelOrder} onToggleFlag={toggleReceiptError} />
         )}
       </View>
     </View>
@@ -118,10 +139,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
   },
+  listHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: DARK_TEXT,
+  },
+  printButton: {
+    backgroundColor: BRAND,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  printButtonDisabled: {
+    opacity: 0.5,
+  },
+  printButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: WHITE,
   },
   loadingContainer: {
     flex: 1,

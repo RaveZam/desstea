@@ -359,7 +359,7 @@ export function usePrinter() {
     }
   };
 
-  const printReprintFromDb = async (order: CompletedOrder) => {
+  const printReprintFromDb = async (order: CompletedOrder): Promise<boolean> => {
     try {
       const hasPermission = await requestBluetoothPermissions();
       if (!hasPermission) {
@@ -367,7 +367,7 @@ export function usePrinter() {
           "Permission Denied",
           "Bluetooth permission is required to print.",
         );
-        return;
+        return false;
       }
       await BLEPrinter.init();
 
@@ -376,7 +376,7 @@ export function usePrinter() {
 
       if (!devices || devices.length === 0) {
         Alert.alert("No Printers", "No paired Bluetooth printers found.");
-        return;
+        return false;
       }
 
       const printer = devices.find(
@@ -388,7 +388,7 @@ export function usePrinter() {
           "Printer not found",
           `Paired devices: ${devices.map((d) => d.device_name).join(", ") || "none"}`,
         );
-        return;
+        return false;
       }
 
       try {
@@ -475,8 +475,10 @@ export function usePrinter() {
       lines.push("\n\n\n");
 
       await BLEPrinter.printText(lines.join("\n"), {});
+      return true;
     } catch (err: unknown) {
       Alert.alert("Print Error", `Could not reprint receipt.\n\n${String(err)}`);
+      return false;
     }
   };
 

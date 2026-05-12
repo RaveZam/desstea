@@ -60,8 +60,9 @@ export function useReports() {
         cash_change: number | null;
         status: string;
         cancellation_reason: string | null;
+        receipt_error: number;
       }>(
-        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason
+        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason, receipt_error
          FROM orders WHERE date(ordered_at, 'localtime') = ? ORDER BY ordered_at DESC`,
         [dateStr]
       );
@@ -126,6 +127,7 @@ export function useReports() {
           syncStatus: pendingSet.has(raw.id) ? "pending" : "synced",
           status: (raw.status as "completed" | "cancelled") ?? "completed",
           cancellationReason: raw.cancellation_reason,
+          receiptError: Boolean(raw.receipt_error),
         });
       }
 
@@ -154,6 +156,17 @@ export function useReports() {
     [selectedDate, loadOrders],
   );
 
+  const toggleReceiptError = useCallback(
+    async (orderId: string) => {
+      await db.runAsync(
+        `UPDATE orders SET receipt_error = NOT receipt_error WHERE id = ?`,
+        [orderId]
+      );
+      await loadOrders(selectedDate);
+    },
+    [selectedDate, loadOrders],
+  );
+
   return {
     selectedDate,
     isToday,
@@ -165,6 +178,7 @@ export function useReports() {
     orderCount,
     averageOrderValue,
     cancelOrder,
+    toggleReceiptError,
     refresh: () => loadOrders(selectedDate),
   };
 }
