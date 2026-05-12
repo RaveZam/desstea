@@ -228,7 +228,7 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
 
   type CurOrderRow = { id: string; total: number; ordered_at: string };
   type PrevOrderRow = { id: string; total: number };
-  type ProductRow = { id: string; categories: { name: string } | null };
+  type ProductRow = { id: string; categories: { name: string }[] };
 
   const curOrders = (curOrdersRes.data ?? []) as CurOrderRow[];
   const prevOrders = (prevOrdersRes.data ?? []) as PrevOrderRow[];
@@ -300,7 +300,7 @@ export async function getBranchDetailData(branchId: string, range: DateRangeKey)
   // ── Top categories ────────────────────────────────────────────
   const productCatMap: Record<string, string> = {};
   for (const p of products) {
-    if (p.categories) productCatMap[p.id] = p.categories.name;
+    if (p.categories.length > 0) productCatMap[p.id] = p.categories[0].name;
   }
   const catRevMap: Record<string, number> = {};
   for (const item of items) {

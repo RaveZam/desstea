@@ -343,6 +343,8 @@ export function ComboDetailModal({
   // Derived UI state
   const drinkSlots = slots.filter((s) => s.drinkGroup);
   const nonDrinkSlots = slots.filter((s) => !s.drinkGroup);
+  const selectableNonDrinkSlots = nonDrinkSlots.filter((s) => s.isSingleSelect);
+  const fixedSlots = nonDrinkSlots.filter((s) => !s.isSingleSelect);
   const activeDrinkSlot =
     drinkSlots.find((s) => s.slotId === activeDrinkSlotId) ?? drinkSlots[0];
 
@@ -597,17 +599,177 @@ export function ComboDetailModal({
               </Pressable>
             )}
 
+            {/* ── SELECTABLE NON-DRINK SLOTS ── */}
+            {selectableNonDrinkSlots.map((slot) => {
+              const sel = selections[slot.slotId];
+              const addonGroupId = sel?.addonGroupId ?? null;
+              const addonOptions = addonGroupId
+                ? (addonOptionsMap[addonGroupId] ?? [])
+                : [];
+              const addonQtys = slotAddonQtys[slot.slotId] ?? {};
+              const isComplete = !!sel;
+              return (
+                <View key={slot.slotId} style={styles.section}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.sectionLabel}>
+                      {slot.categoryName.toUpperCase()}
+                    </Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        isComplete && styles.statusBadgeDone,
+                      ]}
+                    >
+                      <Ionicons
+                        name={isComplete ? "checkmark" : "ellipse-outline"}
+                        size={10}
+                        color={isComplete ? WHITE : BRAND}
+                      />
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          isComplete && styles.statusBadgeTextDone,
+                        ]}
+                      >
+                        {isComplete ? "Selected" : "Required"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.productCard}>
+                    {slot.options.map((option, idx) => {
+                      const isSelected = sel?.productId === option.productId;
+                      const isLast = idx === slot.options.length - 1;
+                      return (
+                        <TouchableOpacity
+                          key={option.productId}
+                          style={[
+                            styles.productRow,
+                            isSelected && styles.productRowSelected,
+                            !isLast && styles.productRowDivider,
+                          ]}
+                          onPress={() => selectProduct(slot.slotId, option)}
+                          activeOpacity={0.7}
+                        >
+                          <View
+                            style={[
+                              styles.radio,
+                              isSelected && styles.radioSelected,
+                            ]}
+                          >
+                            {isSelected && <View style={styles.radioDot} />}
+                          </View>
+                          <Text
+                            style={[
+                              styles.productName,
+                              isSelected && styles.productNameSelected,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {option.quantity > 1 ? `${option.quantity}× ` : ""}
+                            {option.productName}
+                          </Text>
+                          {option.upgradePrice > 0 ? (
+                            <View
+                              style={[
+                                styles.upgradePill,
+                                isSelected && styles.upgradePillSelected,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.upgradePrice,
+                                  isSelected && styles.upgradePriceSelected,
+                                ]}
+                              >
+                                +₱{option.upgradePrice}
+                              </Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.includedTag}>Included</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  {addonOptions.length > 0 && (
+                    <View style={styles.addonCard}>
+                      {addonOptions.map((ao, idx) => {
+                        const qty = addonQtys[ao.id] ?? 0;
+                        const isLast = idx === addonOptions.length - 1;
+                        return (
+                          <View
+                            key={ao.id}
+                            style={[
+                              styles.addonRow,
+                              !isLast && styles.addonRowDivider,
+                            ]}
+                          >
+                            <View style={styles.addonInfo}>
+                              <Text style={styles.addonName}>{ao.name}</Text>
+                              {ao.price_modifier > 0 && (
+                                <Text style={styles.addonPrice}>
+                                  +₱{ao.price_modifier.toFixed(2)} each
+                                </Text>
+                              )}
+                            </View>
+                            <View style={styles.addonStepper}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.stepperBtn,
+                                  qty === 0 && styles.stepperBtnOff,
+                                ]}
+                                onPress={() =>
+                                  setAddonQty(slot.slotId, ao.id, qty - 1)
+                                }
+                                disabled={qty === 0}
+                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                              >
+                                <Text
+                                  style={[
+                                    styles.stepperBtnText,
+                                    qty === 0 && styles.stepperBtnTextOff,
+                                  ]}
+                                >
+                                  −
+                                </Text>
+                              </TouchableOpacity>
+                              <Text
+                                style={[
+                                  styles.stepperQty,
+                                  qty > 0 && styles.stepperQtyActive,
+                                ]}
+                              >
+                                {qty}
+                              </Text>
+                              <TouchableOpacity
+                                style={styles.stepperBtn}
+                                onPress={() =>
+                                  setAddonQty(slot.slotId, ao.id, qty + 1)
+                                }
+                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                              >
+                                <Text style={styles.stepperBtnText}>+</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+
             {/* ── INCLUDED ITEMS ── */}
-            {nonDrinkSlots.length > 0 && (
+            {fixedSlots.length > 0 && (
               <Pressable style={styles.section}>
                 <Text style={styles.sectionLabel}>WHAT'S INCLUDED</Text>
                 <View style={styles.includedCard}>
-                  {nonDrinkSlots.map((slot) =>
+                  {fixedSlots.map((slot) =>
                     slot.options.map((option, idx) => {
                       const isLast =
                         idx === slot.options.length - 1 &&
-                        nonDrinkSlots.indexOf(slot) ===
-                          nonDrinkSlots.length - 1;
+                        fixedSlots.indexOf(slot) === fixedSlots.length - 1;
                       return (
                         <View
                           key={option.productId}
