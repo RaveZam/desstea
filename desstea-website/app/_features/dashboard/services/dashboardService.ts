@@ -73,8 +73,8 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
 
   type OrderRow = { id: string; total: number; branch_id: string; ordered_at: string };
   type PrevOrderRow = { id: string; total: number; branch_id: string };
-  type ItemRow = { product_name_snapshot: string; product_id: string | null; total_price: number; orders: { branch_id: string } };
-  type ProductRow = { id: string; categories: { name: string } | null };
+  type ItemRow = { product_name_snapshot: string; product_id: string | null; total_price: number; orders: { branch_id: string }[] };
+  type ProductRow = { id: string; categories: { name: string }[] };
   type BranchRow = { branch_id: string; branch_name: string };
 
   const curOrders = (curOrdersRes.data ?? []) as OrderRow[];
@@ -140,7 +140,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   // ── Top categories ────────────────────────────────────────────
   const productCatMap: Record<string, string> = {};
   for (const p of products) {
-    if (p.categories) productCatMap[p.id] = p.categories.name;
+    if (p.categories.length > 0) productCatMap[p.id] = p.categories[0].name;
   }
   const catRevMap: Record<string, number> = {};
   for (const item of items) {
@@ -173,7 +173,8 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
 
   const branchProductRevMap: Record<string, Record<string, number>> = {};
   for (const item of items) {
-    const bid = item.orders.branch_id;
+    const bid = item.orders[0]?.branch_id;
+    if (!bid) continue;
     if (!branchProductRevMap[bid]) branchProductRevMap[bid] = {};
     const name = item.product_name_snapshot;
     branchProductRevMap[bid][name] = (branchProductRevMap[bid][name] ?? 0) + Number(item.total_price);

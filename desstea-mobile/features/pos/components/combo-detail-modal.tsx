@@ -177,6 +177,13 @@ export function ComboDetailModal({
         }
       }
     }
+    for (const slot of builtSlots) {
+      if (!slot.isSingleSelect) {
+        for (const opt of slot.options) {
+          if (opt.addonGroupId) groupsToFetch.add(opt.addonGroupId);
+        }
+      }
+    }
     setSelections(defaultSelections);
     setSlotAddonQtys({});
     setActiveDrinkSlotId(firstDefaultedDrinkSlotId);
@@ -265,14 +272,32 @@ export function ComboDetailModal({
   }, 0);
 
   const addonTotal = slots.reduce((sum, slot) => {
-    const sel = selections[slot.slotId];
-    if (!sel?.addonGroupId) return sum;
-    const options = addonOptionsMap[sel.addonGroupId] ?? [];
-    const qtys = slotAddonQtys[slot.slotId] ?? {};
-    return (
-      sum +
-      options.reduce((s, ao) => s + ao.price_modifier * (qtys[ao.id] ?? 0), 0)
-    );
+    if (slot.isSingleSelect) {
+      const sel = selections[slot.slotId];
+      if (!sel?.addonGroupId) return sum;
+      const options = addonOptionsMap[sel.addonGroupId] ?? [];
+      const qtys = slotAddonQtys[slot.slotId] ?? {};
+      return (
+        sum +
+        options.reduce((s, ao) => s + ao.price_modifier * (qtys[ao.id] ?? 0), 0)
+      );
+    } else {
+      return (
+        sum +
+        slot.options.reduce((s, opt) => {
+          if (!opt.addonGroupId) return s;
+          const options = addonOptionsMap[opt.addonGroupId] ?? [];
+          const qtys = slotAddonQtys[opt.productId] ?? {};
+          return (
+            s +
+            options.reduce(
+              (ss, ao) => ss + ao.price_modifier * (qtys[ao.id] ?? 0),
+              0,
+            )
+          );
+        }, 0)
+      );
+    }
   }, 0);
 
   const totalPrice = combo.price + upgradeTotal + addonTotal;
@@ -322,6 +347,14 @@ export function ComboDetailModal({
         });
       } else {
         for (const option of slot.options) {
+          const addonGroupId = option.addonGroupId;
+          const addonOpts = addonGroupId
+            ? (addonOptionsMap[addonGroupId] ?? [])
+            : [];
+          const qtys = slotAddonQtys[option.productId] ?? {};
+          const addons: AddonWithQty[] = addonOpts
+            .filter((ao) => (qtys[ao.id] ?? 0) > 0)
+            .map((ao) => ({ option: ao, qty: qtys[ao.id] }));
           comboSelections.push({
             slotId: slot.slotId,
             slotName: slot.categoryName,
@@ -331,8 +364,8 @@ export function ComboDetailModal({
                 ? `${option.productName} x${option.quantity}`
                 : option.productName,
             upgradePrice: option.upgradePrice ?? 0,
-            addonGroupId: null,
-            addons: [],
+            addonGroupId,
+            addons,
           });
         }
       }
@@ -722,7 +755,12 @@ export function ComboDetailModal({
                                   setAddonQty(slot.slotId, ao.id, qty - 1)
                                 }
                                 disabled={qty === 0}
-                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                hitSlop={{
+                                  top: 6,
+                                  bottom: 6,
+                                  left: 6,
+                                  right: 6,
+                                }}
                               >
                                 <Text
                                   style={[
@@ -746,7 +784,12 @@ export function ComboDetailModal({
                                 onPress={() =>
                                   setAddonQty(slot.slotId, ao.id, qty + 1)
                                 }
-                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                hitSlop={{
+                                  top: 6,
+                                  bottom: 6,
+                                  left: 6,
+                                  right: 6,
+                                }}
                               >
                                 <Text style={styles.stepperBtnText}>+</Text>
                               </TouchableOpacity>
@@ -767,28 +810,124 @@ export function ComboDetailModal({
                 <View style={styles.includedCard}>
                   {fixedSlots.map((slot) =>
                     slot.options.map((option, idx) => {
+                      const addonGroupId = option.addonGroupId;
+                      const addonOptions = addonGroupId
+                        ? (addonOptionsMap[addonGroupId] ?? [])
+                        : [];
+                      const addonQtys =
+                        slotAddonQtys[option.productId] ?? {};
                       const isLast =
                         idx === slot.options.length - 1 &&
                         fixedSlots.indexOf(slot) === fixedSlots.length - 1;
                       return (
                         <View
                           key={option.productId}
-                          style={[
-                            styles.includedRow,
-                            !isLast && styles.includedRowDivider,
-                          ]}
+                          style={[!isLast && styles.includedRowDivider]}
                         >
-                          <View style={styles.includedCheck}>
-                            <Ionicons
-                              name="checkmark"
-                              size={12}
-                              color={BRAND}
-                            />
+                          <View style={styles.includedRow}>
+                            <View style={styles.includedCheck}>
+                              <Ionicons
+                                name="checkmark"
+                                size={12}
+                                color={BRAND}
+                              />
+                            </View>
+                            <Text style={styles.includedName}>
+                              {option.quantity > 1
+                                ? `${option.quantity}× `
+                                : ""}
+                              {option.productName}
+                            </Text>
                           </View>
-                          <Text style={styles.includedName}>
-                            {option.quantity > 1 ? `${option.quantity}× ` : ""}
-                            {option.productName}
-                          </Text>
+                          {addonOptions.length > 0 && (
+                            <View style={[styles.addonCard, { marginTop: 8, marginBottom: 4 }]}>
+                              {addonOptions.map((ao, aoIdx) => {
+                                const qty = addonQtys[ao.id] ?? 0;
+                                const isLastAddon =
+                                  aoIdx === addonOptions.length - 1;
+                                return (
+                                  <View
+                                    key={ao.id}
+                                    style={[
+                                      styles.addonRow,
+                                      !isLastAddon && styles.addonRowDivider,
+                                    ]}
+                                  >
+                                    <View style={styles.addonInfo}>
+                                      <Text style={styles.addonName}>
+                                        {ao.name}
+                                      </Text>
+                                      {ao.price_modifier > 0 && (
+                                        <Text style={styles.addonPrice}>
+                                          +₱{ao.price_modifier.toFixed(2)} each
+                                        </Text>
+                                      )}
+                                    </View>
+                                    <View style={styles.addonStepper}>
+                                      <TouchableOpacity
+                                        style={[
+                                          styles.stepperBtn,
+                                          qty === 0 && styles.stepperBtnOff,
+                                        ]}
+                                        onPress={() =>
+                                          setAddonQty(
+                                            option.productId,
+                                            ao.id,
+                                            qty - 1,
+                                          )
+                                        }
+                                        disabled={qty === 0}
+                                        hitSlop={{
+                                          top: 6,
+                                          bottom: 6,
+                                          left: 6,
+                                          right: 6,
+                                        }}
+                                      >
+                                        <Text
+                                          style={[
+                                            styles.stepperBtnText,
+                                            qty === 0 &&
+                                              styles.stepperBtnTextOff,
+                                          ]}
+                                        >
+                                          −
+                                        </Text>
+                                      </TouchableOpacity>
+                                      <Text
+                                        style={[
+                                          styles.stepperQty,
+                                          qty > 0 && styles.stepperQtyActive,
+                                        ]}
+                                      >
+                                        {qty}
+                                      </Text>
+                                      <TouchableOpacity
+                                        style={styles.stepperBtn}
+                                        onPress={() =>
+                                          setAddonQty(
+                                            option.productId,
+                                            ao.id,
+                                            qty + 1,
+                                          )
+                                        }
+                                        hitSlop={{
+                                          top: 6,
+                                          bottom: 6,
+                                          left: 6,
+                                          right: 6,
+                                        }}
+                                      >
+                                        <Text style={styles.stepperBtnText}>
+                                          +
+                                        </Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          )}
                         </View>
                       );
                     }),
