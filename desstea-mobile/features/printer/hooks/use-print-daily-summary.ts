@@ -59,7 +59,8 @@ function padLeft(str: string, len: number): string {
   return " ".repeat(len - str.length) + str;
 }
 
-// Format: TIME(6) + " " + NAME(13) + CANCEL(4) + TOTAL(8) = 32
+// Format: TIME(6) + " " + NAME(9) + TOTAL(8) + DISC(8) = 32
+// Cancelled orders show "[X]" in the DISC column instead of a discount amount.
 function formatOrderLine(order: CompletedOrder): string {
   const cancelled = order.status === "cancelled";
 
@@ -72,12 +73,19 @@ function formatOrderLine(order: CompletedOrder): string {
     .replace(/\u202f/g, "")
     .replace(/\s/g, ""); // e.g. "2:30PM"
   const time = padRight(rawTime, 6);
+  const name = padRight(order.customerName, 9);
 
-  const name = padRight(order.customerName, 13);
-  const cancelMark = cancelled ? " [X]" : "    ";
+  let disc: string;
+  if (cancelled) {
+    disc = padLeft("[X]", 8);
+  } else if ((order.discountAmount ?? 0) > 0) {
+    disc = padLeft(order.discountAmount.toFixed(2), 8);
+  } else {
+    disc = " ".repeat(8);
+  }
+
   const amount = padLeft(order.total.toFixed(2), 8);
-
-  return `${time} ${name}${cancelMark}${amount}`;
+  return `${time} ${name}${amount}${disc}`;
 }
 
 // ---
@@ -168,9 +176,9 @@ export function usePrintDailySummary() {
       lines.push(`Printed: ${printedTimeStr}`);
       lines.push("================================");
 
-      // Column header
+      // Column header: TIME(6) + " " + NAME(9) + TOTAL(8) + DISC(8) = 32
       lines.push(
-        `${padRight("Time", 6)} ${padRight("Name", 13)}    ${padLeft("Total", 8)}`,
+        `${padRight("Time", 6)} ${padRight("Name", 9)}${padLeft("Total", 8)}${padLeft("Disc", 8)}`,
       );
       lines.push("--------------------------------");
 

@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  TextInput,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,10 +19,23 @@ const ORANGE = "#E8692A";
 
 type Props = {
   orderItems: OrderItem[];
+  subtotal: number;
   total: number;
+  discountAmount: number;
+  discountReason: string;
+  onDiscountAmountChange: (val: number) => void;
+  onDiscountReasonChange: (val: string) => void;
 };
 
-export function OrderSummaryPanel({ orderItems, total }: Props) {
+export function OrderSummaryPanel({
+  orderItems,
+  subtotal,
+  total,
+  discountAmount,
+  discountReason,
+  onDiscountAmountChange,
+  onDiscountReasonChange,
+}: Props) {
   return (
     <View style={styles.leftPanel}>
       <View style={styles.leftHeader}>
@@ -70,6 +84,16 @@ export function OrderSummaryPanel({ orderItems, total }: Props) {
                         {item.customization.temperature}
                       </Text>
                     )}
+                    {item.customization.shot && (
+                      <Text style={styles.customizationLabel}>
+                        {item.customization.shot === "1S" ? "Single Shot" : "Double Shot"}
+                      </Text>
+                    )}
+                    {item.customization.matchaLevel && (
+                      <Text style={styles.customizationLabel}>
+                        {item.customization.matchaLevel}
+                      </Text>
+                    )}
                     {item.customization.flavor && (
                       <Text style={styles.customizationLabel}>
                         Flavor: {item.customization.flavor.label}
@@ -94,8 +118,50 @@ export function OrderSummaryPanel({ orderItems, total }: Props) {
         })}
       </ScrollView>
 
+      <View style={styles.discountArea}>
+        <View style={styles.discountRow}>
+          <Text style={styles.discountLabel}>Discount</Text>
+          <View style={styles.discountInputWrap}>
+            <Text style={styles.discountPrefix}>₱</Text>
+            <TextInput
+              style={styles.discountInput}
+              keyboardType="numeric"
+              value={discountAmount > 0 ? String(discountAmount) : ""}
+              onChangeText={(t) => onDiscountAmountChange(parseFloat(t) || 0)}
+              placeholder="0"
+              placeholderTextColor="#C7C7CC"
+            />
+          </View>
+        </View>
+        <View style={styles.discountRow}>
+          <Text style={styles.discountLabel}>Reason</Text>
+          <TextInput
+            style={[
+              styles.reasonInput,
+              discountAmount > 0 && !discountReason.trim() && styles.reasonInputRequired,
+            ]}
+            value={discountReason}
+            onChangeText={onDiscountReasonChange}
+            placeholder={discountAmount > 0 ? "Required" : "Optional"}
+            placeholderTextColor={discountAmount > 0 ? "#E8692A" : "#C7C7CC"}
+          />
+        </View>
+      </View>
+
       <View style={styles.summaryFooter}>
         <View style={styles.footerDivider} />
+        {discountAmount > 0 && (
+          <>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>₱{subtotal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: ORANGE }]}>Discount</Text>
+              <Text style={[styles.summaryValue, { color: ORANGE }]}>-₱{discountAmount.toFixed(2)}</Text>
+            </View>
+          </>
+        )}
         <View style={styles.grandTotalRow}>
           <Text style={styles.grandTotalLabel}>Total</Text>
           <Text style={styles.grandTotalValue}>₱{total.toFixed(2)}</Text>
@@ -205,5 +271,55 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: DARK_TEXT,
     letterSpacing: -0.5,
+  },
+  discountArea: {
+    paddingVertical: 8,
+    gap: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#ECECEC",
+  },
+  discountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  discountLabel: {
+    fontSize: 13,
+    color: GRAY_TEXT,
+    width: 56,
+  },
+  discountInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#DDDDE3",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  discountPrefix: {
+    fontSize: 13,
+    color: DARK_TEXT,
+    marginRight: 2,
+  },
+  discountInput: {
+    flex: 1,
+    fontSize: 13,
+    color: DARK_TEXT,
+    padding: 0,
+  },
+  reasonInput: {
+    flex: 1,
+    fontSize: 13,
+    color: DARK_TEXT,
+    borderWidth: 1,
+    borderColor: "#DDDDE3",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  reasonInputRequired: {
+    borderColor: ORANGE,
   },
 });

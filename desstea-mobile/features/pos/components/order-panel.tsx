@@ -66,6 +66,16 @@ export function OrderPanel({ orderItems, onUpdateQuantity }: Props) {
                       {item.customization.temperature}
                     </Text>
                   )}
+                  {item.customization.shot && (
+                    <Text style={styles.customizationLabel}>
+                      {item.customization.shot === "1S" ? "Single Shot" : "Double Shot"}
+                    </Text>
+                  )}
+                  {item.customization.matchaLevel && (
+                    <Text style={styles.customizationLabel}>
+                      {item.customization.matchaLevel}
+                    </Text>
+                  )}
                   {item.customization.flavor && (
                     <Text style={styles.customizationLabel}>
                       Flavor: {item.customization.flavor.label}

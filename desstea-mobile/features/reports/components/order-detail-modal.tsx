@@ -304,6 +304,28 @@ export function OrderDetailModal({ order, visible, onClose, onCancel, onToggleFl
 
               {/* ── TOTALS ── */}
               <View style={styles.totalsCard}>
+                {order.discountAmount > 0 && (
+                  <>
+                    <View style={styles.totalRow}>
+                      <Text style={styles.totalLabel}>Subtotal</Text>
+                      <Text style={styles.totalValue}>
+                        ₱{(order.total + order.discountAmount).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.totalRow}>
+                      <View style={{ flex: 1, gap: 1 }}>
+                        <Text style={[styles.totalLabel, { color: RED }]}>Discount</Text>
+                        {!!order.discountReason && (
+                          <Text style={styles.discountReason}>{order.discountReason}</Text>
+                        )}
+                      </View>
+                      <Text style={[styles.totalValue, { color: RED }]}>
+                        -₱{order.discountAmount.toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.totalDivider} />
+                  </>
+                )}
                 <View style={styles.totalRow}>
                   <Text style={styles.grandTotalLabel}>Total</Text>
                   <Text style={styles.grandTotalValue}>
@@ -621,6 +643,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: DIVIDER,
     marginVertical: 2,
+  },
+  discountReason: {
+    fontSize: 11,
+    color: RED,
+    opacity: 0.7,
   },
   grandTotalLabel: {
     fontSize: 16,

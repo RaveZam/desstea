@@ -17,10 +17,11 @@ type Props = {
   customerName: string;
   onChangeName: (name: string) => void;
   onConfirm: () => void;
+  disabled?: boolean;
 };
 
-export function NameInput({ customerName, onChangeName, onConfirm }: Props) {
-  const canContinue = customerName.trim().length > 0;
+export function NameInput({ customerName, onChangeName, onConfirm, disabled = false }: Props) {
+  const canContinue = customerName.trim().length > 0 && !disabled;
 
   return (
     <View style={styles.container}>

@@ -74,7 +74,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   type OrderRow = { id: string; total: number; branch_id: string; ordered_at: string };
   type PrevOrderRow = { id: string; total: number; branch_id: string };
   type ItemRow = { product_name_snapshot: string; product_id: string | null; total_price: number; orders: { branch_id: string }[] };
-  type ProductRow = { id: string; categories: { name: string }[] };
+  type ProductRow = { id: string; categories: { name: string } | null };
   type BranchRow = { branch_id: string; branch_name: string };
 
   const curOrders = (curOrdersRes.data ?? []) as OrderRow[];
@@ -140,7 +140,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   // ── Top categories ────────────────────────────────────────────
   const productCatMap: Record<string, string> = {};
   for (const p of products) {
-    if (p.categories.length > 0) productCatMap[p.id] = p.categories[0].name;
+    if (p.categories) productCatMap[p.id] = p.categories.name;
   }
   const catRevMap: Record<string, number> = {};
   for (const item of items) {

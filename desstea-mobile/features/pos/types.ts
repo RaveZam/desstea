@@ -65,6 +65,8 @@ export type ProductCustomization = {
   temperature: string | null;  // "Hot" or "Cold"
   flavor: LocalProductFlavor | null;
   addonOptions: AddonWithQty[];
+  shot: string | null;  // "1S" or "2S" — Coffee only
+  matchaLevel: string | null;  // "Standard" or "Intense" — Matcha only
 };
 
 export type ComboSlotSelection = {
@@ -125,11 +127,13 @@ export function getItemKey(item: OrderItem): string {
   const sizeKey = item.customization.size?.id ?? "no-size";
   const sugarKey = item.customization.sugarLevel?.id ?? "no-sugar";
   const tempKey = item.customization.temperature ?? "no-temp";
+  const shotKey = item.customization.shot ?? "no-shot";
+  const matchaKey = item.customization.matchaLevel ?? "no-matcha";
   const flavorKey = item.customization.flavor?.id ?? "no-flavor";
   const addonKey = item.customization.addonOptions
     .filter((aq) => aq.qty > 0)
     .map((aq) => `${aq.option.id}x${aq.qty}`)
     .sort()
     .join(",");
-  return `${item.product.id}__${sizeKey}__${sugarKey}__${tempKey}__${flavorKey}__${addonKey}`;
+  return `${item.product.id}__${sizeKey}__${sugarKey}__${tempKey}__${shotKey}__${matchaKey}__${flavorKey}__${addonKey}`;
 }

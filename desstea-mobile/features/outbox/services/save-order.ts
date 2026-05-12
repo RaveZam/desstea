@@ -17,6 +17,8 @@ export type SaveOrderParams = {
   total: number;
   cashTendered?: number;
   branchId: string;
+  discountAmount?: number;
+  discountReason?: string;
 };
 
 export async function saveOrderLocally(
@@ -30,6 +32,8 @@ export async function saveOrderLocally(
     total,
     cashTendered,
     branchId,
+    discountAmount = 0,
+    discountReason = '',
   } = params;
 
   const orderId = preGeneratedId ?? uuidv4();
@@ -39,8 +43,8 @@ export async function saveOrderLocally(
   await db.withTransactionAsync(async () => {
     // INSERT order
     await db.runAsync(
-      `INSERT INTO orders (id, branch_id, customer_name, total, payment_method, ordered_at, created_at, cash_tendered, cash_change)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (id, branch_id, customer_name, total, payment_method, ordered_at, created_at, cash_tendered, cash_change, discount_amount, discount_reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         branchId,
@@ -51,6 +55,8 @@ export async function saveOrderLocally(
         now,
         cashTendered ?? null,
         cashChange,
+        discountAmount,
+        discountReason,
       ],
     );
 
@@ -70,6 +76,8 @@ export async function saveOrderLocally(
           ordered_at: now,
           created_at: now,
           cash_tendered: cashTendered ?? null,
+          discount_amount: discountAmount,
+          discount_reason: discountReason,
         }),
         1,
         now,
@@ -230,6 +238,9 @@ export async function saveOrderLocally(
           item.customization?.sugarLevel?.label ?? null;
         const tempSnapshot = item.customization?.temperature ?? null;
         const flavorSnapshot = item.customization?.flavor?.label ?? null;
+        const shotSuffix = item.customization?.shot ? ` ${item.customization.shot}` : "";
+        const matchaSuffix = item.customization?.matchaLevel ? ` (${item.customization.matchaLevel})` : "";
+        const productNameSnapshot = `${item.product.name}${shotSuffix}${matchaSuffix}`;
 
         // INSERT order_item (product)
         await db.runAsync(
@@ -245,7 +256,7 @@ export async function saveOrderLocally(
             orderId,
             item.product.id,
             sizeId,
-            item.product.name,
+            productNameSnapshot,
             sizeLabel,
             sugarLevelId,
             sugarLevelSnapshot,
@@ -272,7 +283,7 @@ export async function saveOrderLocally(
               combo_name_snapshot: null,
               product_id: item.product.id,
               product_size_id: sizeId,
-              product_name_snapshot: item.product.name,
+              product_name_snapshot: productNameSnapshot,
               size_label_snapshot: sizeLabel,
               sugar_level_id: sugarLevelId,
               sugar_level_snapshot: sugarLevelSnapshot,

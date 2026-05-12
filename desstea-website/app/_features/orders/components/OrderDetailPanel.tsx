@@ -136,6 +136,20 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
 
           {/* Divider + Total */}
           <div className="border-t border-dashed border-gray-200 pt-3 space-y-1.5">
+            {order.discountAmount != null && order.discountAmount > 0 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">Subtotal</p>
+                  <p className="text-sm text-gray-700">₱{(order.total + order.discountAmount).toLocaleString()}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-red-500">
+                    Discount{order.discountReason ? ` (${order.discountReason})` : ""}
+                  </p>
+                  <p className="text-sm text-red-500">-₱{order.discountAmount.toLocaleString()}</p>
+                </div>
+              </>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-700">Total</p>
               <p className="text-lg font-bold text-[#6B4F3A]">₱{order.total.toLocaleString()}</p>

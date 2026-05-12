@@ -97,7 +97,14 @@ export default function POSScreen() {
     return cat ? cat.name[0].toUpperCase() : undefined;
   };
 
+  const getCategoryName = (product: LocalProduct) => {
+    return categories.find((c) => c.id === product.category_id)?.name ?? null;
+  };
+
   const handleProductPress = (product: LocalProduct) => {
+    const categoryName = getCategoryName(product);
+    const isCoffee = categoryName === "Coffee";
+    const isMatcha = categoryName === "Matcha";
     console.log("[POS] product tapped:", {
       id: product.id,
       name: product.name,
@@ -108,7 +115,7 @@ export default function POSScreen() {
       addon_group_id: product.addon_group_id,
       hasCustomization: !!(product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors),
     });
-    if (product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors) {
+    if (isCoffee || isMatcha || product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors) {
       setCustomizingProduct(product);
     } else {
       addToOrder(product, undefined, getCategoryLabel(product));
@@ -377,6 +384,7 @@ export default function POSScreen() {
       <CustomizationModal
         visible={customizingProduct !== null}
         product={customizingProduct}
+        categoryName={customizingProduct ? getCategoryName(customizingProduct) : null}
         onConfirm={handleCustomizationConfirm}
         onCancel={() => setCustomizingProduct(null)}
       />

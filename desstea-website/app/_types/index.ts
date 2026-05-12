@@ -53,6 +53,8 @@ export interface Order {
   cancellationReason?: string;
   paymentMethod?: string;
   cashTendered?: number;
+  discountAmount?: number;
+  discountReason?: string;
   createdAt: string;
 }
 

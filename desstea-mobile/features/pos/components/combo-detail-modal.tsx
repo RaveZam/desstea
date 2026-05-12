@@ -1332,7 +1332,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 28,
+    paddingBottom: 56,
     borderTopWidth: 1,
     borderTopColor: DIVIDER,
     gap: 14,

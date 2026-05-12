@@ -199,6 +199,8 @@ export async function initDatabase() {
     `ALTER TABLE orders ADD COLUMN cancellation_reason TEXT`,
     `ALTER TABLE outbox ADD COLUMN action TEXT NOT NULL DEFAULT 'insert'`,
     `ALTER TABLE orders ADD COLUMN receipt_error INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE orders ADD COLUMN discount_amount REAL NOT NULL DEFAULT 0`,
+    `ALTER TABLE orders ADD COLUMN discount_reason TEXT NOT NULL DEFAULT ''`,
   ];
   for (const sql of migrations) {
     try {

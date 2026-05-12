@@ -29,6 +29,7 @@ const ORANGE_LIGHT = "#FFF3ED";
 type Props = {
   visible: boolean;
   product: LocalProduct | null;
+  categoryName?: string | null;
   onConfirm: (
     product: LocalProduct,
     customization: ProductCustomization,
@@ -39,6 +40,7 @@ type Props = {
 export function CustomizationModal({
   visible,
   product,
+  categoryName,
   onConfirm,
   onCancel,
 }: Props) {
@@ -50,6 +52,8 @@ export function CustomizationModal({
   const [selectedSugarLevel, setSelectedSugarLevel] =
     useState<LocalSugarLevel | null>(null);
   const [selectedTemp, setSelectedTemp] = useState<string | null>(null);
+  const [selectedShot, setSelectedShot] = useState<string>("1S");
+  const [selectedMatchaLevel, setSelectedMatchaLevel] = useState<string>("Standard");
   const [selectedFlavor, setSelectedFlavor] =
     useState<LocalProductFlavor | null>(null);
   const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
@@ -103,6 +107,9 @@ export function CustomizationModal({
     } else {
       setSelectedTemp(null);
     }
+
+    setSelectedShot("1S");
+    setSelectedMatchaLevel("Standard");
 
     if (product.has_flavors) {
       const fl = db.getAllSync<LocalProductFlavor>(
@@ -162,6 +169,8 @@ export function CustomizationModal({
       temperature: selectedTemp,
       flavor: selectedFlavor,
       addonOptions: activeAddons,
+      shot: categoryName === "Coffee" ? selectedShot : null,
+      matchaLevel: categoryName === "Matcha" ? selectedMatchaLevel : null,
     });
     setAddonQtys({});
   };
@@ -282,6 +291,60 @@ export function CustomizationModal({
                             ]}
                           >
                             {temp}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                ) : null}
+
+                {categoryName === "Coffee" ? (
+                  <>
+                    <Text style={styles.sectionLabel}>Espresso Shot</Text>
+                    <View style={styles.pillRow}>
+                      {["1S", "2S"].map((shot) => (
+                        <TouchableOpacity
+                          key={shot}
+                          style={[
+                            styles.pill,
+                            selectedShot === shot && styles.pillActive,
+                          ]}
+                          onPress={() => setSelectedShot(shot)}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              selectedShot === shot && styles.pillTextActive,
+                            ]}
+                          >
+                            {shot === "1S" ? "Single Shot" : "Double Shot"}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                ) : null}
+
+                {categoryName === "Matcha" ? (
+                  <>
+                    <Text style={styles.sectionLabel}>Matcha Level</Text>
+                    <View style={styles.pillRow}>
+                      {["Standard", "Intense"].map((level) => (
+                        <TouchableOpacity
+                          key={level}
+                          style={[
+                            styles.pill,
+                            selectedMatchaLevel === level && styles.pillActive,
+                          ]}
+                          onPress={() => setSelectedMatchaLevel(level)}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              selectedMatchaLevel === level && styles.pillTextActive,
+                            ]}
+                          >
+                            {level}
                           </Text>
                         </TouchableOpacity>
                       ))}

@@ -71,6 +71,8 @@ export async function listOrders(): Promise<Order[]> {
       cancellationReason: (row.cancellation_reason as string | null) ?? undefined,
       paymentMethod: row.payment_method as string | undefined,
       cashTendered: row.cash_tendered as number | undefined,
+      discountAmount: (row.discount_amount as number | null) ?? undefined,
+      discountReason: (row.discount_reason as string | null) || undefined,
       createdAt: row.ordered_at as string,
     } satisfies Order;
   });

@@ -20,6 +20,7 @@ export default function PaymentScreen() {
   const {
     orderId,
     orderItems,
+    subtotal,
     total,
     phase,
     cashInput,
@@ -37,6 +38,10 @@ export default function PaymentScreen() {
     selectGcash,
     confirmCash,
     changePaymentMethod,
+    discountAmount,
+    discountReason,
+    setDiscountAmount,
+    setDiscountReason,
   } = usePayment();
 
   const { printReceipt } = usePrinter();
@@ -47,6 +52,9 @@ export default function PaymentScreen() {
       paymentMethod,
       items: orderItems,
       total,
+      subtotal,
+      discountAmount,
+      discountReason,
       cashTendered: paymentMethod === "Cash" ? cashAmount : undefined,
       change: paymentMethod === "Cash" ? change : undefined,
       orderRef: orderId,
@@ -62,6 +70,7 @@ export default function PaymentScreen() {
             customerName={customerName}
             onChangeName={setCustomerName}
             onConfirm={confirmName}
+            disabled={discountAmount > 0 && !discountReason.trim()}
           />
         );
       case "select":
@@ -111,7 +120,12 @@ export default function PaymentScreen() {
       <View style={styles.mainRow}>
         <OrderSummaryPanel
           orderItems={orderItems}
+          subtotal={subtotal}
           total={total}
+          discountAmount={discountAmount}
+          discountReason={discountReason}
+          onDiscountAmountChange={setDiscountAmount}
+          onDiscountReasonChange={setDiscountReason}
         />
         <View style={styles.rightPanel}>{renderPhase()}</View>
       </View>

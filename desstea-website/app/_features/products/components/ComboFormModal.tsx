@@ -348,8 +348,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                               <label className="block text-[10px] font-bold text-sky-700 uppercase tracking-widest mb-1">
                                 Selection Group
                               </label>
-                              <input
-                                type="text"
+                              <select
                                 value={slot.selection_group ?? ""}
                                 onChange={(e) =>
                                   setSlots((prev) =>
@@ -358,9 +357,12 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                     )
                                   )
                                 }
-                                placeholder="e.g. Drinks"
                                 className="w-full border border-sky-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 bg-white"
-                              />
+                              >
+                                <option value="">— Select group —</option>
+                                <option value="drink">Drink</option>
+                                <option value="meal">Meal</option>
+                              </select>
                             </div>
                             <p className="text-[10px] text-sky-500 leading-relaxed">
                               Slots sharing the same group name are linked — the customer picks <strong>one product total</strong> across all slots in that group.

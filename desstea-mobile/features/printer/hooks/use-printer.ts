@@ -15,6 +15,9 @@ export type ReceiptDetails = {
   paymentMethod: "Cash" | "GCash";
   items: OrderItem[];
   total: number;
+  subtotal?: number;
+  discountAmount?: number;
+  discountReason?: string;
   cashTendered?: number;
   change?: number;
   completedAt?: Date;
@@ -245,6 +248,12 @@ export function usePrinter() {
           if (item.customization?.temperature) {
             parts.push(item.customization.temperature);
           }
+          if (item.customization?.shot) {
+            parts.push(item.customization.shot === "1S" ? "Single Shot" : "Double Shot");
+          }
+          if (item.customization?.matchaLevel) {
+            parts.push(item.customization.matchaLevel);
+          }
           if (item.customization?.flavor) {
             parts.push(item.customization.flavor.label);
           }
@@ -267,6 +276,12 @@ export function usePrinter() {
       }
 
       lines.push("--------------------------------");
+      if (order.discountAmount && order.discountAmount > 0) {
+        const sub = order.subtotal ?? order.total + order.discountAmount;
+        lines.push(`Subtotal:  ${sub.toFixed(2)}`);
+        const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
+        lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+      }
       lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
       lines.push("--------------------------------");
       lines.push(`Payment: ${order.paymentMethod}`);
@@ -325,6 +340,12 @@ export function usePrinter() {
             }
             if (item.customization?.temperature) {
               parts.push(item.customization.temperature);
+            }
+            if (item.customization?.shot) {
+              parts.push(item.customization.shot === "1S" ? "Single Shot" : "Double Shot");
+            }
+            if (item.customization?.matchaLevel) {
+              parts.push(item.customization.matchaLevel);
             }
             if (item.customization?.flavor) {
               parts.push(item.customization.flavor.label);
@@ -454,12 +475,17 @@ export function usePrinter() {
           lines.push(`  + ${a.addon_name_snapshot}${a.quantity > 1 ? ` x${a.quantity}` : ""}`);
         }
         for (const sel of item.comboSelections) {
-          const upgradeSuffix = sel.upgrade_price > 0 ? ` +₱${sel.upgrade_price.toFixed(2)}` : "";
+          const upgradeSuffix = sel.upgrade_price > 0 ? ` +${sel.upgrade_price.toFixed(2)}` : "";
           lines.push(`  - ${sel.product_name_snapshot}${upgradeSuffix}`);
         }
       }
 
       lines.push("--------------------------------");
+      if (order.discountAmount > 0) {
+        lines.push(`Subtotal:  ${(order.total + order.discountAmount).toFixed(2)}`);
+        const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
+        lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+      }
       lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
       lines.push("--------------------------------");
       lines.push(`Payment: ${order.paymentMethod}`);
@@ -475,6 +501,51 @@ export function usePrinter() {
       lines.push("\n\n\n");
 
       await BLEPrinter.printText(lines.join("\n"), {});
+
+      // Wait for customer receipt to finish, then print kitchen copy
+      const receiptDelay = 3000 + order.items.length * 300;
+      await new Promise((r) => setTimeout(r, receiptDelay));
+
+      try {
+        const kitchenLines: string[] = [];
+        kitchenLines.push("---- KITCHEN ORDER [REPRINT] ----");
+        kitchenLines.push(`Order ${displayRef}`);
+        kitchenLines.push(`Customer: ${order.customerName}`);
+        kitchenLines.push("--------------------------------");
+
+        for (const item of order.items) {
+          if (item.combo_id) {
+            kitchenLines.push(`${item.product_name_snapshot} x${item.quantity}`);
+            if (item.comboSelections?.length) {
+              for (const sel of item.comboSelections) {
+                const upgradeSuffix = sel.upgrade_price > 0 ? ` +${sel.upgrade_price.toFixed(2)}` : "";
+                kitchenLines.push(`  - ${sel.product_name_snapshot}${upgradeSuffix}`);
+              }
+            }
+          } else {
+            const parts: string[] = [];
+            if (item.size_label_snapshot) parts.push(item.size_label_snapshot);
+            if (item.sugar_level_snapshot) parts.push(item.sugar_level_snapshot);
+            if (item.temp_snapshot) parts.push(item.temp_snapshot);
+            if (item.flavor_snapshot) parts.push(item.flavor_snapshot);
+            const suffix = parts.length ? ` (${parts.join(", ")})` : "";
+            kitchenLines.push(`${item.product_name_snapshot}${suffix} x${item.quantity}`);
+            if (item.addons?.length) {
+              for (const a of item.addons) {
+                kitchenLines.push(`  + ${a.addon_name_snapshot}${a.quantity > 1 ? ` x${a.quantity}` : ""}`);
+              }
+            }
+          }
+        }
+
+        kitchenLines.push("--------------------------------");
+        kitchenLines.push("\n\n\n");
+
+        await BLEPrinter.printText(kitchenLines.join("\n"), {});
+      } catch (e) {
+        console.warn("Kitchen reprint failed:", e);
+      }
+
       return true;
     } catch (err: unknown) {
       Alert.alert("Print Error", `Could not reprint receipt.\n\n${String(err)}`);

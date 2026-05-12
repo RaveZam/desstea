@@ -22,10 +22,13 @@ export function usePayment() {
   const [phase, setPhase] = useState<Phase>("name-input");
   const [cashInput, setCashInput] = useState("");
   const [customerName, setCustomerNameState] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountReason, setDiscountReason] = useState("");
 
   const cashAmount = parseFloat(cashInput) || 0;
-  const change = cashAmount - total;
-  const canConfirm = cashAmount >= total && cashInput !== "";
+  const finalTotal = Math.max(0, total - discountAmount);
+  const change = cashAmount - finalTotal;
+  const canConfirm = cashAmount >= finalTotal && cashInput !== "";
 
   const confirmName = () => {
     if (customerName.trim()) {
@@ -68,9 +71,11 @@ export function usePayment() {
       orderItems,
       customerName,
       paymentMethod,
-      total,
+      total: finalTotal,
       cashTendered: isCash ? cashAmount : undefined,
       branchId,
+      discountAmount,
+      discountReason,
     });
 
     completeOrder();
@@ -95,7 +100,8 @@ export function usePayment() {
   return {
     orderId,
     orderItems,
-    total,
+    subtotal: total,
+    total: finalTotal,
     phase,
     cashInput,
     cashAmount,
@@ -112,5 +118,9 @@ export function usePayment() {
     selectGcash,
     confirmCash,
     changePaymentMethod,
+    discountAmount,
+    discountReason,
+    setDiscountAmount,
+    setDiscountReason,
   };
 }

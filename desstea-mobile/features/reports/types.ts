@@ -42,4 +42,6 @@ export type CompletedOrder = {
   status: "completed" | "cancelled";
   cancellationReason: string | null;
   receiptError: boolean;
+  discountAmount: number;
+  discountReason: string;
 };

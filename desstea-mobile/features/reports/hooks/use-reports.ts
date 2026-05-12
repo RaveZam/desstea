@@ -61,8 +61,10 @@ export function useReports() {
         status: string;
         cancellation_reason: string | null;
         receipt_error: number;
+        discount_amount: number;
+        discount_reason: string;
       }>(
-        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason, receipt_error
+        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason, receipt_error, COALESCE(discount_amount, 0) AS discount_amount, COALESCE(discount_reason, '') AS discount_reason
          FROM orders WHERE date(ordered_at, 'localtime') = ? ORDER BY ordered_at DESC`,
         [dateStr]
       );
@@ -128,6 +130,8 @@ export function useReports() {
           status: (raw.status as "completed" | "cancelled") ?? "completed",
           cancellationReason: raw.cancellation_reason,
           receiptError: Boolean(raw.receipt_error),
+          discountAmount: raw.discount_amount ?? 0,
+          discountReason: raw.discount_reason ?? '',
         });
       }
 
