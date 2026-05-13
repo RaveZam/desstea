@@ -79,7 +79,7 @@ export default function ProductCard({
                 setConfirming(true);
               }}
               title="Duplicate product"
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg text-gray-400 hover:text-[#E8692A] hover:bg-orange-50"
+              className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1 rounded-lg text-gray-400 hover:text-[#E8692A] hover:bg-orange-50"
             >
               <svg
                 className="w-3.5 h-3.5"

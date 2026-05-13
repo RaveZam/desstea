@@ -109,32 +109,34 @@ export default function ProductsPageContent({ initialProducts, initialCategories
     <>
       <div className="px-5 py-4 space-y-5">
         {/* Header */}
-        <div className="flex items-start justify-between fade-up fade-up-1">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 fade-up fade-up-1">
           <div>
-            <h1 className="font-display text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
+            <h1 className="font-display text-2xl sm:text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
               Products
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">
               Manage your menu catalog across all branches.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <button
               onClick={() => setCategoryModalOpen(true)}
-              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-gray-50 transition-colors"
             >
-              Manage Categories
+              <span className="sm:hidden">Categories</span>
+              <span className="hidden sm:inline">Manage Categories</span>
             </button>
             <button
               onClick={() => setAddonGroupModalOpen(true)}
-              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 border border-gray-200 text-gray-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-gray-50 transition-colors"
             >
-              Manage Addon Groups
+              <span className="sm:hidden">Addons</span>
+              <span className="hidden sm:inline">Manage Addon Groups</span>
             </button>
             <button
               onClick={view === "products" ? openAddProduct : openAddCombo}
-              className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
+              className="flex items-center gap-2 bg-[#E8692A] text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -188,90 +190,121 @@ export default function ProductsPageContent({ initialProducts, initialCategories
         </div>
 
         {view === "products" ? (
-          <div className="flex gap-5 fade-up fade-up-3">
-            {/* Category sidebar */}
-            <div className="w-52 shrink-0">
-              <div className="sticky top-4 space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2">
-                  Categories
-                </p>
+          <>
+            {/* Mobile category chips */}
+            <div className="md:hidden overflow-x-auto -mx-5 px-5 fade-up fade-up-3">
+              <div className="flex gap-2 pb-1">
                 <button
                   onClick={() => setSelectedCategory("all")}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                     selectedCategory === "all"
-                      ? "bg-[#FFF3EC] text-[#E8692A] font-semibold"
-                      : "text-gray-600 hover:bg-gray-100 font-medium"
+                      ? "bg-[#E8692A] text-white"
+                      : "bg-gray-100 text-gray-600 active:bg-gray-200"
                   }`}
                 >
-                  <span>All Products</span>
-                  <span className={`text-xs tabular-nums ${
-                    selectedCategory === "all" ? "text-[#E8692A]/60" : "text-gray-400"
-                  }`}>
-                    {initialProducts.length}
-                  </span>
+                  All <span className="tabular-nums">{initialProducts.length}</span>
                 </button>
                 {categoriesWithCounts.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                       selectedCategory === cat.id
-                        ? "bg-[#FFF3EC] text-[#E8692A] font-semibold"
-                        : "text-gray-600 hover:bg-gray-100 font-medium"
+                        ? "bg-[#E8692A] text-white"
+                        : "bg-gray-100 text-gray-600 active:bg-gray-200"
                     }`}
                   >
-                    <span className="truncate">{cat.name}</span>
-                    <span className={`text-xs tabular-nums shrink-0 ml-2 ${
-                      selectedCategory === cat.id ? "text-[#E8692A]/60" : "text-gray-400"
-                    }`}>
-                      {cat.count}
-                    </span>
+                    {cat.name} <span className="tabular-nums">{cat.count}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Products main area */}
-            <div className="flex-1 min-w-0 space-y-3">
-              {/* Search + count */}
-              <div className="flex items-center justify-between gap-4">
-                <SearchInput
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Search products..."
-                  className="w-64"
-                />
-                <p className="text-xs text-gray-400 shrink-0">
-                  {filtered.length} product{filtered.length !== 1 ? "s" : ""}
-                </p>
+            <div className="flex gap-5 fade-up fade-up-3">
+              {/* Category sidebar — hidden on mobile */}
+              <div className="hidden md:block w-52 shrink-0">
+                <div className="sticky top-4 space-y-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2">
+                    Categories
+                  </p>
+                  <button
+                    onClick={() => setSelectedCategory("all")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                      selectedCategory === "all"
+                        ? "bg-[#FFF3EC] text-[#E8692A] font-semibold"
+                        : "text-gray-600 hover:bg-gray-100 font-medium"
+                    }`}
+                  >
+                    <span>All Products</span>
+                    <span className={`text-xs tabular-nums ${
+                      selectedCategory === "all" ? "text-[#E8692A]/60" : "text-gray-400"
+                    }`}>
+                      {initialProducts.length}
+                    </span>
+                  </button>
+                  {categoriesWithCounts.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                        selectedCategory === cat.id
+                          ? "bg-[#FFF3EC] text-[#E8692A] font-semibold"
+                          : "text-gray-600 hover:bg-gray-100 font-medium"
+                      }`}
+                    >
+                      <span className="truncate">{cat.name}</span>
+                      <span className={`text-xs tabular-nums shrink-0 ml-2 ${
+                        selectedCategory === cat.id ? "text-[#E8692A]/60" : "text-gray-400"
+                      }`}>
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Products grid */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
-                {filtered.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-                      <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-gray-500">No products found</p>
-                    <p className="text-xs text-gray-400 mt-1">Try adjusting your search or category filter.</p>
-                  </div>
-                )}
-                {filtered.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={openEditProduct}
-                    addonGroupTemplates={initialAddonGroupTemplates}
-                    onDuplicate={handleDuplicateProduct}
+              {/* Products main area */}
+              <div className="flex-1 min-w-0 space-y-3">
+                {/* Search + count */}
+                <div className="flex items-center justify-between gap-4">
+                  <SearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Search products..."
+                    className="flex-1 sm:flex-none sm:w-64"
                   />
-                ))}
+                  <p className="text-xs text-gray-400 shrink-0 hidden sm:block">
+                    {filtered.length} product{filtered.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+
+                {/* Products grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
+                  {filtered.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+                        <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-gray-500">No products found</p>
+                      <p className="text-xs text-gray-400 mt-1">Try adjusting your search or category filter.</p>
+                    </div>
+                  )}
+                  {filtered.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onClick={openEditProduct}
+                      addonGroupTemplates={initialAddonGroupTemplates}
+                      onDuplicate={handleDuplicateProduct}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         ) : (
           <div className="space-y-3 fade-up fade-up-3">
             {/* Count */}
@@ -280,7 +313,7 @@ export default function ProductsPageContent({ initialProducts, initialCategories
             </p>
 
             {/* Combos grid */}
-            <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
               {initialCombos.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-[#FFF3EC] flex items-center justify-center mb-3">
