@@ -17,12 +17,14 @@ interface BranchDetailContentProps {
   branch: Branch;
   data: BranchDetailData;
   periodLabel: string;
+  rangeLabel: string;
 }
 
 export default function BranchDetailContent({
   branch,
   data,
   periodLabel,
+  rangeLabel,
 }: BranchDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -34,9 +36,9 @@ export default function BranchDetailContent({
 
   return (
     <>
-      <div className="px-5 py-4 space-y-3">
+      <div className="h-full overflow-y-auto flex flex-col px-5 py-3 gap-4">
         {/* Header */}
-        <div className="fade-up fade-up-1">
+        <div className="shrink-0 fade-up fade-up-1">
           <BranchDetailHeader
             branch={branch}
             onEdit={() => setEditOpen(true)}
@@ -44,28 +46,20 @@ export default function BranchDetailContent({
         </div>
 
         {/* KPI Cards */}
-        <div className="fade-up fade-up-2">
+        <div className="shrink-0 fade-up fade-up-2">
           <BranchStatCards kpis={data.kpis} periodLabel={periodLabel} />
         </div>
 
         {/* Charts row */}
-        <div className="grid grid-cols-3 gap-3 fade-up fade-up-3 items-stretch" style={{ height: 400 }}>
-          <div className="col-span-2 flex flex-col">
-            <BranchSalesChart salesByDay={data.salesByDay} />
-          </div>
-          <div className="flex flex-col">
-            <OrderStatusChart topCategories={data.topCategories} />
-          </div>
+        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 fade-up fade-up-3 overflow-hidden lg:h-[380px]">
+          <BranchSalesChart salesByDay={data.salesByDay} rangeLabel={rangeLabel} />
+          <OrderStatusChart topCategories={data.topCategories} />
         </div>
 
         {/* Bottom row */}
-        <div className="grid grid-cols-3 gap-3 fade-up fade-up-4" style={{ height: 340 }}>
-          <div className="flex flex-col">
-            <BranchTopProducts products={data.topProducts} />
-          </div>
-          <div className="col-span-2 flex flex-col min-h-0">
-            <BranchRecentOrders orders={data.recentOrders} onOrderClick={handleOrderClick} />
-          </div>
+        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 fade-up fade-up-4">
+          <BranchTopProducts products={data.topProducts} />
+          <BranchRecentOrders orders={data.recentOrders} onOrderClick={handleOrderClick} />
         </div>
       </div>
 

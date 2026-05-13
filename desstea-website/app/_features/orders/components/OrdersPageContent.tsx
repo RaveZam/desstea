@@ -66,7 +66,7 @@ export default function OrdersPageContent({
   return (
     <>
       <div
-        className={`h-full flex flex-col transition-all duration-300 ${selected ? "mr-[400px]" : ""}`}
+        className={`h-full flex flex-col transition-all duration-300 ${selected ? "sm:mr-[400px]" : ""}`}
       >
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-start justify-between fade-up fade-up-1 shrink-0">
@@ -78,8 +78,8 @@ export default function OrdersPageContent({
               View and manage all customer orders across branches.
             </p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-gray-400">
+          <div className="flex items-center gap-2 mt-1 shrink-0">
+            <span className="text-sm text-gray-400 whitespace-nowrap">
               {filtered.length} order{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>

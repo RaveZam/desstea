@@ -26,22 +26,29 @@ export default function BranchCard({ branch, orderCount, totalRevenue, onEdit, o
   return (
     <div
       onClick={() => router.push(`/branches/${branch.id}`)}
-      className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-[#EDE8E3]"
+      className="bg-white rounded-2xl shadow-sm p-3.5 sm:p-4 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-[#EDE8E3]"
     >
       {/* Top row */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2.5 sm:mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[status]}`} />
             <h3 className="font-semibold text-gray-900 text-sm truncate">{branch.name}</h3>
+            <div className="sm:hidden flex-shrink-0">
+              <Badge variant={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Badge>
+            </div>
           </div>
           <p className="text-xs text-gray-400 ml-4 truncate">{branch.address}</p>
         </div>
 
         <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-          <Badge variant={status}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
+          <div className="hidden sm:block">
+            <Badge variant={status}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </Badge>
+          </div>
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-[#6B4F3A] hover:bg-[#F2EBE5] transition-colors"
@@ -67,15 +74,15 @@ export default function BranchCard({ branch, orderCount, totalRevenue, onEdit, o
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-[#FDFAF7] rounded-xl p-2.5">
+      {/* Stats — horizontal on mobile, grid on larger */}
+      <div className="flex sm:grid sm:grid-cols-2 gap-2 mb-2.5 sm:mb-3">
+        <div className="flex-1 bg-[#FDFAF7] rounded-xl p-2.5">
           <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Daily Revenue</p>
           <p className="text-base font-bold text-[#6B4F3A] mt-0.5">
             {totalRevenue > 0 ? `₱${totalRevenue.toLocaleString()}` : "—"}
           </p>
         </div>
-        <div className="bg-[#FDFAF7] rounded-xl p-2.5">
+        <div className="flex-1 bg-[#FDFAF7] rounded-xl p-2.5">
           <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Orders Today</p>
           <p className="text-base font-bold text-gray-800 mt-0.5">
             {orderCount > 0 ? orderCount : "—"}
@@ -84,8 +91,8 @@ export default function BranchCard({ branch, orderCount, totalRevenue, onEdit, o
       </div>
 
       {/* Meta */}
-      <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-50 pt-2.5">
-        <span className="truncate max-w-[140px]" title={branch.assigned_account_name ?? undefined}>
+      <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-50 pt-2 sm:pt-2.5">
+        <span className="truncate max-w-[180px] sm:max-w-[140px]" title={branch.assigned_account_name ?? undefined}>
           {branch.assigned_account_name ?? "Unassigned"}
         </span>
         <span className="font-medium text-[#6B4F3A] truncate max-w-[120px]">Today</span>

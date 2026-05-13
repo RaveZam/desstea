@@ -59,15 +59,15 @@ export default function AccountsPageContent({
         {/* Header */}
         <div className="flex items-start justify-between fade-up fade-up-1">
           <div>
-            <h1 className="font-display text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
+            <h1 className="font-display text-2xl sm:text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
               Accounts
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">
               Manage team members, roles, and branch access.
             </p>
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-gray-400">
+            <span className="hidden sm:inline text-xs text-gray-400">
               {activeCount} active users
             </span>
             <button
@@ -86,60 +86,64 @@ export default function AccountsPageContent({
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add User
+              <span className="whitespace-nowrap">Add User</span>
             </button>
           </div>
         </div>
 
         {/* Role permissions reference */}
-        <div className="fade-up fade-up-2">
+        <div className="hidden sm:block fade-up fade-up-2">
           <RolePermissionsCard />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 fade-up fade-up-3">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search by name or email…"
-            className="w-60"
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center fade-up fade-up-3">
+          <div className="flex items-center gap-3">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search by name or email…"
+              className="flex-1 sm:w-60"
+            />
 
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole | "all")}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] text-gray-700"
-          >
-            {roleOptions.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-
-          <div className="flex gap-1">
-            {(["all", "active", "inactive"] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors capitalize ${
-                  status === s
-                    ? s === "active"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : s === "inactive"
-                        ? "bg-gray-100 text-gray-500"
-                        : "bg-[#F2EBE5] text-[#6B4F3A]"
-                    : "text-gray-500 hover:bg-gray-100"
-                }`}
-              >
-                {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole | "all")}
+              className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] text-gray-700"
+            >
+              {roleOptions.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <span className="text-xs text-gray-400 ml-auto">
-            {filtered.length} user{filtered.length !== 1 ? "s" : ""}
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              {(["all", "active", "inactive"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors capitalize ${
+                    status === s
+                      ? s === "active"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : s === "inactive"
+                          ? "bg-gray-100 text-gray-500"
+                          : "bg-[#F2EBE5] text-[#6B4F3A]"
+                      : "text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <span className="text-xs text-gray-400 ml-auto">
+              {filtered.length} user{filtered.length !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
 
         {/* Table */}

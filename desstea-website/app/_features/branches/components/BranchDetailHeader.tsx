@@ -26,23 +26,23 @@ export default function BranchDetailHeader({ branch, onEdit }: BranchDetailHeade
       </button>
 
       {/* Branch name row */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">
           {branch.name}
         </h1>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-col gap-2 flex-shrink-0 sm:items-end">
           <DateRangeSelector />
-        <button
-          onClick={onEdit}
-          className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm flex-shrink-0"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-          Edit Branch
-        </button>
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit Branch
+          </button>
         </div>
       </div>
 

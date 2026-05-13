@@ -23,18 +23,18 @@ export default function OrderFilters({
   branchOptions,
 }: OrderFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <SearchInput
         value={search}
         onChange={onSearchChange}
         placeholder="Search order ID or customer…"
-        className="w-60"
+        className="w-full sm:w-60"
       />
 
       <select
         value={branch}
         onChange={(e) => onBranchChange(e.target.value)}
-        className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] text-gray-700"
+        className="w-full sm:w-auto text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] text-gray-700"
       >
         {branchOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>

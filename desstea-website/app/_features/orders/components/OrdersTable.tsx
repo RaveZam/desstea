@@ -34,16 +34,16 @@ export default function OrdersTable({
             <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Customer
             </th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="hidden sm:table-cell text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Branch
             </th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="hidden sm:table-cell text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Items
             </th>
             <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Total
             </th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="hidden sm:table-cell text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Date
             </th>
           </tr>
@@ -84,10 +84,10 @@ export default function OrdersTable({
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
+                <td className="hidden sm:table-cell px-4 py-3 text-gray-500 text-xs">
                   {order.branchName}
                 </td>
-                <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
+                <td className="hidden sm:table-cell px-4 py-3 text-gray-500 text-xs max-w-[200px]">
                   <div className="space-y-0.5">
                     {order.items.slice(0, 2).map((item, idx) => (
                       <div key={idx} className="truncate">
@@ -113,7 +113,7 @@ export default function OrdersTable({
                 <td className={`px-4 py-3 text-right font-semibold ${isCancelled ? "text-gray-400 line-through" : "text-gray-900"}`}>
                   ₱{order.total.toLocaleString()}
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                <td className="hidden sm:table-cell px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                   {formatDate(order.createdAt)}
                 </td>
               </tr>

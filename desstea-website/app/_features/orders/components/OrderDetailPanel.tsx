@@ -31,7 +31,7 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
       />
 
       <div
-        className={`fixed inset-y-0 right-0 z-40 w-[400px] bg-white shadow-2xl border-l border-gray-100 flex flex-col transition-transform duration-300 ${
+        className={`fixed inset-y-0 right-0 z-40 w-full sm:w-[400px] bg-white shadow-2xl border-l border-gray-100 flex flex-col transition-transform duration-300 ${
           order ? "translate-x-0" : "translate-x-full"
         }`}
       >

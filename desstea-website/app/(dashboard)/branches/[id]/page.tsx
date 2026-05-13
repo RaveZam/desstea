@@ -11,6 +11,12 @@ const PERIOD_LABELS: Record<DateRangeKey, string> = {
   "30d": "prior 30 days",
 };
 
+const RANGE_LABELS: Record<DateRangeKey, string> = {
+  today: "Today",
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+};
+
 async function BranchDetailContentWrapper({
   params,
   searchParams,
@@ -26,7 +32,7 @@ async function BranchDetailContentWrapper({
 
   const data = await getBranchDetailData(branch.id, range);
 
-  return <BranchDetailContent branch={branch} data={data} periodLabel={PERIOD_LABELS[range]} />;
+  return <BranchDetailContent branch={branch} data={data} periodLabel={PERIOD_LABELS[range]} rangeLabel={RANGE_LABELS[range]} />;
 }
 
 export default function BranchDetailPage({

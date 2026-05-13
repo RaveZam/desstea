@@ -80,7 +80,7 @@ export async function getDashboardData(range: DateRangeKey): Promise<DashboardDa
   const curOrders = (curOrdersRes.data ?? []) as OrderRow[];
   const prevOrders = (prevOrdersRes.data ?? []) as PrevOrderRow[];
   const items = (itemsRes.data ?? []) as ItemRow[];
-  const products = (productsRes.data ?? []) as ProductRow[];
+  const products = (productsRes.data ?? []) as unknown as ProductRow[];
   const branches = (branchesRes.data ?? []) as BranchRow[];
 
   // ── KPIs ──────────────────────────────────────────────────────

@@ -56,19 +56,19 @@ export default function BranchesPageContent({
     <>
       <div className="px-5 py-4 space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between fade-up fade-up-1">
-          <div>
-            <h1 className="font-display text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
+        <div className="flex items-start justify-between gap-3 fade-up fade-up-1">
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl sm:text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
               Branches
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">
               Manage all DessTea branch locations and track performance.
             </p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-shrink-0">
             <button
               onClick={openAdd}
-              className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
+              className="flex items-center gap-2 bg-[#E8692A] text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -82,7 +82,8 @@ export default function BranchesPageContent({
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add Branch
+              <span className="hidden sm:inline">Add Branch</span>
+              <span className="sm:hidden">Add</span>
             </button>
           </div>
         </div>
@@ -105,7 +106,7 @@ export default function BranchesPageContent({
             </div>
           ) : (
             <div
-              className={`grid grid-cols-2 xl:grid-cols-3 gap-3 ${isPending ? "opacity-60 pointer-events-none" : ""}`}
+              className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 ${isPending ? "opacity-60 pointer-events-none" : ""}`}
             >
               {initialBranches.map((branch) => (
                 <BranchCard
