@@ -30,10 +30,26 @@ interface Props {
   branches: Branch[];
 }
 
-const emptyProduct = (): ProductDraft => ({ product_id: "", quantity: 1, upgrade_price: 0 });
-const emptySlot = (): SlotDraft => ({ category_id: "", requires_selection: false, selection_group: null, products: [emptyProduct()] });
+const emptyProduct = (): ProductDraft => ({
+  product_id: "",
+  quantity: 1,
+  upgrade_price: 0,
+});
+const emptySlot = (): SlotDraft => ({
+  category_id: "",
+  requires_selection: false,
+  selection_group: null,
+  products: [emptyProduct()],
+});
 
-export default function ComboFormModal({ open, onClose, combo, categories, products, branches }: Props) {
+export default function ComboFormModal({
+  open,
+  onClose,
+  combo,
+  categories,
+  products,
+  branches,
+}: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -51,14 +67,20 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       setPrice(combo ? combo.price.toFixed(2) : "");
       setIsAvailable(combo?.is_available ?? true);
       setAvailableBranchIds(combo?.available_branch_ids ?? []);
-      const initialSlots = combo?.slots.map((s) => ({
-        category_id: s.category_id,
-        requires_selection: s.requires_selection,
-        selection_group: s.selection_group,
-        products: s.products.length > 0
-          ? s.products.map((p) => ({ product_id: p.product_id, quantity: p.quantity, upgrade_price: p.upgrade_price ?? 0 }))
-          : [emptyProduct()],
-      })) ?? [];
+      const initialSlots =
+        combo?.slots.map((s) => ({
+          category_id: s.category_id,
+          requires_selection: s.requires_selection,
+          selection_group: s.selection_group,
+          products:
+            s.products.length > 0
+              ? s.products.map((p) => ({
+                  product_id: p.product_id,
+                  quantity: p.quantity,
+                  upgrade_price: p.upgrade_price ?? 0,
+                }))
+              : [emptyProduct()],
+        })) ?? [];
       setSlots(initialSlots);
       setAllProductsFlags(initialSlots.map(() => false));
       setSlotApplyPrices(initialSlots.map(() => ""));
@@ -68,7 +90,7 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
   function toggleBranch(id: string) {
     setAvailableBranchIds((prev) =>
-      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
     );
   }
 
@@ -86,9 +108,13 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
   function setSlotCategory(slotIdx: number, category_id: string) {
     setSlots((prev) =>
-      prev.map((s, i) => (i === slotIdx ? { ...s, category_id, products: [emptyProduct()] } : s))
+      prev.map((s, i) =>
+        i === slotIdx ? { ...s, category_id, products: [emptyProduct()] } : s,
+      ),
     );
-    setAllProductsFlags((prev) => prev.map((f, i) => (i === slotIdx ? false : f)));
+    setAllProductsFlags((prev) =>
+      prev.map((f, i) => (i === slotIdx ? false : f)),
+    );
     setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? "" : v)));
   }
 
@@ -97,8 +123,13 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
     const val = Math.max(0, parseFloat(raw) || 0);
     setSlots((prev) =>
       prev.map((s, i) =>
-        i === slotIdx ? { ...s, products: s.products.map((p) => ({ ...p, upgrade_price: val })) } : s
-      )
+        i === slotIdx
+          ? {
+              ...s,
+              products: s.products.map((p) => ({ ...p, upgrade_price: val })),
+            }
+          : s,
+      ),
     );
   }
 
@@ -107,39 +138,67 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
     if (!slot.category_id) return;
     if (checked) {
       const catProducts = getProductsForCategory(slot.category_id);
-      const allDrafts = catProducts.map((p) => ({ product_id: p.id, quantity: 1, upgrade_price: 0 }));
+      const allDrafts = catProducts.map((p) => ({
+        product_id: p.id,
+        quantity: 1,
+        upgrade_price: 0,
+      }));
       setSlots((prev) =>
-        prev.map((s, i) => (i === slotIdx ? { ...s, products: allDrafts.length > 0 ? allDrafts : [emptyProduct()] } : s))
+        prev.map((s, i) =>
+          i === slotIdx
+            ? {
+                ...s,
+                products: allDrafts.length > 0 ? allDrafts : [emptyProduct()],
+              }
+            : s,
+        ),
       );
     } else {
       setSlots((prev) =>
-        prev.map((s, i) => (i === slotIdx ? { ...s, products: [emptyProduct()] } : s))
+        prev.map((s, i) =>
+          i === slotIdx ? { ...s, products: [emptyProduct()] } : s,
+        ),
       );
     }
-    setAllProductsFlags((prev) => prev.map((f, i) => (i === slotIdx ? checked : f)));
+    setAllProductsFlags((prev) =>
+      prev.map((f, i) => (i === slotIdx ? checked : f)),
+    );
   }
 
   function addProductRow(slotIdx: number) {
     setSlots((prev) =>
-      prev.map((s, i) => (i === slotIdx ? { ...s, products: [...s.products, emptyProduct()] } : s))
+      prev.map((s, i) =>
+        i === slotIdx ? { ...s, products: [...s.products, emptyProduct()] } : s,
+      ),
     );
   }
 
   function removeProductRow(slotIdx: number, pidIdx: number) {
     setSlots((prev) =>
       prev.map((s, i) =>
-        i === slotIdx ? { ...s, products: s.products.filter((_, j) => j !== pidIdx) } : s
-      )
+        i === slotIdx
+          ? { ...s, products: s.products.filter((_, j) => j !== pidIdx) }
+          : s,
+      ),
     );
   }
 
-  function updateProductRow(slotIdx: number, pidIdx: number, patch: Partial<ProductDraft>) {
+  function updateProductRow(
+    slotIdx: number,
+    pidIdx: number,
+    patch: Partial<ProductDraft>,
+  ) {
     setSlots((prev) =>
       prev.map((s, i) =>
         i === slotIdx
-          ? { ...s, products: s.products.map((p, j) => (j === pidIdx ? { ...p, ...patch } : p)) }
-          : s
-      )
+          ? {
+              ...s,
+              products: s.products.map((p, j) =>
+                j === pidIdx ? { ...p, ...patch } : p,
+              ),
+            }
+          : s,
+      ),
     );
   }
 
@@ -157,15 +216,33 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
       .map((s) => ({
         category_id: s.category_id,
         requires_selection: s.requires_selection,
-        selection_group: s.requires_selection ? (s.selection_group || null) : null,
+        selection_group: s.requires_selection
+          ? s.selection_group || null
+          : null,
         products: s.products
           .filter((p) => p.product_id)
-          .map((p) => ({ product_id: p.product_id, quantity: Math.max(1, p.quantity), upgrade_price: p.upgrade_price ?? 0 })),
+          .map((p) => ({
+            product_id: p.product_id,
+            quantity: Math.max(1, p.quantity),
+            upgrade_price: p.upgrade_price ?? 0,
+          })),
       }));
 
     const { error: err } = combo
-      ? await updateCombo(combo.id, { name: name.trim(), price: parseFloat(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds })
-      : await createCombo({ name: name.trim(), price: parseFloat(price), is_available: isAvailable, slots: slotData, available_branch_ids: availableBranchIds });
+      ? await updateCombo(combo.id, {
+          name: name.trim(),
+          price: parseFloat(price),
+          is_available: isAvailable,
+          slots: slotData,
+          available_branch_ids: availableBranchIds,
+        })
+      : await createCombo({
+          name: name.trim(),
+          price: parseFloat(price),
+          is_available: isAvailable,
+          slots: slotData,
+          available_branch_ids: availableBranchIds,
+        });
 
     setLoading(false);
     if (err) {
@@ -188,11 +265,18 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           return product ? product.base_price * p.quantity : null;
         })
         .filter((v): v is number => v !== null);
-      const avgPrice = prices.length > 0 ? Math.round(prices.reduce((s, v) => s + v, 0) / prices.length * 100) / 100 : 0;
+      const avgPrice =
+        prices.length > 0
+          ? Math.round(
+              (prices.reduce((s, v) => s + v, 0) / prices.length) * 100,
+            ) / 100
+          : 0;
       return { cat, avgPrice, count: prices.length };
     })
     .filter((s) => s.count > 0);
-  const slotPricesSum = Math.round(slotBreakdowns.reduce((sum, s) => sum + s.avgPrice, 0) * 100) / 100;
+  const slotPricesSum =
+    Math.round(slotBreakdowns.reduce((sum, s) => sum + s.avgPrice, 0) * 100) /
+    100;
 
   // Detect duplicate products within each slot
   const hasDuplicateProducts = slots.some((slot) => {
@@ -207,12 +291,17 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
     return slot.products.some((p, j) => j !== pidIdx && p.product_id === pid);
   }
 
-  const inputCls = "border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
+  const inputCls =
+    "border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white";
 
   return (
-    <Modal open={open} onClose={onClose} title={combo ? "Edit Combo" : "New Combo"} size="xl">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={combo ? "Edit Combo" : "New Combo"}
+      size="xl"
+    >
       <div className="space-y-5">
-
         {/* Name + Price + Availability */}
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
@@ -233,7 +322,9 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                 Combo Price
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">₱</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                  ₱
+                </span>
                 <input
                   type="number"
                   value={price}
@@ -246,7 +337,11 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
               </div>
             </div>
             <div className="pb-2">
-              <Toggle checked={isAvailable} onChange={setIsAvailable} label="Available" />
+              <Toggle
+                checked={isAvailable}
+                onChange={setIsAvailable}
+                label="Available"
+              />
             </div>
           </div>
         </div>
@@ -258,14 +353,24 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                 Combo Slots
               </label>
-              <p className="text-[11px] text-gray-400 mt-0.5">Each slot is a category of products included in this combo.</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Each slot is a category of products included in this combo.
+              </p>
             </div>
             <button
               type="button"
               onClick={addSlot}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E8692A] text-white text-xs font-semibold hover:bg-[#d45c20] transition-colors"
             >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                className="w-3 h-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -276,7 +381,9 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
           {slots.length === 0 ? (
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
               <p className="text-sm font-medium text-gray-500">No slots yet</p>
-              <p className="text-xs text-gray-400 mt-1">Add a slot to pick product categories for this combo.</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Add a slot to pick product categories for this combo.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -284,30 +391,45 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                 const catProducts = getProductsForCategory(slot.category_id);
                 const isAllProducts = allProductsFlags[slotIdx] ?? false;
                 return (
-                  <div key={slotIdx} className="border border-gray-200 rounded-xl overflow-hidden">
-
+                  <div
+                    key={slotIdx}
+                    className="border border-gray-200 rounded-xl overflow-hidden"
+                  >
                     {/* Slot header row */}
                     <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border-b border-gray-200">
-                      <span className="text-xs font-bold text-gray-400 shrink-0 w-5 text-center">{slotIdx + 1}</span>
+                      <span className="text-xs font-bold text-gray-400 shrink-0 w-5 text-center">
+                        {slotIdx + 1}
+                      </span>
                       <select
                         value={slot.category_id}
-                        onChange={(e) => setSlotCategory(slotIdx, e.target.value)}
+                        onChange={(e) =>
+                          setSlotCategory(slotIdx, e.target.value)
+                        }
                         className={`flex-1 ${inputCls} text-xs font-medium py-1.5`}
                       >
                         <option value="">Select category…</option>
                         {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
                         ))}
                       </select>
                       {slot.category_id && (
-                        <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none" title="Add all products in this category">
+                        <label
+                          className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none"
+                          title="Add all products in this category"
+                        >
                           <input
                             type="checkbox"
                             checked={isAllProducts}
-                            onChange={(e) => toggleAllProducts(slotIdx, e.target.checked)}
+                            onChange={(e) =>
+                              toggleAllProducts(slotIdx, e.target.checked)
+                            }
                             className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
                           />
-                          <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">Add all</span>
+                          <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">
+                            Add all
+                          </span>
                         </label>
                       )}
                       <button
@@ -316,7 +438,15 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                         className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
                         title="Remove slot"
                       >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          className="w-4 h-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -333,13 +463,23 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                             onChange={(e) =>
                               setSlots((prev) =>
                                 prev.map((s, i) =>
-                                  i === slotIdx ? { ...s, requires_selection: e.target.checked, selection_group: e.target.checked ? s.selection_group : null } : s
-                                )
+                                  i === slotIdx
+                                    ? {
+                                        ...s,
+                                        requires_selection: e.target.checked,
+                                        selection_group: e.target.checked
+                                          ? s.selection_group
+                                          : null,
+                                      }
+                                    : s,
+                                ),
                               )
                             }
                             className="w-3.5 h-3.5 rounded accent-[#E8692A] cursor-pointer"
                           />
-                          <span className="text-xs font-semibold text-gray-700">Customer picks one from this slot</span>
+                          <span className="text-xs font-semibold text-gray-700">
+                            Customer picks one from this slot
+                          </span>
                         </label>
 
                         {slot.requires_selection && (
@@ -353,8 +493,14 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                 onChange={(e) =>
                                   setSlots((prev) =>
                                     prev.map((s, i) =>
-                                      i === slotIdx ? { ...s, selection_group: e.target.value || null } : s
-                                    )
+                                      i === slotIdx
+                                        ? {
+                                            ...s,
+                                            selection_group:
+                                              e.target.value || null,
+                                          }
+                                        : s,
+                                    ),
                                   )
                                 }
                                 className="w-full border border-sky-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 bg-white"
@@ -365,7 +511,9 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                               </select>
                             </div>
                             <p className="text-[10px] text-sky-500 leading-relaxed">
-                              Slots sharing the same group name are linked — the customer picks <strong>one product total</strong> across all slots in that group.
+                              Slots sharing the same group name are linked — the
+                              customer picks <strong>one product total</strong>{" "}
+                              across all slots in that group.
                             </p>
                           </div>
                         )}
@@ -381,14 +529,23 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                 Apply +₱ to all
                               </span>
                               <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
-                                <span className="pl-2 text-xs text-gray-400 pointer-events-none select-none">₱</span>
+                                <span className="pl-2 text-xs text-gray-400 pointer-events-none select-none">
+                                  ₱
+                                </span>
                                 <input
                                   type="number"
                                   value={slotApplyPrices[slotIdx] ?? ""}
                                   onChange={(e) =>
-                                    setSlotApplyPrices((prev) => prev.map((v, i) => (i === slotIdx ? e.target.value : v)))
+                                    setSlotApplyPrices((prev) =>
+                                      prev.map((v, i) =>
+                                        i === slotIdx ? e.target.value : v,
+                                      ),
+                                    )
                                   }
-                                  onKeyDown={(e) => e.key === "Enter" && applyUpgradePriceToAll(slotIdx)}
+                                  onKeyDown={(e) =>
+                                    e.key === "Enter" &&
+                                    applyUpgradePriceToAll(slotIdx)
+                                  }
                                   placeholder="0"
                                   className="w-16 px-1.5 py-1 text-xs focus:outline-none bg-white"
                                   min={0}
@@ -407,14 +564,24 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
 
                           {/* Individual product rows */}
                           {slot.products.map((pd, pidIdx) => {
-                            const isDuplicate = isProductDuplicate(slotIdx, pidIdx);
+                            const isDuplicate = isProductDuplicate(
+                              slotIdx,
+                              pidIdx,
+                            );
                             return (
-                              <div key={pidIdx} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-2">
+                              <div
+                                key={pidIdx}
+                                className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-2"
+                              >
                                 {/* Quantity stepper */}
                                 <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0 bg-gray-50">
                                   <button
                                     type="button"
-                                    onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: Math.max(1, pd.quantity - 1) })}
+                                    onClick={() =>
+                                      updateProductRow(slotIdx, pidIdx, {
+                                        quantity: Math.max(1, pd.quantity - 1),
+                                      })
+                                    }
                                     className="w-7 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm font-bold"
                                   >
                                     −
@@ -424,7 +591,11 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                   </span>
                                   <button
                                     type="button"
-                                    onClick={() => updateProductRow(slotIdx, pidIdx, { quantity: pd.quantity + 1 })}
+                                    onClick={() =>
+                                      updateProductRow(slotIdx, pidIdx, {
+                                        quantity: pd.quantity + 1,
+                                      })
+                                    }
                                     className="w-7 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm font-bold"
                                   >
                                     +
@@ -435,27 +606,48 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                 <div className="relative flex-1">
                                   <select
                                     value={pd.product_id}
-                                    onChange={(e) => updateProductRow(slotIdx, pidIdx, { product_id: e.target.value })}
+                                    onChange={(e) =>
+                                      updateProductRow(slotIdx, pidIdx, {
+                                        product_id: e.target.value,
+                                      })
+                                    }
                                     className={`w-full ${inputCls} text-xs py-1.5 ${isDuplicate ? "!border-red-400 !ring-red-200 !bg-red-50" : ""}`}
-                                    title={isDuplicate ? "Duplicate Product" : undefined}
+                                    title={
+                                      isDuplicate
+                                        ? "Duplicate Product"
+                                        : undefined
+                                    }
                                   >
                                     <option value="">Select product…</option>
                                     {catProducts.map((p) => (
-                                      <option key={p.id} value={p.id}>{p.name}</option>
+                                      <option key={p.id} value={p.id}>
+                                        {p.name}
+                                      </option>
                                     ))}
                                   </select>
                                   {isDuplicate && (
-                                    <span className="text-[10px] text-red-500 font-medium mt-0.5 block">Duplicate product</span>
+                                    <span className="text-[10px] text-red-500 font-medium mt-0.5 block">
+                                      Duplicate product
+                                    </span>
                                   )}
                                 </div>
 
                                 {/* Upgrade price */}
                                 <div className="flex items-center gap-1 shrink-0">
-                                  <span className="text-xs text-gray-400 font-medium">+₱</span>
+                                  <span className="text-xs text-gray-400 font-medium">
+                                    +₱
+                                  </span>
                                   <input
                                     type="number"
                                     value={pd.upgrade_price}
-                                    onChange={(e) => updateProductRow(slotIdx, pidIdx, { upgrade_price: Math.max(0, parseFloat(e.target.value) || 0) })}
+                                    onChange={(e) =>
+                                      updateProductRow(slotIdx, pidIdx, {
+                                        upgrade_price: Math.max(
+                                          0,
+                                          parseFloat(e.target.value) || 0,
+                                        ),
+                                      })
+                                    }
                                     placeholder="0"
                                     className="w-16 border border-gray-300 rounded-lg px-1.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#6B4F3A]/20 focus:border-[#6B4F3A] bg-white"
                                     min={0}
@@ -467,10 +659,20 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                                 {slot.products.length > 1 && (
                                   <button
                                     type="button"
-                                    onClick={() => removeProductRow(slotIdx, pidIdx)}
+                                    onClick={() =>
+                                      removeProductRow(slotIdx, pidIdx)
+                                    }
                                     className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
                                   >
-                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth={2}
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
                                       <line x1="18" y1="6" x2="6" y2="18" />
                                       <line x1="6" y1="6" x2="18" y2="18" />
                                     </svg>
@@ -490,7 +692,6 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
                         </div>
                       )}
                     </div>
-
                   </div>
                 );
               })}
@@ -520,10 +721,17 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         {/* Price breakdown */}
         {slotBreakdowns.length > 0 && (
           <div className="bg-[#FFF8F4] border border-[#F5C5A3] rounded-xl p-4 space-y-2">
-            <p className="text-[10px] font-bold text-[#6B4F3A] uppercase tracking-widest mb-2.5">Price Breakdown</p>
+            <p className="text-[10px] font-bold text-[#6B4F3A] uppercase tracking-widest mb-2.5">
+              Price Breakdown
+            </p>
             {slotBreakdowns.map(({ cat, avgPrice }, idx) => (
-              <div key={idx} className="flex justify-between text-xs text-gray-600">
-                <span className="font-medium text-gray-700">{cat?.name ?? "Unknown"}</span>
+              <div
+                key={idx}
+                className="flex justify-between text-xs text-gray-600"
+              >
+                <span className="font-medium text-gray-700">
+                  {cat?.name ?? "Unknown"}
+                </span>
                 <span className="font-medium">₱{avgPrice.toFixed(2)}</span>
               </div>
             ))}
@@ -533,14 +741,27 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
             </div>
             <div className="flex justify-between text-sm font-bold text-gray-900">
               <span>Combo price</span>
-              <span className="text-[#E8692A]">₱{price !== "" && !isNaN(parseFloat(price)) ? parseFloat(price).toFixed(2) : "—"}</span>
+              <span className="text-[#E8692A]">
+                ₱
+                {price !== "" && !isNaN(parseFloat(price))
+                  ? parseFloat(price).toFixed(2)
+                  : "—"}
+              </span>
             </div>
-            {price !== "" && !isNaN(parseFloat(price)) && slotPricesSum > parseFloat(price) && (
-              <div className="flex justify-between text-xs text-green-600 font-medium">
-                <span>Customer saves</span>
-                <span>₱{(Math.round((slotPricesSum - parseFloat(price)) * 100) / 100).toFixed(2)}</span>
-              </div>
-            )}
+            {price !== "" &&
+              !isNaN(parseFloat(price)) &&
+              slotPricesSum > parseFloat(price) && (
+                <div className="flex justify-between text-xs text-green-600 font-medium">
+                  <span>Customer saves</span>
+                  <span>
+                    ₱
+                    {(
+                      Math.round((slotPricesSum - parseFloat(price)) * 100) /
+                      100
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              )}
           </div>
         )}
 
@@ -549,7 +770,13 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleSave}
-            disabled={loading || !name.trim() || price === "" || isNaN(parseFloat(price)) || hasDuplicateProducts}
+            disabled={
+              loading ||
+              !name.trim() ||
+              price === "" ||
+              isNaN(parseFloat(price)) ||
+              hasDuplicateProducts
+            }
             className="flex-1 px-4 py-2.5 rounded-xl bg-[#E8692A] text-white text-sm font-semibold hover:bg-[#d45c20] transition-colors disabled:opacity-50"
           >
             {loading ? "Saving…" : combo ? "Save Changes" : "Create Combo"}
@@ -561,7 +788,6 @@ export default function ComboFormModal({ open, onClose, combo, categories, produ
             Cancel
           </button>
         </div>
-
       </div>
     </Modal>
   );

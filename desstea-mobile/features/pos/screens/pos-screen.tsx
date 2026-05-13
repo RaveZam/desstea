@@ -84,12 +84,28 @@ export default function POSScreen() {
         return matchesCategory && matchesSearch;
       });
 
+  const COMBO_SORT_ORDER = [
+    "Combo 1", "Combo 2", "Combo 3", "Combo 4", "Combo 5",
+    "Student Meal 1", "Student Meal 2", "Student Meal 3", "Student Meal 4",
+    "Couple Meal A", "Couple Meal B", "Couple Set", "Tropa Set",
+  ];
+
   const filteredCombos = isComboTab
-    ? combos.filter(
-        (c) =>
-          searchQuery === "" ||
-          c.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? combos
+        .filter(
+          (c) =>
+            searchQuery === "" ||
+            c.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => {
+          const ai = COMBO_SORT_ORDER.indexOf(a.name);
+          const bi = COMBO_SORT_ORDER.indexOf(b.name);
+          // Items not in the list go to the end, sorted alphabetically
+          if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        })
     : [];
 
   const getCategoryLabel = (product: LocalProduct) => {
@@ -321,8 +337,14 @@ export default function POSScreen() {
               <CategoryTabs
                 categories={[
                   { id: ALL_TAB_ID, name: "All" },
-                  ...categories,
                   { id: COMBOS_TAB_ID, name: "Combos" },
+                  ...[...categories].sort((a, b) => {
+                    const aName = a.name.trim().toLowerCase();
+                    const bName = b.name.trim().toLowerCase();
+                    if (aName === "combo special items") return 1;
+                    if (bName === "combo special items") return -1;
+                    return a.name.localeCompare(b.name);
+                  }),
                 ]}
                 selectedCategory={activeCategory ?? ""}
                 onSelect={setSelectedCategory}
