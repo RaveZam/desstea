@@ -40,7 +40,7 @@ async function DashboardContent({
   return (
     <div className="h-full overflow-y-auto flex flex-col px-5 py-3 gap-4">
       {/* Page title row */}
-      <div className="shrink-0 flex items-center justify-between fade-up fade-up-1">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 fade-up fade-up-1">
         <div>
           <h1 className="font-display text-[32px] font-semibold text-gray-900 tracking-tight leading-tight">
             Dashboard
@@ -49,9 +49,9 @@ async function DashboardContent({
             Track, manage, and grow your tea business with ease.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
           <DateRangeSelector />
-          <button className="flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm">
+          <button className="hidden sm:flex items-center gap-2 bg-[#E8692A] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#d45c20] transition-colors shadow-sm">
             <svg
               className="w-3.5 h-3.5"
               viewBox="0 0 24 24"
@@ -77,8 +77,7 @@ async function DashboardContent({
 
       {/* Row 2: Sales chart + Top Products donut */}
       <div
-        className="shrink-0 grid gap-4 fade-up fade-up-3 overflow-hidden"
-        style={{ gridTemplateColumns: "2fr 1fr", height: 380 }}
+        className="shrink-0 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 fade-up fade-up-3 overflow-hidden lg:h-[380px]"
       >
         <SalesChart
           salesByDay={data.salesByDay}
@@ -89,8 +88,7 @@ async function DashboardContent({
 
       {/* Row 3: Branch overview + Top products list */}
       <div
-        className="shrink-0 grid gap-4 fade-up fade-up-4"
-        style={{ gridTemplateColumns: "3fr 1fr" }}
+        className="shrink-0 grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 fade-up fade-up-4"
       >
         <TopBranchesCard branches={data.branchOverview} />
         <TopProductsCard products={data.topProducts} />

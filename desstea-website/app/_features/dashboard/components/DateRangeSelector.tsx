@@ -72,22 +72,22 @@ export default function DateRangeSelector() {
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className="flex items-center gap-0 border border-gray-200 bg-white rounded-xl shadow-sm hover:bg-gray-50 transition-colors overflow-hidden"
+        className="flex items-center gap-0 border border-gray-200 bg-white rounded-xl shadow-sm hover:bg-gray-50 transition-colors overflow-hidden w-full sm:w-auto"
       >
-        <div className="flex items-center gap-2 px-3.5 py-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5">
           <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          <span className="text-sm text-gray-600 tabular-nums">{getRangeDisplay(currentKey)}</span>
+          <span className="hidden sm:inline text-sm text-gray-600 tabular-nums">{getRangeDisplay(currentKey)}</span>
         </div>
 
         <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
 
-        <div className="flex items-center gap-1.5 px-3 py-2.5">
-          <span className="text-sm font-medium text-gray-700">{selected.label}</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-2.5 flex-1 sm:flex-initial justify-between sm:justify-start">
+          <span className="text-xs sm:text-sm font-medium text-gray-700">{selected.label}</span>
           <svg
             className={`w-3 h-3 text-gray-400 transition-transform duration-150 flex-shrink-0 ${open ? "rotate-180" : ""}`}
             viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"

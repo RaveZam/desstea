@@ -84,10 +84,7 @@ export default function TopBranchesCard({ branches }: Props) {
         className="overflow-y-auto"
         style={{ maxHeight: branches.length > 3 ? "420px" : undefined }}
       >
-        <div
-          className="grid gap-2"
-          style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
-        >
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {branches.map((branch, i) => {
             const aov =
               branch.orders > 0

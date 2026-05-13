@@ -1,4 +1,5 @@
 import LiveClock from "./LiveClock";
+import NavigationDrawer from "./NavigationDrawer";
 
 type Props = {
   email: string;
@@ -8,10 +9,19 @@ type Props = {
 
 export default function Header({ email, displayName, initials }: Props) {
   return (
-    <header className="h-14 bg-white border-b border-gray-100 flex items-center px-6 gap-4 flex-shrink-0">
+    <header className="h-14 bg-white border-b border-gray-100 flex items-center px-4 sm:px-6 gap-3 flex-shrink-0">
+      {/* Hamburger menu */}
+      <NavigationDrawer
+        email={email}
+        displayName={displayName}
+        initials={initials}
+      />
+
       {/* Greeting + date */}
       <div className="flex flex-col leading-tight">
-        <p className="text-sm font-semibold text-gray-800">Good morning, {displayName}</p>
+        <p className="text-sm font-semibold text-gray-800">
+          Good morning, {displayName}
+        </p>
         <p className="text-[11px] text-gray-400">
           {new Date().toLocaleDateString("en-PH", {
             timeZone: "Asia/Manila",
@@ -25,14 +35,15 @@ export default function Header({ email, displayName, initials }: Props) {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-
         {/* User */}
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
             {initials}
           </div>
           <div className="leading-tight hidden sm:block">
-            <p className="text-xs font-semibold text-gray-800">{displayName}</p>
+            <p className="text-xs font-semibold text-gray-800">
+              {displayName}
+            </p>
             <p className="text-[10px] text-gray-400">{email}</p>
           </div>
         </div>

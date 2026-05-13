@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import Sidebar from "../_components/layout/Sidebar";
 import Header from "../_components/layout/Header";
 
 async function AuthShell({ children }: { children: React.ReactNode }) {
@@ -19,12 +18,9 @@ async function AuthShell({ children }: { children: React.ReactNode }) {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F4F6F8]">
-      <Sidebar email={email} displayName={displayName} initials={initials} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header email={email} displayName={displayName} initials={initials} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </div>
+    <div className="flex flex-col h-screen overflow-hidden bg-[#F4F6F8] lg:pl-64">
+      <Header email={email} displayName={displayName} initials={initials} />
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }
@@ -37,12 +33,9 @@ export default function DashboardLayout({
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen overflow-hidden bg-[#F4F6F8] animate-pulse">
-          <div className="w-[250px] bg-gray-200" />
-          <div className="flex-1 flex flex-col">
-            <div className="h-14 bg-gray-200" />
-            <main className="flex-1" />
-          </div>
+        <div className="flex flex-col h-screen overflow-hidden bg-[#F4F6F8] animate-pulse">
+          <div className="h-14 bg-gray-200" />
+          <main className="flex-1" />
         </div>
       }
     >
