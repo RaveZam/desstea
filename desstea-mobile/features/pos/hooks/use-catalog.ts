@@ -11,7 +11,7 @@ export function useCatalog() {
 
   useEffect(() => {
     const cats = db.getAllSync<LocalCategory>(
-      `SELECT id, name FROM categories ORDER BY name`
+      `SELECT id, name, COALESCE(supports_dedication, 0) AS supports_dedication FROM categories ORDER BY name`
     );
     const prods = db.getAllSync<LocalProduct>(
       `SELECT id, name, description, base_price, category_id,

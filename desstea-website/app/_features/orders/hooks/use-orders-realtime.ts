@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import type { Branch, Order } from "@/app/_types";
+import type { Branch, Order, OrderType } from "@/app/_types";
 import React from "react";
 
 const POLL_INTERVAL = 2000;
@@ -82,6 +82,7 @@ export function useOrdersRealtime(
             sugarLevel: (item.sugar_level_snapshot as string | null) ?? null,
             temp: (item.temp_snapshot as string | null) ?? null,
             flavor: (item.flavor_snapshot as string | null) ?? null,
+            dedicationNote: (item.dedication_note as string | null) ?? null,
             unitPrice,
             lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
             addons,
@@ -98,6 +99,8 @@ export function useOrdersRealtime(
           total: row.total,
           paymentMethod: row.payment_method ?? undefined,
           cashTendered: row.cash_tendered ?? undefined,
+          orderType: ((row.order_type as OrderType | null) ?? "dine_in") as OrderType,
+          deliveryFee: (row.delivery_fee as number | null) ?? 0,
           createdAt: row.ordered_at,
         };
 

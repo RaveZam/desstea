@@ -22,6 +22,9 @@ const FLAG_COLOR = "#D63B2F";
 const SYNCED_COLOR = "#2D7D46";
 const PENDING_COLOR = "#D4700A";
 const CANCELLED_COLOR = "#D9362B";
+const DINE_IN_COLOR = "#0066CC";
+const TAKEOUT_COLOR = "#E8692A";
+const DELIVERY_COLOR = "#7C3AED";
 
 type Props = {
   orders: CompletedOrder[];
@@ -138,6 +141,36 @@ function OrderRow({
             ) : (
               <SyncBadge status={order.syncStatus} />
             )}
+
+            {/* Order type chip */}
+            {(() => {
+              const typeColor =
+                order.orderType === "delivery"
+                  ? DELIVERY_COLOR
+                  : order.orderType === "takeout"
+                    ? TAKEOUT_COLOR
+                    : DINE_IN_COLOR;
+              const iconName =
+                order.orderType === "delivery"
+                  ? "bicycle-outline"
+                  : order.orderType === "takeout"
+                    ? "bag-handle-outline"
+                    : "restaurant-outline";
+              const label =
+                order.orderType === "delivery"
+                  ? "Delivery"
+                  : order.orderType === "takeout"
+                    ? "Take Out"
+                    : "Dine In";
+              return (
+                <View style={[styles.payChip, { backgroundColor: typeColor + "18" }]}>
+                  <Ionicons name={iconName} size={11} color={typeColor} />
+                  <Text style={[styles.payChipText, { color: typeColor }]}>
+                    {label}
+                  </Text>
+                </View>
+              );
+            })()}
 
             {/* Payment chip */}
             <View style={[styles.payChip, { backgroundColor: paymentColor + "18" }]}>

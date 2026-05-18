@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { router } from "expo-router";
 import { getOrder, completeOrder, setCustomerName } from "../../../store";
 import { getItemPrice } from "../../pos/types";
 
 import { saveOrderLocally, uuidv4 } from "../../outbox/services/save-order";
 import { processOutbox } from "../../outbox/services/outbox-sync";
 import { supabase } from "@/lib/supabase";
+import type { OrderType } from "../components/name-input";
 
 export type Phase = "name-input" | "select" | "cash-numpad" | "cash-confirmed" | "gcash-wait";
 
@@ -24,9 +24,12 @@ export function usePayment() {
   const [customerName, setCustomerNameState] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
+  const [orderType, setOrderType] = useState<OrderType>("dine_in");
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
+  const effectiveDeliveryFee = orderType === "delivery" ? deliveryFee : 0;
   const cashAmount = parseFloat(cashInput) || 0;
-  const finalTotal = Math.max(0, total - discountAmount);
+  const finalTotal = Math.max(0, total - discountAmount) + effectiveDeliveryFee;
   const change = cashAmount - finalTotal;
   const canConfirm = cashAmount >= finalTotal && cashInput !== "";
 
@@ -76,6 +79,8 @@ export function usePayment() {
       branchId,
       discountAmount,
       discountReason,
+      orderType,
+      deliveryFee: effectiveDeliveryFee,
     });
 
     completeOrder();
@@ -83,10 +88,9 @@ export function usePayment() {
     processOutbox().catch((err) =>
       console.error("[outbox] post-payment sync failed", err)
     );
-
-    router.back();
   };
 
+  const goBackToName = () => setPhase("name-input");
   const selectCash = () => setPhase("cash-numpad");
   const selectGcash = () => setPhase("gcash-wait");
   const confirmCash = () => {
@@ -111,6 +115,7 @@ export function usePayment() {
     customerName,
     setCustomerName: setCustomerNameState,
     confirmName,
+    goBackToName,
     addBill,
     handleNumpad,
     handleComplete,
@@ -122,5 +127,9 @@ export function usePayment() {
     discountReason,
     setDiscountAmount,
     setDiscountReason,
+    orderType,
+    setOrderType,
+    deliveryFee: effectiveDeliveryFee,
+    setDeliveryFee,
   };
 }

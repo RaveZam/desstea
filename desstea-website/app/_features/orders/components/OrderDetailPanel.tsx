@@ -64,11 +64,20 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                 <p className="text-xs text-gray-400 capitalize">{order.paymentMethod}</p>
               )}
             </div>
-            {order.status && (
-              <Badge variant={order.status as OrderStatus}>
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            <div className="flex flex-col items-end gap-1">
+              {order.status && (
+                <Badge variant={order.status as OrderStatus}>
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </Badge>
+              )}
+              <Badge variant={order.orderType}>
+                {order.orderType === "dine_in"
+                  ? "Dine In"
+                  : order.orderType === "delivery"
+                    ? "Delivery"
+                    : "Take Out"}
               </Badge>
-            )}
+            </div>
           </div>
 
           {/* Cancellation reason */}
@@ -98,6 +107,13 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
                     </div>
                     <p className="font-semibold text-gray-900 ml-3">₱{item.lineTotal.toLocaleString()}</p>
                   </div>
+
+                  {/* Dedication note */}
+                  {item.dedicationNote && (
+                    <div className="mt-1 ml-3 text-xs text-[#E8692A]">
+                      Msg: {item.dedicationNote}
+                    </div>
+                  )}
 
                   {/* Combo selections */}
                   {(item.comboSelections ?? []).length > 0 && (
@@ -136,18 +152,26 @@ export default function OrderDetailPanel({ order, onClose }: OrderDetailPanelPro
 
           {/* Divider + Total */}
           <div className="border-t border-dashed border-gray-200 pt-3 space-y-1.5">
-            {order.discountAmount != null && order.discountAmount > 0 && (
+            {((order.discountAmount != null && order.discountAmount > 0) || order.deliveryFee > 0) && (
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-500">Subtotal</p>
-                  <p className="text-sm text-gray-700">₱{(order.total + order.discountAmount).toLocaleString()}</p>
+                  <p className="text-sm text-gray-700">₱{(order.total + (order.discountAmount ?? 0) - order.deliveryFee).toLocaleString()}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-red-500">
-                    Discount{order.discountReason ? ` (${order.discountReason})` : ""}
-                  </p>
-                  <p className="text-sm text-red-500">-₱{order.discountAmount.toLocaleString()}</p>
-                </div>
+                {order.discountAmount != null && order.discountAmount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-red-500">
+                      Discount{order.discountReason ? ` (${order.discountReason})` : ""}
+                    </p>
+                    <p className="text-sm text-red-500">-₱{order.discountAmount.toLocaleString()}</p>
+                  </div>
+                )}
+                {order.deliveryFee > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">Delivery Fee</p>
+                    <p className="text-sm text-gray-700">₱{order.deliveryFee.toLocaleString()}</p>
+                  </div>
+                )}
               </>
             )}
             <div className="flex items-center justify-between">

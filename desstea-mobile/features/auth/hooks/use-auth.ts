@@ -8,14 +8,32 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && session.user?.user_metadata?.role !== "branch_manager") {
-        supabase.auth.signOut();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
         setIsLoading(false);
         return;
       }
-      setSession(session);
-      setUser(session?.user ?? null);
+
+      if (session.user?.user_metadata?.role !== "branch_manager") {
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      const { error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        if ((refreshError as any).__isAuthError) {
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        // Network error — offline, fall back to cached session
+        setSession(session);
+        setUser(session.user);
+      }
+      // On success: onAuthStateChange TOKEN_REFRESHED fires and updates session
+
       setIsLoading(false);
     });
 

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  TextInput,
 } from "react-native";
 import { db } from "@/lib/database";
 import {
@@ -26,10 +27,13 @@ const GRAY_BG = "#F5F5F7";
 const WHITE = "#FFFFFF";
 const ORANGE_LIGHT = "#FFF3ED";
 
+const DEDICATION_MAX_LENGTH = 200;
+
 type Props = {
   visible: boolean;
   product: LocalProduct | null;
   categoryName?: string | null;
+  supportsDedication?: boolean;
   onConfirm: (
     product: LocalProduct,
     customization: ProductCustomization,
@@ -41,6 +45,7 @@ export function CustomizationModal({
   visible,
   product,
   categoryName,
+  supportsDedication = false,
   onConfirm,
   onCancel,
 }: Props) {
@@ -57,6 +62,7 @@ export function CustomizationModal({
   const [selectedFlavor, setSelectedFlavor] =
     useState<LocalProductFlavor | null>(null);
   const [addonQtys, setAddonQtys] = useState<Record<string, number>>({});
+  const [dedicationNote, setDedicationNote] = useState<string>("");
 
   useEffect(() => {
     if (!product) return;
@@ -145,6 +151,7 @@ export function CustomizationModal({
     }
 
     setAddonQtys({});
+    setDedicationNote("");
   }, [product?.id]);
 
   if (!product) return null;
@@ -163,6 +170,7 @@ export function CustomizationModal({
     const activeAddons: AddonWithQty[] = addonOptions
       .filter((ao) => (addonQtys[ao.id] ?? 0) > 0)
       .map((ao) => ({ option: ao, qty: addonQtys[ao.id] }));
+    const trimmedNote = dedicationNote.trim();
     onConfirm(product, {
       size: selectedSize,
       sugarLevel: selectedSugarLevel,
@@ -171,12 +179,15 @@ export function CustomizationModal({
       addonOptions: activeAddons,
       shot: categoryName === "Coffee" ? selectedShot : null,
       matchaLevel: categoryName === "Matcha" ? selectedMatchaLevel : null,
+      dedicationNote: supportsDedication && trimmedNote.length > 0 ? trimmedNote : null,
     });
     setAddonQtys({});
+    setDedicationNote("");
   };
 
   const handleCancel = () => {
     setAddonQtys({});
+    setDedicationNote("");
     onCancel();
   };
 
@@ -439,6 +450,26 @@ export function CustomizationModal({
                     </View>
                   </>
                 )}
+                {supportsDedication && (
+                  <>
+                    <Text style={styles.sectionLabel}>Dedication Note (optional)</Text>
+                    <TextInput
+                      style={styles.dedicationInput}
+                      value={dedicationNote}
+                      onChangeText={(t) =>
+                        setDedicationNote(t.slice(0, DEDICATION_MAX_LENGTH))
+                      }
+                      placeholder="e.g., Happy Birthday Maria"
+                      placeholderTextColor={GRAY_TEXT}
+                      multiline
+                      maxLength={DEDICATION_MAX_LENGTH}
+                      textAlignVertical="top"
+                    />
+                    <Text style={styles.dedicationCounter}>
+                      {dedicationNote.length} / {DEDICATION_MAX_LENGTH}
+                    </Text>
+                  </>
+                )}
               </View>
               <View style={styles.bottom}>
                 <Text style={styles.adjustedPrice}>
@@ -602,6 +633,23 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: "center",
     textAlign: "center",
+  },
+  dedicationInput: {
+    width: "100%",
+    minHeight: 72,
+    backgroundColor: GRAY_BG,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: DARK_TEXT,
+    marginBottom: 4,
+  },
+  dedicationCounter: {
+    fontSize: 11,
+    color: GRAY_TEXT,
+    alignSelf: "flex-end",
+    marginBottom: 16,
   },
   adjustedPrice: {
     fontSize: 28,

@@ -117,10 +117,16 @@ export default function POSScreen() {
     return categories.find((c) => c.id === product.category_id)?.name ?? null;
   };
 
+  const getCategorySupportsDedication = (product: LocalProduct) => {
+    const cat = categories.find((c) => c.id === product.category_id);
+    return cat?.supports_dedication === 1;
+  };
+
   const handleProductPress = (product: LocalProduct) => {
     const categoryName = getCategoryName(product);
     const isCoffee = categoryName === "Coffee";
     const isMatcha = categoryName === "Matcha";
+    const supportsDedication = getCategorySupportsDedication(product);
     console.log("[POS] product tapped:", {
       id: product.id,
       name: product.name,
@@ -131,7 +137,7 @@ export default function POSScreen() {
       addon_group_id: product.addon_group_id,
       hasCustomization: !!(product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors),
     });
-    if (isCoffee || isMatcha || product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors) {
+    if (isCoffee || isMatcha || supportsDedication || product.has_sizes || product.has_sugar_level || product.addon_group_id || product.is_hot_cold || product.has_flavors) {
       setCustomizingProduct(product);
     } else {
       addToOrder(product, undefined, getCategoryLabel(product));
@@ -336,8 +342,8 @@ export default function POSScreen() {
               {/* Category Tabs */}
               <CategoryTabs
                 categories={[
-                  { id: ALL_TAB_ID, name: "All" },
-                  { id: COMBOS_TAB_ID, name: "Combos" },
+                  { id: ALL_TAB_ID, name: "All", supports_dedication: 0 },
+                  { id: COMBOS_TAB_ID, name: "Combos", supports_dedication: 0 },
                   ...[...categories].sort((a, b) => {
                     const aName = a.name.trim().toLowerCase();
                     const bName = b.name.trim().toLowerCase();
@@ -407,6 +413,7 @@ export default function POSScreen() {
         visible={customizingProduct !== null}
         product={customizingProduct}
         categoryName={customizingProduct ? getCategoryName(customizingProduct) : null}
+        supportsDedication={customizingProduct ? getCategorySupportsDedication(customizingProduct) : false}
         onConfirm={handleCustomizationConfirm}
         onCancel={() => setCustomizingProduct(null)}
       />

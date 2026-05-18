@@ -275,6 +275,11 @@ export function OrderDetailModal({ order, visible, onClose, onCancel, onToggleFl
                         {item.flavor_snapshot} flavor
                       </Text>
                     )}
+                    {item.dedication_note && (
+                      <Text style={styles.itemCustom}>
+                        Msg: {item.dedication_note}
+                      </Text>
+                    )}
                     {item.comboSelections.map((selection) => (
                       <Text key={selection.id} style={styles.itemCustom}>
                         {selection.slot_name_snapshot}:{" "}
@@ -304,25 +309,35 @@ export function OrderDetailModal({ order, visible, onClose, onCancel, onToggleFl
 
               {/* ── TOTALS ── */}
               <View style={styles.totalsCard}>
-                {order.discountAmount > 0 && (
+                {(order.discountAmount > 0 || order.deliveryFee > 0) && (
                   <>
                     <View style={styles.totalRow}>
                       <Text style={styles.totalLabel}>Subtotal</Text>
                       <Text style={styles.totalValue}>
-                        ₱{(order.total + order.discountAmount).toFixed(2)}
+                        ₱{(order.total + order.discountAmount - order.deliveryFee).toFixed(2)}
                       </Text>
                     </View>
-                    <View style={styles.totalRow}>
-                      <View style={{ flex: 1, gap: 1 }}>
-                        <Text style={[styles.totalLabel, { color: RED }]}>Discount</Text>
-                        {!!order.discountReason && (
-                          <Text style={styles.discountReason}>{order.discountReason}</Text>
-                        )}
+                    {order.discountAmount > 0 && (
+                      <View style={styles.totalRow}>
+                        <View style={{ flex: 1, gap: 1 }}>
+                          <Text style={[styles.totalLabel, { color: RED }]}>Discount</Text>
+                          {!!order.discountReason && (
+                            <Text style={styles.discountReason}>{order.discountReason}</Text>
+                          )}
+                        </View>
+                        <Text style={[styles.totalValue, { color: RED }]}>
+                          -₱{order.discountAmount.toFixed(2)}
+                        </Text>
                       </View>
-                      <Text style={[styles.totalValue, { color: RED }]}>
-                        -₱{order.discountAmount.toFixed(2)}
-                      </Text>
-                    </View>
+                    )}
+                    {order.deliveryFee > 0 && (
+                      <View style={styles.totalRow}>
+                        <Text style={styles.totalLabel}>Delivery Fee</Text>
+                        <Text style={styles.totalValue}>
+                          ₱{order.deliveryFee.toFixed(2)}
+                        </Text>
+                      </View>
+                    )}
                     <View style={styles.totalDivider} />
                   </>
                 )}
@@ -358,6 +373,17 @@ export function OrderDetailModal({ order, visible, onClose, onCancel, onToggleFl
                     </Text>
                   </View>
                   <Text style={styles.paymentStatus}>Paid</Text>
+                </View>
+
+                <View style={styles.paymentDetailRow}>
+                  <Text style={styles.paymentDetailLabel}>Order Type</Text>
+                  <Text style={styles.paymentDetailValue}>
+                    {order.orderType === "dine_in"
+                      ? "Dine In"
+                      : order.orderType === "delivery"
+                        ? "Delivery"
+                        : "Take Out"}
+                  </Text>
                 </View>
 
                 {order.paymentMethod === "Cash" &&

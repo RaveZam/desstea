@@ -19,6 +19,7 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 import { syncCatalog } from "@/lib/sync";
 import { SyncProvider, useBumpSync, useSetSyncing } from "@/lib/sync-context";
 import { useOutboxSync } from "@/features/outbox/hooks/use-outbox-sync";
+import { supabase } from "@/lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -65,6 +66,23 @@ function AuthGate() {
       })
       .catch((err) => console.error("[sync] startup sync failed", err))
       .finally(() => setSyncing(false));
+  }, [session?.user.id]);
+
+  // When connectivity returns, refresh the auth token. Covers the case where
+  // the app-load refresh attempt failed because the device was offline.
+  useEffect(() => {
+    if (!session) return;
+    let wasConnected = true;
+    const sub = Network.addNetworkStateListener(({ isInternetReachable }) => {
+      const connected = isInternetReachable !== false;
+      if (connected && !wasConnected) {
+        supabase.auth.refreshSession().catch((err) =>
+          console.warn("[auth] refresh on reconnect failed", err)
+        );
+      }
+      wasConnected = connected;
+    });
+    return () => sub.remove();
   }, [session?.user.id]);
 
   return null;

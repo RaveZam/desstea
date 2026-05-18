@@ -35,6 +35,11 @@ export function useOrder() {
       customization,
       categoryLabel,
     };
+    // Items with a dedication note never stack — each one is its own line at qty 1.
+    if (customization?.dedicationNote) {
+      setOrderItems((prev) => [...prev, newItem]);
+      return;
+    }
     const key = getItemKey(newItem);
     setOrderItems((prev) => {
       const existing = prev.find((item) => getItemKey(item) === key);
@@ -66,6 +71,8 @@ export function useOrder() {
       category_id: "__combos__",
       has_sizes: 0,
       has_sugar_level: 0,
+      is_hot_cold: 0,
+      has_flavors: 0,
       is_available: 1,
       addon_group_id: null,
     };

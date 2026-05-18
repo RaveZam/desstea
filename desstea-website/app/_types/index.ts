@@ -17,6 +17,8 @@ export interface Branch {
 
 export type OrderStatus = "pending" | "completed" | "cancelled" | "refunded";
 
+export type OrderType = "dine_in" | "takeout" | "delivery";
+
 export interface OrderAddon {
   addonName: string;
   priceModifier: number;
@@ -36,6 +38,7 @@ export interface OrderLineItem {
   sugarLevel: string | null;
   temp: string | null;
   flavor: string | null;
+  dedicationNote: string | null;
   unitPrice: number;
   lineTotal: number;
   addons?: OrderAddon[];
@@ -55,6 +58,8 @@ export interface Order {
   cashTendered?: number;
   discountAmount?: number;
   discountReason?: string;
+  orderType: OrderType;
+  deliveryFee: number;
   createdAt: string;
 }
 

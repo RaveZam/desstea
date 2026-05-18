@@ -63,8 +63,10 @@ export function useReports() {
         receipt_error: number;
         discount_amount: number;
         discount_reason: string;
+        order_type: string;
+        delivery_fee: number;
       }>(
-        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason, receipt_error, COALESCE(discount_amount, 0) AS discount_amount, COALESCE(discount_reason, '') AS discount_reason
+        `SELECT id, customer_name, total, payment_method, ordered_at, cash_tendered, cash_change, status, cancellation_reason, receipt_error, COALESCE(discount_amount, 0) AS discount_amount, COALESCE(discount_reason, '') AS discount_reason, COALESCE(order_type, 'dine_in') AS order_type, COALESCE(delivery_fee, 0) AS delivery_fee
          FROM orders WHERE date(ordered_at, 'localtime') = ? ORDER BY ordered_at DESC`,
         [dateStr]
       );
@@ -96,8 +98,9 @@ export function useReports() {
           quantity: number;
           unit_price_snapshot: number;
           total_price: number;
+          dedication_note: string | null;
         }>(
-          `SELECT id, combo_id, product_name_snapshot, size_label_snapshot, sugar_level_snapshot, temp_snapshot, flavor_snapshot, quantity, unit_price_snapshot, total_price
+          `SELECT id, combo_id, product_name_snapshot, size_label_snapshot, sugar_level_snapshot, temp_snapshot, flavor_snapshot, quantity, unit_price_snapshot, total_price, dedication_note
            FROM order_items WHERE order_id = ?`,
           [raw.id]
         );
@@ -132,6 +135,8 @@ export function useReports() {
           receiptError: Boolean(raw.receipt_error),
           discountAmount: raw.discount_amount ?? 0,
           discountReason: raw.discount_reason ?? '',
+          orderType: (raw.order_type as "dine_in" | "takeout" | "delivery") ?? "dine_in",
+          deliveryFee: raw.delivery_fee ?? 0,
         });
       }
 

@@ -22,6 +22,7 @@ export type LocalProductFlavor = {
 export type LocalCategory = {
   id: string;
   name: string;
+  supports_dedication: number; // SQLite 0 | 1
 };
 
 export type LocalCombo = {
@@ -67,6 +68,7 @@ export type ProductCustomization = {
   addonOptions: AddonWithQty[];
   shot: string | null;  // "1S" or "2S" — Coffee only
   matchaLevel: string | null;  // "Standard" or "Intense" — Matcha only
+  dedicationNote: string | null;  // Free-text message for cakes etc.
 };
 
 export type ComboSlotSelection = {
@@ -135,5 +137,8 @@ export function getItemKey(item: OrderItem): string {
     .map((aq) => `${aq.option.id}x${aq.qty}`)
     .sort()
     .join(",");
-  return `${item.product.id}__${sizeKey}__${sugarKey}__${tempKey}__${shotKey}__${matchaKey}__${flavorKey}__${addonKey}`;
+  const noteKey = item.customization.dedicationNote
+    ? `note:${item.customization.dedicationNote}`
+    : "no-note";
+  return `${item.product.id}__${sizeKey}__${sugarKey}__${tempKey}__${shotKey}__${matchaKey}__${flavorKey}__${addonKey}__${noteKey}`;
 }

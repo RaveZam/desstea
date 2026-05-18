@@ -1,6 +1,6 @@
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { cacheLife, cacheTag } from "next/cache";
-import type { Order, OrderStatus } from "../../../_types";
+import type { Order, OrderStatus, OrderType } from "../../../_types";
 
 export async function listOrders(): Promise<Order[]> {
   "use cache";
@@ -53,6 +53,7 @@ export async function listOrders(): Promise<Order[]> {
         sugarLevel: (item.sugar_level_snapshot as string | null) ?? null,
         temp: (item.temp_snapshot as string | null) ?? null,
         flavor: (item.flavor_snapshot as string | null) ?? null,
+        dedicationNote: (item.dedication_note as string | null) ?? null,
         unitPrice,
         lineTotal: (item.total_price as number | null) ?? unitPrice * qty,
         addons,
@@ -73,6 +74,8 @@ export async function listOrders(): Promise<Order[]> {
       cashTendered: row.cash_tendered as number | undefined,
       discountAmount: (row.discount_amount as number | null) ?? undefined,
       discountReason: (row.discount_reason as string | null) || undefined,
+      orderType: ((row.order_type as OrderType | null) ?? "dine_in") as OrderType,
+      deliveryFee: (row.delivery_fee as number | null) ?? 0,
       createdAt: row.ordered_at as string,
     } satisfies Order;
   });

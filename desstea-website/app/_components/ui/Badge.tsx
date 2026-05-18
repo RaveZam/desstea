@@ -12,6 +12,9 @@ type BadgeVariant =
   | "Coffee"
   | "Foods"
   | "Combos"
+  | "dine_in"
+  | "takeout"
+  | "delivery"
   | "default";
 
 const variantStyles: Record<BadgeVariant, string> = {
@@ -28,6 +31,9 @@ const variantStyles: Record<BadgeVariant, string> = {
   Coffee: "bg-[#F2EBE5] text-[#6B4F3A]",
   Foods: "bg-green-100 text-green-700",
   Combos: "bg-orange-100 text-orange-700",
+  dine_in: "bg-blue-100 text-blue-700",
+  takeout: "bg-green-100 text-green-700",
+  delivery: "bg-purple-100 text-purple-700",
   default: "bg-gray-100 text-gray-600",
 };
 

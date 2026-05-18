@@ -1,5 +1,6 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
@@ -32,6 +33,7 @@ export default function PaymentScreen() {
     customerName,
     setCustomerName,
     confirmName,
+    goBackToName,
     handleNumpad,
     handleComplete,
     selectCash,
@@ -42,11 +44,22 @@ export default function PaymentScreen() {
     discountReason,
     setDiscountAmount,
     setDiscountReason,
+    orderType,
+    setOrderType,
+    deliveryFee,
+    setDeliveryFee,
   } = usePayment();
 
   const { printReceipt } = usePrinter();
 
-  const handleCompleteWithPrint = (paymentMethod: "Cash" | "GCash") => {
+  const handleCompleteWithPrint = async (paymentMethod: "Cash" | "GCash") => {
+    try {
+      await handleComplete();
+    } catch (err) {
+      Alert.alert("Error", "Failed to save order. Please try again.");
+      return;
+    }
+
     printReceipt({
       customerName: getCustomerName(),
       paymentMethod,
@@ -58,8 +71,11 @@ export default function PaymentScreen() {
       cashTendered: paymentMethod === "Cash" ? cashAmount : undefined,
       change: paymentMethod === "Cash" ? change : undefined,
       orderRef: orderId,
+      orderType,
+      deliveryFee,
     });
-    handleComplete();
+
+    router.back();
   };
 
   const renderPhase = () => {
@@ -71,6 +87,10 @@ export default function PaymentScreen() {
             onChangeName={setCustomerName}
             onConfirm={confirmName}
             disabled={discountAmount > 0 && !discountReason.trim()}
+            orderType={orderType}
+            onChangeOrderType={setOrderType}
+            deliveryFee={deliveryFee}
+            onChangeDeliveryFee={setDeliveryFee}
           />
         );
       case "select":
@@ -78,6 +98,7 @@ export default function PaymentScreen() {
           <PaymentMethodSelect
             onSelectCash={selectCash}
             onSelectGcash={selectGcash}
+            onBack={goBackToName}
           />
         );
       case "cash-numpad":
@@ -124,6 +145,8 @@ export default function PaymentScreen() {
           total={total}
           discountAmount={discountAmount}
           discountReason={discountReason}
+          orderType={orderType}
+          deliveryFee={deliveryFee}
           onDiscountAmountChange={setDiscountAmount}
           onDiscountReasonChange={setDiscountReason}
         />

@@ -27,14 +27,14 @@ async function query<T>(
 // ── Categories ──────────────────────────────────────────────────────────────
 
 export function fetchAllCategories(): Promise<Category[]> {
-  return query("categories", "id, name, description, created_at", (q) =>
+  return query("categories", "id, name, description, supports_dedication, created_at", (q) =>
     q.is("deleted_at", null),
   );
 }
 
 export function fetchCategoriesByIds(ids: string[]): Promise<Category[]> {
   if (ids.length === 0) return Promise.resolve([]);
-  return query("categories", "id, name, description, created_at", (q) =>
+  return query("categories", "id, name, description, supports_dedication, created_at", (q) =>
     q.in("id", ids).is("deleted_at", null),
   );
 }

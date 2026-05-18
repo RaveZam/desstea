@@ -2,6 +2,7 @@ export interface Category {
   id: string;
   name: string;
   description: string | null;
+  supports_dedication: boolean;
   created_at: string | null;
 }
 

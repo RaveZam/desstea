@@ -10,6 +10,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { OrderItem, getItemKey, getItemPrice } from "../../pos/types";
+import type { OrderType } from "./name-input";
+
+const ORDER_TYPE_LABEL: Record<OrderType, string> = {
+  dine_in: "Dine In",
+  takeout: "Take Out",
+  delivery: "Delivery",
+};
 
 const GRAY_BG = "#F5F5F7";
 const GRAY_TEXT = "#8E8E93";
@@ -23,6 +30,8 @@ type Props = {
   total: number;
   discountAmount: number;
   discountReason: string;
+  orderType: OrderType;
+  deliveryFee: number;
   onDiscountAmountChange: (val: number) => void;
   onDiscountReasonChange: (val: string) => void;
 };
@@ -33,6 +42,8 @@ export function OrderSummaryPanel({
   total,
   discountAmount,
   discountReason,
+  orderType,
+  deliveryFee,
   onDiscountAmountChange,
   onDiscountReasonChange,
 }: Props) {
@@ -106,6 +117,11 @@ export function OrderSummaryPanel({
                           .join(", ")}
                       </Text>
                     )}
+                    {item.customization.dedicationNote && (
+                      <Text style={styles.dedicationLabel}>
+                        Msg: {item.customization.dedicationNote}
+                      </Text>
+                    )}
                   </>
                 )}
                 <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
@@ -150,6 +166,16 @@ export function OrderSummaryPanel({
 
       <View style={styles.summaryFooter}>
         <View style={styles.footerDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Order Type</Text>
+          <Text style={styles.orderTypeValue}>{ORDER_TYPE_LABEL[orderType]}</Text>
+        </View>
+        {orderType === "delivery" && deliveryFee > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Delivery Fee</Text>
+            <Text style={styles.summaryValue}>₱{deliveryFee.toFixed(2)}</Text>
+          </View>
+        )}
         {discountAmount > 0 && (
           <>
             <View style={styles.summaryRow}>
@@ -221,6 +247,17 @@ const styles = StyleSheet.create({
   },
   customizationLabel: {
     fontSize: 11,
+    color: ORANGE,
+  },
+  dedicationLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: ORANGE,
+    fontStyle: "italic",
+  },
+  orderTypeValue: {
+    fontSize: 14,
+    fontWeight: "700",
     color: ORANGE,
   },
   itemQty: {

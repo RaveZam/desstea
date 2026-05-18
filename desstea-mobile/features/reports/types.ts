@@ -25,6 +25,7 @@ export type DbOrderItem = {
   quantity: number;
   unit_price_snapshot: number;
   total_price: number;
+  dedication_note: string | null;
   addons: DbAddon[];
   comboSelections: DbComboSelection[];
 };
@@ -44,4 +45,6 @@ export type CompletedOrder = {
   receiptError: boolean;
   discountAmount: number;
   discountReason: string;
+  orderType: "dine_in" | "takeout" | "delivery";
+  deliveryFee: number;
 };

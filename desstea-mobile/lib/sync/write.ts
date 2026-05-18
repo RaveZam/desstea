@@ -17,9 +17,9 @@ import type {
 export async function upsertCategories(rows: Category[], now: string) {
   for (const c of rows) {
     await db.runAsync(
-      `INSERT OR REPLACE INTO categories (id, name, description, created_at, synced_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [c.id, c.name, c.description ?? null, c.created_at ?? null, now],
+      `INSERT OR REPLACE INTO categories (id, name, description, supports_dedication, created_at, synced_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [c.id, c.name, c.description ?? null, c.supports_dedication ? 1 : 0, c.created_at ?? null, now],
     );
   }
 }

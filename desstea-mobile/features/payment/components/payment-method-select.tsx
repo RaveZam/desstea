@@ -13,11 +13,17 @@ const GCASH_LIGHT = "#EEF5FF";
 type Props = {
   onSelectCash: () => void;
   onSelectGcash: () => void;
+  onBack: () => void;
 };
 
-export function PaymentMethodSelect({ onSelectCash, onSelectGcash }: Props) {
+export function PaymentMethodSelect({ onSelectCash, onSelectGcash, onBack }: Props) {
   return (
     <View style={[styles.phaseWrap, styles.phaseCentered]}>
+      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
+        <Ionicons name="chevron-back" size={18} color={GRAY_TEXT} />
+        <Text style={styles.backText}>Edit Order Info</Text>
+      </TouchableOpacity>
+
       <Text style={styles.phaseTitle}>Payment Method</Text>
       <Text style={styles.phaseSubtitle}>How will the customer pay?</Text>
 
@@ -59,6 +65,21 @@ const styles = StyleSheet.create({
   },
   phaseCentered: {
     justifyContent: "center",
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    position: "absolute",
+    top: 24,
+    left: 28,
+    gap: 2,
+    paddingVertical: 4,
+  },
+  backText: {
+    fontSize: 13,
+    color: GRAY_TEXT,
+    fontWeight: "500",
   },
   phaseTitle: {
     fontSize: 22,

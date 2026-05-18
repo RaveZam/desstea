@@ -8,11 +8,12 @@ export async function initDatabase() {
     PRAGMA foreign_keys = ON;
 
     CREATE TABLE IF NOT EXISTS categories (
-      id          TEXT PRIMARY KEY,
-      name        TEXT NOT NULL,
-      description TEXT,
-      created_at  TEXT,
-      synced_at   TEXT
+      id                   TEXT PRIMARY KEY,
+      name                 TEXT NOT NULL,
+      description          TEXT,
+      supports_dedication  INTEGER NOT NULL DEFAULT 0,
+      created_at           TEXT,
+      synced_at            TEXT
     );
 
     CREATE TABLE IF NOT EXISTS addon_groups (
@@ -118,7 +119,9 @@ export async function initDatabase() {
       created_at      TEXT NOT NULL,
       cash_tendered   REAL,
       cash_change     REAL,
-      receipt_error   INTEGER NOT NULL DEFAULT 0
+      receipt_error   INTEGER NOT NULL DEFAULT 0,
+      order_type      TEXT NOT NULL DEFAULT 'dine_in',
+      delivery_fee    REAL NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS order_items (
@@ -137,7 +140,8 @@ export async function initDatabase() {
       quantity               INTEGER NOT NULL CHECK(quantity > 0),
       unit_price_snapshot    REAL NOT NULL,
       created_at             TEXT NOT NULL,
-      total_price            REAL NOT NULL
+      total_price            REAL NOT NULL,
+      dedication_note        TEXT
     );
 
     CREATE TABLE IF NOT EXISTS order_item_combo_selections (
@@ -201,6 +205,10 @@ export async function initDatabase() {
     `ALTER TABLE orders ADD COLUMN receipt_error INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE orders ADD COLUMN discount_amount REAL NOT NULL DEFAULT 0`,
     `ALTER TABLE orders ADD COLUMN discount_reason TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE orders ADD COLUMN order_type TEXT NOT NULL DEFAULT 'dine_in'`,
+    `ALTER TABLE orders ADD COLUMN delivery_fee REAL NOT NULL DEFAULT 0`,
+    `ALTER TABLE categories ADD COLUMN supports_dedication INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE order_items ADD COLUMN dedication_note TEXT`,
   ];
   for (const sql of migrations) {
     try {

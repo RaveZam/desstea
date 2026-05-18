@@ -22,7 +22,17 @@ export type ReceiptDetails = {
   change?: number;
   completedAt?: Date;
   orderRef?: string;
+  orderType?: "dine_in" | "takeout" | "delivery";
+  deliveryFee?: number;
 };
+
+function formatOrderTypeLabel(
+  orderType: "dine_in" | "takeout" | "delivery" | undefined,
+): string {
+  if (orderType === "takeout") return "Take Out";
+  if (orderType === "delivery") return "Delivery";
+  return "Dine In";
+}
 
 async function getLogoBase64(): Promise<string | null> {
   try {
@@ -214,6 +224,7 @@ export function usePrinter() {
       lines.push(`Order ${displayRef}`);
       lines.push(`Date: ${dateStr} ${timeStr}`);
       lines.push(`Customer: ${order.customerName}`);
+      lines.push(`Type: ${formatOrderTypeLabel(order.orderType)}`);
       lines.push("--------------------------------");
 
       for (const item of order.items) {
@@ -265,6 +276,9 @@ export function usePrinter() {
           lines.push(
             `${catPrefix}${item.product.name}${suffix}\nx${item.quantity} ${lineTotal.toFixed(2)} `,
           );
+          if (item.customization?.dedicationNote) {
+            lines.push(`  Msg: ${item.customization.dedicationNote}`);
+          }
           if (item.customization?.addonOptions?.length) {
             for (const aq of item.customization.addonOptions) {
               lines.push(
@@ -276,11 +290,18 @@ export function usePrinter() {
       }
 
       lines.push("--------------------------------");
-      if (order.discountAmount && order.discountAmount > 0) {
-        const sub = order.subtotal ?? order.total + order.discountAmount;
+      const deliveryFee = order.deliveryFee ?? 0;
+      if ((order.discountAmount && order.discountAmount > 0) || deliveryFee > 0) {
+        const sub =
+          order.subtotal ?? order.total + (order.discountAmount ?? 0) - deliveryFee;
         lines.push(`Subtotal:  ${sub.toFixed(2)}`);
-        const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
-        lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+        if (order.discountAmount && order.discountAmount > 0) {
+          const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
+          lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+        }
+        if (deliveryFee > 0) {
+          lines.push(`Delivery: ${deliveryFee.toFixed(2)}`);
+        }
       }
       lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
       lines.push("--------------------------------");
@@ -312,6 +333,7 @@ export function usePrinter() {
         kitchenLines.push("---- KITCHEN ORDER ----");
         kitchenLines.push(`Order ${kitchenRef}`);
         kitchenLines.push(`Customer: ${order.customerName}`);
+        kitchenLines.push(`Type: ${formatOrderTypeLabel(order.orderType)}`);
         kitchenLines.push("--------------------------------");
 
         for (const item of order.items) {
@@ -358,6 +380,9 @@ export function usePrinter() {
             kitchenLines.push(
               `${catPrefix}${item.product.name}${suffix} x${item.quantity}`,
             );
+            if (item.customization?.dedicationNote) {
+              kitchenLines.push(`  Msg: ${item.customization.dedicationNote}`);
+            }
             if (item.customization?.addonOptions?.length) {
               for (const aq of item.customization.addonOptions) {
                 kitchenLines.push(
@@ -459,6 +484,7 @@ export function usePrinter() {
       lines.push(`Order ${displayRef}`);
       lines.push(`Date: ${dateStr} ${timeStr}`);
       lines.push(`Customer: ${order.customerName}`);
+      lines.push(`Type: ${formatOrderTypeLabel(order.orderType)}`);
       lines.push("--------------------------------");
 
       for (const item of order.items) {
@@ -471,6 +497,9 @@ export function usePrinter() {
         lines.push(
           `${item.product_name_snapshot}${suffix}\nx${item.quantity} ${item.total_price.toFixed(2)} `,
         );
+        if (item.dedication_note) {
+          lines.push(`  Msg: ${item.dedication_note}`);
+        }
         for (const a of item.addons) {
           lines.push(`  + ${a.addon_name_snapshot}${a.quantity > 1 ? ` x${a.quantity}` : ""}`);
         }
@@ -481,10 +510,18 @@ export function usePrinter() {
       }
 
       lines.push("--------------------------------");
-      if (order.discountAmount > 0) {
-        lines.push(`Subtotal:  ${(order.total + order.discountAmount).toFixed(2)}`);
-        const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
-        lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+      const deliveryFee = order.deliveryFee ?? 0;
+      if (order.discountAmount > 0 || deliveryFee > 0) {
+        lines.push(
+          `Subtotal:  ${(order.total + order.discountAmount - deliveryFee).toFixed(2)}`,
+        );
+        if (order.discountAmount > 0) {
+          const reasonSuffix = order.discountReason ? ` (${order.discountReason})` : "";
+          lines.push(`Discount: -${order.discountAmount.toFixed(2)}${reasonSuffix}`);
+        }
+        if (deliveryFee > 0) {
+          lines.push(`Delivery: ${deliveryFee.toFixed(2)}`);
+        }
       }
       lines.push(`TOTAL:     ${order.total.toFixed(2)}`);
       lines.push("--------------------------------");
@@ -511,6 +548,7 @@ export function usePrinter() {
         kitchenLines.push("---- KITCHEN ORDER [REPRINT] ----");
         kitchenLines.push(`Order ${displayRef}`);
         kitchenLines.push(`Customer: ${order.customerName}`);
+        kitchenLines.push(`Type: ${formatOrderTypeLabel(order.orderType)}`);
         kitchenLines.push("--------------------------------");
 
         for (const item of order.items) {
@@ -530,6 +568,9 @@ export function usePrinter() {
             if (item.flavor_snapshot) parts.push(item.flavor_snapshot);
             const suffix = parts.length ? ` (${parts.join(", ")})` : "";
             kitchenLines.push(`${item.product_name_snapshot}${suffix} x${item.quantity}`);
+            if (item.dedication_note) {
+              kitchenLines.push(`  Msg: ${item.dedication_note}`);
+            }
             if (item.addons?.length) {
               for (const a of item.addons) {
                 kitchenLines.push(`  + ${a.addon_name_snapshot}${a.quantity > 1 ? ` x${a.quantity}` : ""}`);

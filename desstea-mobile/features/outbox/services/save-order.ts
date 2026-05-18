@@ -19,6 +19,8 @@ export type SaveOrderParams = {
   branchId: string;
   discountAmount?: number;
   discountReason?: string;
+  orderType?: "dine_in" | "takeout" | "delivery";
+  deliveryFee?: number;
 };
 
 export async function saveOrderLocally(
@@ -34,6 +36,8 @@ export async function saveOrderLocally(
     branchId,
     discountAmount = 0,
     discountReason = '',
+    orderType = 'dine_in',
+    deliveryFee = 0,
   } = params;
 
   const orderId = preGeneratedId ?? uuidv4();
@@ -43,8 +47,8 @@ export async function saveOrderLocally(
   await db.withTransactionAsync(async () => {
     // INSERT order
     await db.runAsync(
-      `INSERT INTO orders (id, branch_id, customer_name, total, payment_method, ordered_at, created_at, cash_tendered, cash_change, discount_amount, discount_reason)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (id, branch_id, customer_name, total, payment_method, ordered_at, created_at, cash_tendered, cash_change, discount_amount, discount_reason, order_type, delivery_fee)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         branchId,
@@ -57,6 +61,8 @@ export async function saveOrderLocally(
         cashChange,
         discountAmount,
         discountReason,
+        orderType,
+        deliveryFee,
       ],
     );
 
@@ -78,6 +84,8 @@ export async function saveOrderLocally(
           cash_tendered: cashTendered ?? null,
           discount_amount: discountAmount,
           discount_reason: discountReason,
+          order_type: orderType,
+          delivery_fee: deliveryFee,
         }),
         1,
         now,
@@ -238,6 +246,7 @@ export async function saveOrderLocally(
           item.customization?.sugarLevel?.label ?? null;
         const tempSnapshot = item.customization?.temperature ?? null;
         const flavorSnapshot = item.customization?.flavor?.label ?? null;
+        const dedicationNote = item.customization?.dedicationNote ?? null;
         const shotSuffix = item.customization?.shot ? ` ${item.customization.shot}` : "";
         const matchaSuffix = item.customization?.matchaLevel ? ` (${item.customization.matchaLevel})` : "";
         const productNameSnapshot = `${item.product.name}${shotSuffix}${matchaSuffix}`;
@@ -249,8 +258,8 @@ export async function saveOrderLocally(
               product_id, product_size_id, product_name_snapshot,
               size_label_snapshot, sugar_level_id, sugar_level_snapshot,
               temp_snapshot, flavor_snapshot,
-              quantity, unit_price_snapshot, created_at, total_price)
-           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              quantity, unit_price_snapshot, created_at, total_price, dedication_note)
+           VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             orderId,
@@ -266,6 +275,7 @@ export async function saveOrderLocally(
             unitPrice,
             now,
             totalPrice,
+            dedicationNote,
           ],
         );
 
@@ -292,6 +302,7 @@ export async function saveOrderLocally(
               quantity: item.quantity,
               unit_price_snapshot: unitPrice,
               created_at: now,
+              dedication_note: dedicationNote,
             }),
             2,
             now,
