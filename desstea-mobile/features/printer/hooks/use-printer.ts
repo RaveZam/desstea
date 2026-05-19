@@ -1,10 +1,5 @@
 import { Alert, PermissionsAndroid, Platform } from "react-native";
-import { Asset } from "expo-asset";
-import { File } from "expo-file-system";
-import {
-  BLEPrinter,
-  PrinterWidth,
-} from "react-native-thermal-receipt-printer-image-qr";
+import { BLEPrinter } from "react-native-thermal-receipt-printer-image-qr";
 import { OrderItem } from "../../../store";
 import { getItemPrice } from "../../pos/types";
 import { useBranchName } from "../../auth/hooks/use-branch-name";
@@ -32,22 +27,6 @@ function formatOrderTypeLabel(
   if (orderType === "takeout") return "Take Out";
   if (orderType === "delivery") return "Delivery";
   return "Dine In";
-}
-
-async function getLogoBase64(): Promise<string | null> {
-  try {
-    const asset = Asset.fromModule(
-      require("../../../assets/images/logo-padding.png"),
-    );
-    await asset.downloadAsync();
-    const uri = asset.localUri ?? asset.uri;
-    if (!uri) return null;
-    const file = new File(uri);
-    return await file.base64();
-  } catch (e) {
-    console.warn("getLogoBase64 failed:", e);
-    return null;
-  }
 }
 
 async function requestBluetoothPermissions(): Promise<boolean> {
@@ -187,17 +166,6 @@ export function usePrinter() {
 
       await new Promise((r) => setTimeout(r, 300));
 
-      // Print logo — centered on 58mm paper
-      const logoBase64 = await getLogoBase64();
-      if (logoBase64) {
-        BLEPrinter.printImageBase64(logoBase64, {
-          imageWidth: 350,
-          imageHeight: 180,
-          printerWidthType: PrinterWidth["58mm"],
-        });
-        await new Promise((r) => setTimeout(r, 400));
-      }
-
       // Build the entire customer receipt as a single string
       const d = order.completedAt ?? new Date();
       const dateStr = d.toLocaleDateString("en-PH", {
@@ -312,9 +280,7 @@ export function usePrinter() {
         lines.push(`Change:  ${(order.change ?? 0).toFixed(2)}`);
       }
 
-      lines.push("================================\n");
-      lines.push("      Thank you Come again!\n");
-      lines.push("      This Document is not\n  valid for claim of input tax");
+      lines.push("================================");
       lines.push("\n\n\n");
 
       await BLEPrinter.printText(lines.join("\n"), {});
@@ -451,16 +417,6 @@ export function usePrinter() {
 
       await new Promise((r) => setTimeout(r, 300));
 
-      const logoBase64 = await getLogoBase64();
-      if (logoBase64) {
-        BLEPrinter.printImageBase64(logoBase64, {
-          imageWidth: 350,
-          imageHeight: 180,
-          printerWidthType: PrinterWidth["58mm"],
-        });
-        await new Promise((r) => setTimeout(r, 400));
-      }
-
       const d = order.completedAt;
       const dateStr = d.toLocaleDateString("en-PH", {
         month: "short",
@@ -532,9 +488,7 @@ export function usePrinter() {
         lines.push(`Change:  ${(order.cashChange ?? 0).toFixed(2)}`);
       }
 
-      lines.push("================================\n");
-      lines.push("      Thank you Come again!\n");
-      lines.push("      This Document is not\n  valid for claim of input tax");
+      lines.push("================================");
       lines.push("\n\n\n");
 
       await BLEPrinter.printText(lines.join("\n"), {});

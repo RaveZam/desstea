@@ -4,7 +4,7 @@ import { getItemPrice } from "../../pos/types";
 
 import { saveOrderLocally, uuidv4 } from "../../outbox/services/save-order";
 import { processOutbox } from "../../outbox/services/outbox-sync";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { OrderType } from "../components/name-input";
 
 export type Phase = "name-input" | "select" | "cash-numpad" | "cash-confirmed" | "gcash-wait";
@@ -12,6 +12,7 @@ export type Phase = "name-input" | "select" | "cash-numpad" | "cash-confirmed" |
 const NUMPAD_KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "⌫"];
 
 export function usePayment() {
+  const { user } = useAuth();
   const orderItems = getOrder();
   const total = orderItems.reduce(
     (sum, item) => sum + getItemPrice(item) * item.quantity,
@@ -65,9 +66,11 @@ export function usePayment() {
     const paymentMethod = phase === "cash-confirmed" ? "Cash" : "GCash";
     const isCash = phase === "cash-confirmed";
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const branchId =
-      sessionData?.session?.user?.user_metadata?.branch_id ?? "";
+    // Read branch_id from the cached user in useAuth rather than calling
+    // supabase.auth.getSession(). When offline with an expired access token,
+    // getSession() can trigger an internal refresh that fails and returns
+    // null, which would zero out branch_id on the saved order.
+    const branchId = user?.user_metadata?.branch_id ?? "";
 
     await saveOrderLocally({
       orderId,

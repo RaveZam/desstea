@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Session, User } from "@supabase/supabase-js";
+import * as Network from "expo-network";
 import { supabase } from "@/lib/supabase";
 
 export function useAuth() {
@@ -16,6 +17,17 @@ export function useAuth() {
 
       if (session.user?.user_metadata?.role !== "branch_manager") {
         await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      // Only attempt token refresh on Wi-Fi. On cellular/offline, fall back to
+      // the cached session — the reconnect listener in _layout will refresh
+      // later when conditions improve.
+      const netState = await Network.getNetworkStateAsync().catch(() => null);
+      if (netState?.type !== Network.NetworkStateType.WIFI) {
+        setSession(session);
+        setUser(session.user);
         setIsLoading(false);
         return;
       }
